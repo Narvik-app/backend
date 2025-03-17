@@ -23,7 +23,7 @@ class MemberImportFromEden extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be an XLSX.');
     }
 
-    $response = $edenService->importFromFile($this->getQueryClub(), $uploadedFile->getPathname());
+    $response = $edenService->importFromFile($this->getClub($request), $uploadedFile->getPathname());
 
     return new JsonResponse(["lines" => $response]);
   }

@@ -23,7 +23,7 @@ class MemberPresencesFromCsv extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be a csv');
     }
 
-    $response = $memberPresenceService->importFromFile($this->getQueryClub(), $uploadedFile);
+    $response = $memberPresenceService->importFromFile($this->getClub($request), $uploadedFile);
     return new JsonResponse($response);
   }
 

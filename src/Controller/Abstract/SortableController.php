@@ -26,9 +26,9 @@ class SortableController extends AbstractClubDependentController {
     }
 
     if ($direction === 'up') {
-      $repository->moveUp($this->getQueryClub(), $entity);
+      $repository->moveUp($this->getClub($request), $entity);
     } else {
-      $repository->moveDown($this->getQueryClub(), $entity);
+      $repository->moveDown($this->getClub($request), $entity);
     }
 
     return new JsonResponse();
