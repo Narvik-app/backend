@@ -22,7 +22,7 @@ class MemberPhotosImportFromItac extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be a ZIP');
     }
 
-    $importPhotosService->importItacPhotos($this->getQueryClub(), $uploadedFile);
+    $importPhotosService->importItacPhotos($this->getClub($request), $uploadedFile);
 
     return new JsonResponse();
   }

@@ -7,15 +7,16 @@ use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Service\GlobalSettingService;
 use App\Service\MemberService;
+use Symfony\Component\HttpFoundation\Request;
 
 class MemberPresenceToday extends AbstractClubDependentController {
 
-  public function __invoke(MemberPresenceRepository $memberPresenceRepository, MemberService $memberService, GlobalSettingService $globalSettingService): ?array {
+  public function __invoke(Request $request, MemberPresenceRepository $memberPresenceRepository, MemberService $memberService, GlobalSettingService $globalSettingService): ?array {
 
     /** @var MemberPresence[] $todayPresentMembers */
-    $todayPresentMembers = $memberPresenceRepository->findAllPresentToday($this->getQueryClub());
+    $todayPresentMembers = $memberPresenceRepository->findAllPresentToday($this->getClub($request));
 
-    $controlShootingActivity = $this->getQueryClub()->getSettings()?->getControlShootingActivity();
+    $controlShootingActivity = $this->getClub($request)->getSettings()?->getControlShootingActivity();
 
     foreach ($todayPresentMembers as $memberPresence) {
       if (!$memberPresence->getMember()) {

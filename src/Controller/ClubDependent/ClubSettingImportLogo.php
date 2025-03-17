@@ -22,7 +22,7 @@ class ClubSettingImportLogo extends AbstractClubDependentController {
       }
     }
 
-    $importPhotosService->importClubLogo($this->getQueryClub(), $uploadedFile);
+    $importPhotosService->importClubLogo($this->getClub($request), $uploadedFile);
     return new JsonResponse();
   }
 

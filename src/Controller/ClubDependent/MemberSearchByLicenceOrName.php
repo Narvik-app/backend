@@ -14,7 +14,7 @@ class MemberSearchByLicenceOrName extends AbstractClubDependentController {
     $payload = $this->checkAndGetJsonValues($request, ['query']);
     $query = $payload['query'];
 
-    $members = $memberRepository->findByLicenceOrName($this->getQueryClub(), $query);
+    $members = $memberRepository->findByLicenceOrName($this->getClub($request), $query);
 
     return new Response($serializer->serialize($members, 'jsonld', [
       'groups' => ['autocomplete', 'common-read']

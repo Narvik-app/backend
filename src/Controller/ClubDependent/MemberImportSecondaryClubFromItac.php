@@ -22,7 +22,7 @@ class MemberImportSecondaryClubFromItac extends AbstractClubDependentController 
       throw new BadRequestHttpException('The "file" must be a CSV');
     }
 
-    $response = $itacCsvService->importSecondaryFromFile($this->getQueryClub(), $uploadedFile->getPathname());
+    $response = $itacCsvService->importSecondaryFromFile($this->getClub($request), $uploadedFile->getPathname());
 
     return new JsonResponse(["lines" => $response]);
   }

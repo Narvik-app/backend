@@ -22,7 +22,7 @@ class SalesFromCsv extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be a csv');
     }
 
-    $importSale->setClub($this->getQueryClub());
+    $importSale->setClub($this->getClub($request));
     $response = $importSale->fromFile($uploadedFile);
 
     return new JsonResponse($response);

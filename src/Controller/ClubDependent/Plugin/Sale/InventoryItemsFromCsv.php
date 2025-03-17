@@ -23,7 +23,7 @@ class InventoryItemsFromCsv extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be a csv');
     }
 
-    $importInventorySale->setClub($this->getQueryClub());
+    $importInventorySale->setClub($this->getClub($request));
     $response = $importInventorySale->fromFile($uploadedFile);
 
     return new JsonResponse($response);

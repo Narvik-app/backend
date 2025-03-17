@@ -1,7 +1,7 @@
 #syntax=docker/dockerfile:1
 
 # Versions
-FROM dunglas/frankenphp:1.4.2-php8.4 AS frankenphp_upstream
+FROM dunglas/frankenphp:1.4.4-php8.4 AS frankenphp_upstream
 
 # The different stages of this Dockerfile are meant to be built into separate images
 # https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage
@@ -52,6 +52,11 @@ COPY --link --chmod=755 docker/frankenphp/docker-entrypoint.sh /usr/local/bin/do
 COPY --link docker/frankenphp/Caddyfile /etc/caddy/Caddyfile
 
 ENTRYPOINT ["docker-entrypoint"]
+
+# Fix broken proxy install: https://stackoverflow.com/a/76092743/8255326
+RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
+    echo "Acquire::http::No-Cache true;" >> /etc/apt/apt.conf.d/99custom && \
+    echo "Acquire::BrokenProxy    true;" >> /etc/apt/apt.conf.d/99custom
 
 # Install supervisor for Symfony Messenger
 RUN apt-get update && apt-get install -y --no-install-recommends supervisor

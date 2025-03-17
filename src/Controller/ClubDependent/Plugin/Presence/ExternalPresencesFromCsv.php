@@ -23,7 +23,7 @@ class ExternalPresencesFromCsv extends AbstractClubDependentController {
       throw new BadRequestHttpException('The "file" must be a csv');
     }
 
-    $importExternalPresence->setClub($this->getQueryClub());
+    $importExternalPresence->setClub($this->getClub($request));
     $response = $importExternalPresence->fromFile($uploadedFile);
 
     return new JsonResponse($response);
