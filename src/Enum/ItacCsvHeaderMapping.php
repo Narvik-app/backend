@@ -9,7 +9,7 @@ enum ItacCsvHeaderMapping: string {
   case LASTNAME = 'Nom';
   case FIRSTNAME = 'Prénom';
   case BIRTHDAY = 'Date de naissance';
-  case HANDISPORT = 'Handisport';
+  // case HANDISPORT = 'Handisport';
 
 
   case POSTAL_1 = 'Adresse 1';

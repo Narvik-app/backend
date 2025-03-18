@@ -323,10 +323,6 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['member-read', 'club-supervisor-write'])]
   private ?\DateTimeInterface $birthday = null;
 
-  #[ORM\Column]
-  #[Groups(['member-read', 'club-admin-write'])]
-  private bool $handisport = false;
-
   #[ORM\Column(length: 255, nullable: true)]
   #[Groups(['member-read', 'club-supervisor-write'])]
   private ?string $postal1 = null;
@@ -482,15 +478,6 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setBirthday(?\DateTimeInterface $birthday): Member {
     $this->birthday = $birthday;
-    return $this;
-  }
-
-  public function isHandisport(): bool {
-    return $this->handisport;
-  }
-
-  public function setHandisport(bool $handisport): Member {
-    $this->handisport = $handisport;
     return $this;
   }
 
