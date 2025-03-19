@@ -90,7 +90,7 @@ class ItacMembersMessageHandler implements ResetInterface {
         ->setLastname($record[ItacCsvHeaderMapping::LASTNAME->value])
         ->setFirstname($record[ItacCsvHeaderMapping::FIRSTNAME->value])
         ->setBirthday(\DateTime::createFromFormat("d/m/Y", $record[ItacCsvHeaderMapping::BIRTHDAY->value]))
-        ->setHandisport($this->toBoolean($record[ItacCsvHeaderMapping::HANDISPORT->value]))
+        //->setHandisport($this->toBoolean($record[ItacCsvHeaderMapping::HANDISPORT->value]))
 
         ->setPostal1($record[ItacCsvHeaderMapping::POSTAL_1->value])
         ->setPostal2($record[ItacCsvHeaderMapping::POSTAL_2->value])
