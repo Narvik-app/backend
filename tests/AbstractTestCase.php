@@ -11,6 +11,8 @@ use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Story\_InitStory;
 use Doctrine\DBAL\Connection;
 use JetBrains\PhpStorm\NoReturn;
+use PHPUnit\Framework\Attributes\Before;
+use PHPUnit\Framework\Attributes\BeforeClass;
 use PHPUnit\Framework\ExpectationFailedException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +27,8 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   use CustomApiTestAssertionsTrait;
 
+  protected static ?bool $alwaysBootKernel = true; // We make the test ready for api-platform 5.0
+
   private string $clientAuthorization = 'dGVzdDpzZWNyZXRUZXN0T25seQ=='; // base64 encode test:secretTestOnly
 
   private ?string $accessToken = null;
@@ -33,14 +37,17 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   public function setUp(): void {
     parent::setUp();
-    self::bootKernel();
-    $registry = self::$kernel->getContainer()->get('doctrine');
+    $this->initDefaultFixtures();
+  }
+
+  #[Before]
+  public static function _resetDatabaseBeforeEachTest(): void {
+    $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
     $connection = $registry->getConnection();
     $connection->executeQuery('CREATE EXTENSION unaccent;');
-
-    $this->initDefaultFixtures();
   }
+
 
   public function tearDown(): void {
     $fs = self::getContainer()->get(FileSystem::class);
