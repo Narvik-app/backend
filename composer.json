@@ -133,7 +133,7 @@
             "bin/phpunit"
         ],
         "ci-test": [
-            "XDEBUG_MODE=coverage bin/phpunit --do-not-cache-result --coverage-clover coverage.xml --log-junit junit.xml"
+            "XDEBUG_MODE=coverage bin/phpunit --coverage-clover coverage.xml --log-junit junit.xml"
         ],
         "test-with-coverage": [
             "XDEBUG_MODE=coverage bin/phpunit --coverage-html=tests/coverage/html"
