@@ -32,6 +32,8 @@ use App\Entity\UserMember;
 use App\Enum\ClubRole;
 use App\Filter\CurrentSeasonFilter;
 use App\Filter\MultipleFilter;
+use App\Filter\PreviousSeasonFilter;
+use App\Filter\SeasonNotRenewedFilter;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Security\Voter\SelfMemberVoter;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -240,6 +242,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(OrderFilter::class, properties: ['lastname' => 'ASC', 'firstname' => 'ASC'])]
 #[ApiFilter(MultipleFilter::class, properties: ['firstname', 'lastname', 'licence'])]
 #[ApiFilter(CurrentSeasonFilter::class, properties: ['memberSeasons.season'])]
+#[ApiFilter(PreviousSeasonFilter::class, properties: ['memberSeasons.season'])]
+#[ApiFilter(SeasonNotRenewedFilter::class, properties: ['memberSeasons.season'])]
 class Member extends UuidEntity implements ClubLinkedEntityInterface {
   use SelfClubLinkedEntityTrait;
 
