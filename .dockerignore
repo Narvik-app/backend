@@ -41,3 +41,4 @@ supervisord.pid
 
 dump/
 tests/coverage/
+.phpunit.cache
