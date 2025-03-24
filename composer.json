@@ -3,7 +3,7 @@
     "version": "3.4.0",
     "type": "project",
     "license": "GNU AGPLv3",
-    "description": "App to manage multiple french shooting clubs",
+    "description": "App to manage multiple french association, especially sporting associations",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
