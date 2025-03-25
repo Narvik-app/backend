@@ -365,4 +365,31 @@ class UserTest extends AbstractEntityTestCase {
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
   }
+
+  public function testSelfLegalsAccepted(): void {
+    // Badger is denied
+    $this->loggedAsBadgerClub1();
+    $this->makePatchRequest("/self/legals-accepted", []);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+
+    // Member
+    $this->loggedAsMemberClub1();
+    $this->makePatchRequest("/self/legals-accepted", []);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    // Supervisor
+    $this->loggedAsSupervisorClub1();
+    $this->makePatchRequest("/self/legals-accepted", []);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    // Admin
+    $this->loggedAsAdminClub1();
+    $this->makePatchRequest("/self/legals-accepted", []);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    // Super Admin
+    $this->loggedAsSuperAdmin();
+    $this->makePatchRequest("/self/legals-accepted", []);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+  }
 }
