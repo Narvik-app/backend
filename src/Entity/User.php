@@ -275,6 +275,9 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
   #[Groups(['user-read', 'super-admin-write'])]
   private ?\DateTimeImmutable $legalsAccepted = null;
 
+  #[Groups(['user-read', 'super-admin-read'])]
+  private bool $legalsExpired = true;
+
   /**
    * @var Collection<int, UserMember>
    */
@@ -472,6 +475,15 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
 
   public function setLegalsAccepted(?\DateTimeImmutable $legalsAccepted): User {
     $this->legalsAccepted = $legalsAccepted;
+    return $this;
+  }
+
+  public function getLegalsExpired(): bool {
+    return $this->legalsExpired;
+  }
+
+  public function setLegalsExpired(bool $legalsExpired): User {
+    $this->legalsExpired = $legalsExpired;
     return $this;
   }
 
