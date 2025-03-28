@@ -11,6 +11,8 @@ parameters:
 
     app.oauth_passphrase: '%env(OAUTH_PASSPHRASE)%'
     app.oauth_private_key: '%env(resolve:OAUTH_PRIVATE_KEY)%'
+    
+    app.legals_last_update: '%env(LEGALS_LAST_UPDATE)%'
 
     app.files: '%kernel.project_dir%/private/files'
     app.public_images: '%kernel.project_dir%/public/images'

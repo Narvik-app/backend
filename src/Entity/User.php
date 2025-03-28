@@ -18,6 +18,7 @@ use App\Controller\UserPasswordResetInitiate;
 use App\Controller\UserInitiateRegister;
 use App\Controller\UserSelf;
 use App\Controller\UserSelfDeleteAccount;
+use App\Controller\UserSelfLegalsAccepted;
 use App\Controller\UserSelfUpdatePassword;
 use App\Controller\UserRegister;
 use App\Entity\Abstract\UuidEntity;
@@ -30,6 +31,7 @@ use App\Repository\UserRepository;
 use App\State\UserProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -81,6 +83,16 @@ use Symfony\Component\Validator\Constraints as Assert;
             ]),
           ),
       ),
+    read: false,
+    write: false
+  ),
+  new Patch(
+    uriTemplate: '/self/legals-accepted',
+    controller: UserSelfLegalsAccepted::class,
+    openapi:
+    new Model\Operation(
+      summary: 'User accepted the latest legals informations.',
+    ),
     read: false,
     write: false
   ),
@@ -258,6 +270,13 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
   #[Groups(['autocomplete', 'user-read', 'super-admin-write'])]
   #[Assert\NotBlank(allowNull: false)]
   private ?string $lastname = null;
+
+  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+  #[Groups(['user-read', 'super-admin-write'])]
+  private ?\DateTimeImmutable $legalsAccepted = null;
+
+  #[Groups(['user-read', 'super-admin-read'])]
+  private bool $legalsExpired = true;
 
   /**
    * @var Collection<int, UserMember>
@@ -448,6 +467,24 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
           }
       }
       return $this;
+  }
+
+  public function getLegalsAccepted(): ?\DateTimeImmutable {
+    return $this->legalsAccepted;
+  }
+
+  public function setLegalsAccepted(?\DateTimeImmutable $legalsAccepted): User {
+    $this->legalsAccepted = $legalsAccepted;
+    return $this;
+  }
+
+  public function getLegalsExpired(): bool {
+    return $this->legalsExpired;
+  }
+
+  public function setLegalsExpired(bool $legalsExpired): User {
+    $this->legalsExpired = $legalsExpired;
+    return $this;
   }
 
   public function isSkipAutoSetUserMember(): bool {
