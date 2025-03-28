@@ -28,6 +28,10 @@ build: ## Builds the Docker images
 build-prod:
 	@docker build --pull --no-cache -t benoitvignal/narvik-back:latest -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
 
+build-cloud-prod:
+	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t benoitvignal/narvik-back:latest -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod
+
+
 push-build-prod:
 	@docker image push benoitvignal/narvik-back:latest
 	@docker image push benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o`
