@@ -98,6 +98,10 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\NotBlank()]
   private string $name;
 
+  #[ORM\Column(type: "string", nullable: true, enumType: ClubRole::class)]
+  #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
+  private ClubRole|null $visibility = null;
+
   #[ORM\Column(type: 'boolean')]
   #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
   private ?bool $isEnabled = true;
@@ -120,6 +124,19 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setName(string $name): static {
     $this->name = trim($name);
+    return $this;
+  }
+
+  public function getVisibility(): ?ClubRole {
+    return $this->visibility;
+  }
+
+  public function setVisibility(?ClubRole $visibility): Activity {
+    // Member visibility = visible for everybody
+    if ($visibility === ClubRole::member) {
+      $visibility = null;
+    }
+    $this->visibility = $visibility;
     return $this;
   }
 

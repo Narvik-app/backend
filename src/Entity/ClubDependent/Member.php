@@ -266,7 +266,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['member-read', 'member-presence-read'])]
   private ?MemberSeason $currentSeason = null;
 
-  #[Groups(['member-read', 'member-presence-read'])]
+  #[Groups(['autocomplete', 'member-read', 'member-presence-read'])]
   private ClubRole|null $role = null;
 
   #[Groups(['member-read'])]
