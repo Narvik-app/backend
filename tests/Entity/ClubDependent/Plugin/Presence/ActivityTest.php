@@ -159,4 +159,29 @@ class ActivityTest extends AbstractEntityClubLinkedTestCase {
       },
     );
   }
+
+  public function testPatchVisibility(): void {
+    $activity = ActivityStory::getRandom("activities_club1");
+    $iri = $this->getIriFromResource($activity);
+
+    $this->loggedAsAdminClub1();
+
+    $payload = [
+      "visibility" => ClubRole::admin->value,
+    ];
+
+    $response = $this->makePatchRequest($iri, $payload);
+    $this->assertResponseIsSuccessful();
+    $this->assertEquals(ClubRole::admin->value, $response->toArray()['visibility']);
+
+    // Sending with member payload should return null as it's consider the default value
+
+    $payload = [
+      "visibility" => ClubRole::member->value,
+    ];
+
+    $response = $this->makePatchRequest($iri, $payload);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonNotHasKey('visibility', $response);
+  }
 }
