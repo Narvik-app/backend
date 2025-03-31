@@ -25,6 +25,9 @@ help: ## Outputs this help screen
 build: ## Builds the Docker images
 	@$(DOCKER_COMP) build --pull --no-cache
 
+build-cloud-local:
+	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t narvik-php
+
 build-prod:
 	@docker build --pull --no-cache -t benoitvignal/narvik-back:latest -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
 
