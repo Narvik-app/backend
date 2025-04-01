@@ -1,6 +1,6 @@
 services:
   php:
-    image: narvik-php
+    image: narvik-php:latest
     restart: unless-stopped
     environment:
       SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
