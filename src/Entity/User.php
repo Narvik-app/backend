@@ -214,8 +214,8 @@ use Symfony\Component\Validator\Constraints as Assert;
   ],
   processor: UserProcessor::class,
 )]
-#[ApiFilter(SearchFilter::class, properties: ['role' => 'exact'])]
-#[ApiFilter(OrderFilter::class, properties: ['lastname' => 'ASC', 'firstname' => 'ASC'])]
+#[ApiFilter(SearchFilter::class, properties: ['role' => 'exact', 'memberships.member.club.uuid' => 'exact'])]
+#[ApiFilter(OrderFilter::class, properties: ['lastname' => 'ASC', 'firstname' => 'ASC', 'accountActivated' => 'DESC'])]
 #[ApiFilter(MultipleFilter::class, properties: ['firstname', 'lastname', 'email'])]
 class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUserInterface, TimestampEntityInterface {
   use TimestampTrait;
