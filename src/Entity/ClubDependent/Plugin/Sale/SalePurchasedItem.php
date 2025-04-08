@@ -16,7 +16,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SalePurchasedItem extends UuidEntity implements TimestampEntityInterface {
   use TimestampTrait;
 
-  #[ORM\ManyToOne]
+  #[ORM\ManyToOne(targetEntity: InventoryItem::class)]
+  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
   #[Groups(['sale'])]
   #[Assert\NotBlank(allowNull: true)]
   private ?InventoryItem $item = null;
