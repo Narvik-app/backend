@@ -1,6 +1,9 @@
 # Executables (local)
 DOCKER_COMP = docker compose
 
+# Container repo
+BUILD_REPO = benoitvignal/narvik-back
+
 # Docker containers
 PHP_CONT = $(DOCKER_COMP) exec php
 DB_CONT = $(DOCKER_COMP) exec database
@@ -29,17 +32,17 @@ build-cloud-local:
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t narvik-php --target frankenphp_dev
 
 build-prod:
-	@docker build --pull --no-cache -t benoitvignal/narvik-back:latest -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
+	@docker build --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
 
 build-cloud-prod:
-	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t benoitvignal/narvik-back:latest -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod
+	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod
 
 
 push-build-prod:
-	@docker image push benoitvignal/narvik-back:latest
-	@docker image push benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o`
-	@docker image push benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o`
-	@docker image push benoitvignal/narvik-back:`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o`
+	@docker image push $(BUILD_REPO):latest
+	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o`
+	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o`
+	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o`
 
 up: ## Start the docker hub in detached mode (no logs)
 	@$(DOCKER_COMP) up --detach
