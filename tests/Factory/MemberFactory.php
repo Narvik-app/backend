@@ -77,7 +77,7 @@ final class MemberFactory extends PersistentProxyObjectFactory {
     return $this->afterInstantiate(function(Member $member): void {
       // For all member we link them with the current season
       MemberSeasonFactory::new([
-        'season' => SeasonStory::season_2024(),
+        'season' => SeasonStory::season_current(),
         'member' => $member
       ])->create();
     });
