@@ -36,11 +36,11 @@ class Season {
   #[ORM\Id]
   #[ORM\GeneratedValue(strategy: 'SEQUENCE')]
   #[ORM\Column]
-  #[Groups(['season-read', 'member-season-read', 'member-presence-read'])]
+  #[Groups(['season-read', 'member-season-read', 'member-presence-read', 'club-setting-read'])]
   private ?int $id = null;
 
   #[ORM\Column(length: 255)]
-  #[Groups(['super-admin-write', 'season-read', 'member-season-read', 'member-presence-read'])]
+  #[Groups(['super-admin-write', 'season-read', 'member-season-read', 'member-presence-read', 'club-setting-read'])]
   private ?string $name = null;
 
   #[ORM\OneToMany(mappedBy: 'season', targetEntity: MemberSeason::class)]

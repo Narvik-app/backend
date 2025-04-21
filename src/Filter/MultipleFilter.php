@@ -2,10 +2,10 @@
 
 namespace App\Filter;
 
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\DQL\CustomExpr;
+use App\Filter\Abstract\AbstractFilter;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\PropertyInfo\Type;
 
@@ -56,22 +56,7 @@ final class MultipleFilter extends AbstractFilter {
   }
 
   private function buildFilterClause(QueryBuilder $queryBuilder, string $field, int $iParam, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator) {
-    $clauseField = "$rootAlias.$field"; // by default clauseField = provided field
-    $joins = explode(".", $field);
-    if (count($joins) > 1) {
-      $linkedTo = $rootAlias;
-      foreach ($joins as $k => $join) {
-        if ($k === count($joins)-1) {
-          $clauseField = "$linkedTo.$join";
-          break;
-        }
-        $joinAlias = $queryNameGenerator->generateJoinAlias("ja_{$join}");
-        if (!in_array($joinAlias, $queryBuilder->getAllAliases())) {
-          $queryBuilder->leftJoin(sprintf('%s.%s', $linkedTo, $join), $joinAlias);
-        }
-        $linkedTo = $joinAlias;
-      }
-    }
+    $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
     return $queryBuilder->expr()->like(CustomExpr::unaccentInsensitive($clauseField), CustomExpr::unaccentInsensitive(":value$iParam"));
   }
 

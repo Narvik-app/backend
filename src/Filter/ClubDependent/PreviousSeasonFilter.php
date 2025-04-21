@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Filter;
+namespace App\Filter\ClubDependent;
 
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Filter\Abstract\AbstractClubDependentFilter;
+use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -12,11 +14,11 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
-final class CurrentSeasonFilter extends AbstractFilter {
-  public const PROPERTY_NAME = "currentSeason";
+final class PreviousSeasonFilter extends AbstractClubDependentFilter {
+  public const PROPERTY_NAME = "previousSeason";
 
-  public function __construct(ManagerRegistry $managerRegistry, private readonly SeasonRepository $seasonRepository, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
-    parent::__construct($managerRegistry, $logger, $properties, $nameConverter);
+  public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
+    parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);
   }
 
 
@@ -30,8 +32,8 @@ final class CurrentSeasonFilter extends AbstractFilter {
 
     $acceptedFilterProps = $this->getAcceptedFilterProps();
 
-    $currentSeason = $this->seasonRepository->findCurrentSeason();
-    if (!$currentSeason) {
+    $previousSeason = $this->seasonRepository->findPreviousSeason($this->getSelfClub($queryBuilder));
+    if (!$previousSeason) {
       return;
     }
 
@@ -49,7 +51,7 @@ final class CurrentSeasonFilter extends AbstractFilter {
 
       $rootAlias = $queryBuilder->getRootAliases()[0];
       $queryBuilder->andWhere($this->buildFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator));
-      $queryBuilder->setParameter(":currentSeason", $currentSeason);
+      $queryBuilder->setParameter(":previousSeason", $previousSeason);
     }
   }
 
@@ -62,28 +64,8 @@ final class CurrentSeasonFilter extends AbstractFilter {
   }
 
   private function buildFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator) {
-    $clauseField = "$rootAlias.$field"; // by default clauseField = provided field
-    $joins = explode(".", $field);
-    if (count($joins) > 1) {
-      $linkedTo = $rootAlias;
-      foreach ($joins as $k => $join) {
-        if ($k === count($joins)-1) {
-          $clauseField = "$linkedTo.$join";
-          break;
-        }
-        $joinAlias = $queryNameGenerator->generateJoinAlias("ja_{$join}");
-        if (!in_array($joinAlias, $queryBuilder->getAllAliases())) {
-          $queryBuilder->leftJoin(sprintf('%s.%s', $linkedTo, $join), $joinAlias);
-        }
-        $linkedTo = $joinAlias;
-      }
-    }
-
-    return $queryBuilder->expr()->eq($clauseField, ':currentSeason');
-  }
-
-  private function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
+    return $queryBuilder->expr()->eq($clauseField, ':previousSeason');
   }
 
   public function getDescription(string $resourceClass): array {
@@ -97,7 +79,7 @@ final class CurrentSeasonFilter extends AbstractFilter {
         'property' => $property,
         'type' => Type::BUILTIN_TYPE_BOOL,
         'required' => false,
-        'description' => 'Force the query to be only for current season.',
+        'description' => 'Force the query to be only for previous season.',
       ];
     }
     return $description;

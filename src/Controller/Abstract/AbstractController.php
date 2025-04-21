@@ -2,7 +2,6 @@
 
 namespace App\Controller\Abstract;
 
-use App\Entity\ClubDependent\Member;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as SymfonyAbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

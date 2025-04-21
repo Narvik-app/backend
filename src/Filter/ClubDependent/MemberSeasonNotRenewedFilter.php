@@ -1,28 +1,28 @@
 <?php
 
-namespace App\Filter;
+namespace App\Filter\ClubDependent;
 
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\ClubDependent\Member;
 use App\Entity\Season;
+use App\Filter\Abstract\AbstractClubDependentFilter;
+use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
 use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Lazy\LazyUuidFromString;
-use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
-final class SeasonNotRenewedFilter extends AbstractFilter {
+final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
   public const PROPERTY_NAME = "seasonNotRenewed";
 
-  public function __construct(ManagerRegistry $managerRegistry, private readonly SeasonRepository $seasonRepository, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
-    parent::__construct($managerRegistry, $logger, $properties, $nameConverter);
+  public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
+    parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);
   }
 
 
@@ -36,7 +36,7 @@ final class SeasonNotRenewedFilter extends AbstractFilter {
 
     $acceptedFilterProps = $this->getAcceptedFilterProps();
 
-    $currentSeason = $this->seasonRepository->findCurrentSeason();
+    $currentSeason = $this->seasonRepository->findCurrentSeason($this->getSelfClub($queryBuilder));
 
     if (!$currentSeason) {
       return;
@@ -66,49 +66,27 @@ final class SeasonNotRenewedFilter extends AbstractFilter {
     return array_unique($acceptedFilterProps);
   }
 
-  private function buildFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator, Season $currentSeason) {
+  private function buildFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator, Season $currentSeason): void {
     $subQuery = new QueryBuilder($queryBuilder->getEntityManager());
     $subQuery
       ->select("m.id")
       ->from(Member::class, 'm');
 
-    $clauseField = "$rootAlias.$field"; // by default clauseField = provided field
-    $joins = explode(".", $field);
-    if (count($joins) > 1) {
-      $linkedTo = $rootAlias;
-      foreach ($joins as $k => $join) {
-        if ($k === count($joins)-1) {
-          $clauseField = "$linkedTo.$join";
-          break;
-        }
-        $joinAlias = $queryNameGenerator->generateJoinAlias("ja_{$join}");
-        if (!in_array($joinAlias, $subQuery->getAllAliases())) {
-          $subQuery->leftJoin(sprintf('%s.%s', $linkedTo, $join), $joinAlias);
-        }
-        $linkedTo = $joinAlias;
-      }
-    }
-
-    /** @var Parameter|null $parameter */
-    $parameter = $queryBuilder->getParameters()[0] ?? null;
+    $clauseField = $this->buildClauseField($rootAlias, $field, $subQuery, $queryNameGenerator);
 
     $subQuery->andWhere($subQuery->expr()->eq($clauseField, ':currentSeason'));
     $queryBuilder->setParameter("currentSeason", $currentSeason);
 
-    if ($parameter && $parameter->getValue() instanceof UuidInterface) {
+    $clubUuid = $this->getClubUuid($queryBuilder);
+    if ($clubUuid) {
       $joinAlias = $queryNameGenerator->generateJoinAlias("ja_club");
       $subQuery->leftJoin("m.club", $joinAlias);
-
       $subQuery
         ->andWhere($subQuery->expr()->eq("$joinAlias.uuid", ":c"));
-      $queryBuilder->setParameter("c", $parameter->getValue());
+      $queryBuilder->setParameter("c", $clubUuid);
     }
 
     $queryBuilder->andWhere($queryBuilder->expr()->notIn("$rootAlias.id", $subQuery->getDQL()));
-  }
-
-  private function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
   }
 
   public function getDescription(string $resourceClass): array {
