@@ -2,7 +2,6 @@
 
 namespace App\Filter\ClubDependent;
 
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\ClubDependent\Member;
@@ -10,11 +9,9 @@ use App\Entity\Season;
 use App\Filter\Abstract\AbstractClubDependentFilter;
 use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
-use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 

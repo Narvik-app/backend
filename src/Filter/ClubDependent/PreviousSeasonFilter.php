@@ -2,7 +2,6 @@
 
 namespace App\Filter\ClubDependent;
 
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Filter\Abstract\AbstractClubDependentFilter;
