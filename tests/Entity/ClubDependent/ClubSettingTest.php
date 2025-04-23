@@ -93,4 +93,30 @@ class ClubSettingTest extends AbstractTestCase {
     $responseArray = $response->toArray();
     $this->assertArrayNotHasKey("logo", $responseArray);
   }
+
+  public function testUpdateSeasonEnd(): void {
+    $club = _InitStory::club_1();
+    $clubUrl = $this->getRootUrl($club);
+
+    $this->loggedAsAdminClub1();
+
+    $this->makeGetRequest($clubUrl);
+    $this->assertJsonContains([
+      "seasonEnd" => "31-12",
+    ]);
+
+    // We update it to an invalid format
+    $this->makePatchRequest($clubUrl, ['seasonEnd' => '31/12']);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+    $this->assertJsonContains([
+      "detail" => "seasonEnd: This value is not valid.",
+    ]);
+
+    // We don't set the 0, should still set it correctly
+    $this->makePatchRequest($clubUrl, ['seasonEnd' => '1-2']);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      "seasonEnd" => "01-02",
+    ]);
+  }
 }

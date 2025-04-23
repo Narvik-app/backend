@@ -243,11 +243,14 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   public function setSeasonEnd(string $seasonEnd): ClubSetting {
     // We force to always be in the mm-dd format
     $exploded = explode('-', $seasonEnd, 2);
-    if (strlen($exploded[0]) < 2) {
-      $exploded[0] = '0' . $exploded[0];
-    }
-    if (strlen($exploded[1]) < 2) {
-      $exploded[1] = '0' . $exploded[1];
+    if (count($exploded) === 2) {
+      if (strlen($exploded[0]) < 2) {
+        $exploded[0] = '0' . $exploded[0];
+      }
+
+      if (strlen($exploded[1]) < 2) {
+        $exploded[1] = '0' . $exploded[1];
+      }
     }
 
     $seasonEnd = implode('-', $exploded);

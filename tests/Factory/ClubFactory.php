@@ -70,7 +70,9 @@ final class ClubFactory extends PersistentProxyObjectFactory {
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
   protected function initialize(): static {
-    return $this// ->afterInstantiate(function(Club $club): void {})
+    return $this->afterInstantiate(function(Club $club): void {
+      $club->getSettings()?->setSeasonEnd("31-12"); // For the tests, we force the end of the year
+    })
       ;
   }
 }
