@@ -102,11 +102,18 @@ class ClubSettingTest extends AbstractTestCase {
 
     $this->makeGetRequest($clubUrl);
     $this->assertJsonContains([
-      "seasonEnd" => "31-12",
+      "seasonEnd" => "12-31",
     ]);
 
     // We update it to an invalid format
-    $this->makePatchRequest($clubUrl, ['seasonEnd' => '31/12']);
+    $this->makePatchRequest($clubUrl, ['seasonEnd' => '12/31']);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+    $this->assertJsonContains([
+      "detail" => "seasonEnd: This value is not valid.",
+    ]);
+
+    // No month 14
+    $this->makePatchRequest($clubUrl, ['seasonEnd' => '14-12']);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
     $this->assertJsonContains([
       "detail" => "seasonEnd: This value is not valid.",

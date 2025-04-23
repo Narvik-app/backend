@@ -71,7 +71,7 @@ final class ClubFactory extends PersistentProxyObjectFactory {
    */
   protected function initialize(): static {
     return $this->afterInstantiate(function(Club $club): void {
-      $club->getSettings()?->setSeasonEnd("31-12"); // For the tests, we force the end of the year
+      $club->getSettings()?->setSeasonEnd("12-31"); // For the tests, we force the end of the year
     })
       ;
   }

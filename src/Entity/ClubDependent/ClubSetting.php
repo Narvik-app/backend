@@ -82,7 +82,7 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   #[ORM\Column(type: 'string', length: 5, options: ["default" => '08-31'])]
   #[Groups(['club-setting'])]
-  #[Assert\Regex(pattern: '/^[0-1][0-9]-[0-3][0-9]$/m')]
+  #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
   private string $seasonEnd = "08-31";
 
   #[ORM\OneToOne(targetEntity: Activity::class)]
