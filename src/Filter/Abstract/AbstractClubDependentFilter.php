@@ -43,23 +43,30 @@ abstract class AbstractClubDependentFilter extends AbstractFilter {
   }
 
   /**
-   * Only work for query (setParameter don't work if set on a subQuery like in currentSeasonFilter)
    *
    * @param QueryBuilder $queryBuilder
    * @param QueryNameGeneratorInterface $queryNameGenerator
-   * @return void
+   * @param QueryBuilder|null $rootQuery In the case of a subquery, we must specify the root qb so we can set the parameter correctly (if the parameter is set on the subquery doctrine throw an exception)
+   * @return string|null Return the current club uuid
    */
-  public function addSelfClubJoin(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator): void {
-    $clubUuid = $this->getClubUuid($queryBuilder);
+  public function addSelfClubJoin(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, ?QueryBuilder $rootQuery = null): ?string {
+    $clubUuid = $this->getClubUuid($rootQuery ?? $queryBuilder);
 
     if ($clubUuid) {
       $joinAlias = $queryNameGenerator->generateJoinAlias("ja_club");
       $queryBuilder->leftJoin("m.club", $joinAlias);
 
       $queryBuilder
-        ->andWhere($queryBuilder->expr()->eq("$joinAlias.uuid", ":c"));
-      $queryBuilder->setParameter("c", $clubUuid);
+        ->andWhere($queryBuilder->expr()->eq("$joinAlias.uuid", ":self_club_uuid"));
+
+      if ($rootQuery) {
+        $rootQuery->setParameter("self_club_uuid", $clubUuid);
+      } else {
+        $queryBuilder->setParameter("self_club_uuid", $clubUuid);
+      }
     }
+
+    return $clubUuid;
   }
 
 }

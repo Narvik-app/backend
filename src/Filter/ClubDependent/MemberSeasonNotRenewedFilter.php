@@ -74,14 +74,7 @@ final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
     $subQuery->andWhere($subQuery->expr()->eq($clauseField, ':currentSeason'));
     $queryBuilder->setParameter("currentSeason", $currentSeason);
 
-    $clubUuid = $this->getClubUuid($queryBuilder);
-    if ($clubUuid) {
-      $joinAlias = $queryNameGenerator->generateJoinAlias("ja_club");
-      $subQuery->leftJoin("m.club", $joinAlias);
-      $subQuery
-        ->andWhere($subQuery->expr()->eq("$joinAlias.uuid", ":c"));
-      $queryBuilder->setParameter("c", $clubUuid);
-    }
+    $this->addSelfClubJoin($subQuery, $queryNameGenerator, $queryBuilder);
 
     $queryBuilder->andWhere($queryBuilder->expr()->notIn("$rootAlias.id", $subQuery->getDQL()));
   }
