@@ -15,6 +15,7 @@ use App\Entity\Club;
 use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
+use App\Entity\Season;
 use App\Enum\ClubRole;
 use App\Repository\ClubDependent\ClubSettingRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -79,6 +80,11 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['club-setting-read'])]
   private ?File $logo = null;
 
+  #[ORM\Column(type: 'string', length: 5, options: ["default" => '08-31'])]
+  #[Groups(['club-setting'])]
+  #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
+  private string $seasonEnd = "08-31";
+
   #[ORM\OneToOne(targetEntity: Activity::class)]
   #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
   #[Groups(['club-setting'])]
@@ -121,6 +127,9 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\NotBlank]
   #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
   private int $cerbereImportRemaining = 0;
+
+  #[Groups(['common-read', 'club-setting-read'])]
+  private ?Season $currentSeason = null;
 
   public function __construct() {
     parent::__construct();
@@ -224,6 +233,38 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setLogo(?File $logo): ClubSetting {
     $this->logo = $logo;
+    return $this;
+  }
+
+  public function getSeasonEnd(): string {
+    return $this->seasonEnd;
+  }
+
+  public function setSeasonEnd(string $seasonEnd): ClubSetting {
+    // We force to always be in the mm-dd format
+    $exploded = explode('-', $seasonEnd, 2);
+    if (count($exploded) === 2) {
+      if (strlen($exploded[0]) < 2) {
+        $exploded[0] = '0' . $exploded[0];
+      }
+
+      if (strlen($exploded[1]) < 2) {
+        $exploded[1] = '0' . $exploded[1];
+      }
+    }
+
+    $seasonEnd = implode('-', $exploded);
+
+    $this->seasonEnd = $seasonEnd;
+    return $this;
+  }
+
+  public function getCurrentSeason(): ?Season {
+    return $this->currentSeason;
+  }
+
+  public function setCurrentSeason(?Season $currentSeason): ClubSetting {
+    $this->currentSeason = $currentSeason;
     return $this;
   }
 }

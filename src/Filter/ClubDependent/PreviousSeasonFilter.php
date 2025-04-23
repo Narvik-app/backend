@@ -1,18 +1,28 @@
 <?php
 
-namespace App\Filter;
+namespace App\Filter\ClubDependent;
 
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
-use App\DQL\CustomExpr;
-use App\Filter\Abstract\AbstractFilter;
+use App\Filter\Abstract\AbstractClubDependentFilter;
+use App\Repository\ClubRepository;
+use App\Repository\SeasonRepository;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
-final class MultipleFilter extends AbstractFilter {
-  public const PROPERTY_NAME = "multiple";
+final class PreviousSeasonFilter extends AbstractClubDependentFilter {
+  public const PROPERTY_NAME = "previousSeason";
+
+  public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
+    parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);
+  }
+
 
   protected function filterProperty(string $property, $values, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void {
+
     if ($property !== static::PROPERTY_NAME) return;
     if (!is_array($values)) return;
     if ($this->properties === null) {
@@ -20,8 +30,15 @@ final class MultipleFilter extends AbstractFilter {
     }
 
     $acceptedFilterProps = $this->getAcceptedFilterProps();
-    $iParam=0;
+
+    $previousSeason = $this->seasonRepository->findPreviousSeason($this->getSelfClub($queryBuilder));
+    if (!$previousSeason) {
+      return;
+    }
+
     foreach ($values as $fields => $value) {
+      if (!$this->toBoolean($value)) return;
+
       $passedFilterProps = array_map("trim", explode(",", $fields));
       if ($this->properties !== null) {
         // restrict http-passed properties to accepted filter properties only
@@ -29,17 +46,11 @@ final class MultipleFilter extends AbstractFilter {
       }
       // if no filter property matches supported resource properties
       // do not take into account the current multiple filter
-      if (empty($passedFilterProps)) continue;
+      if (empty($passedFilterProps) || count($passedFilterProps) !== 1) return;
 
-      $orClauses = [];
       $rootAlias = $queryBuilder->getRootAliases()[0];
-      foreach ($passedFilterProps as $field) {
-        $newClause = $this->buildFilterClause($queryBuilder, $field, $iParam, $rootAlias, $queryNameGenerator);
-        if ($newClause) $orClauses[] = $newClause;
-      }
-      if (!empty($orClauses)) {
-        $this->applyFilter($queryBuilder, $orClauses, $value, $iParam);
-      }
+      $queryBuilder->andWhere($this->buildFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator));
+      $queryBuilder->setParameter(":previousSeason", $previousSeason);
     }
   }
 
@@ -51,13 +62,9 @@ final class MultipleFilter extends AbstractFilter {
     return array_unique($acceptedFilterProps);
   }
 
-  public function applyFilter(QueryBuilder $queryBuilder, array $orClauses, $value, int $iParam): void {
-    $queryBuilder->andWhere($queryBuilder->expr()->orX()->addMultiple($orClauses))->setParameter("value".$iParam++, "%$value%");
-  }
-
-  private function buildFilterClause(QueryBuilder $queryBuilder, string $field, int $iParam, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator) {
+  private function buildFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator) {
     $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
-    return $queryBuilder->expr()->like(CustomExpr::unaccentInsensitive($clauseField), CustomExpr::unaccentInsensitive(":value$iParam"));
+    return $queryBuilder->expr()->eq($clauseField, ':previousSeason');
   }
 
   public function getDescription(string $resourceClass): array {
@@ -69,9 +76,9 @@ final class MultipleFilter extends AbstractFilter {
     foreach ($this->properties as $property => $value) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
-        'type' => Type::BUILTIN_TYPE_STRING,
+        'type' => Type::BUILTIN_TYPE_BOOL,
         'required' => false,
-        'description' => 'Filtering with a ' . self::PROPERTY_NAME . ' condition for property ' . $property . '. Multiple field can be passed, it will be an OR condition between each one',
+        'description' => 'Force the query to be only for previous season.',
       ];
     }
     return $description;

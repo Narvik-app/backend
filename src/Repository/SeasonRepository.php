@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Club;
 use App\Entity\Season;
 use App\Service\SeasonService;
 use App\Service\UtilsService;
@@ -37,36 +38,39 @@ class SeasonRepository extends ServiceEntityRepository {
     }
   }
 
-  public function findCurrentSeason(): ?Season  {
-    return $this->findOneByName(SeasonService::getCurrentSeasonName());
+  public function findOrCreateOneByName(string $seasonName, bool $autoFlush = true): ?Season {
+    $seasonName = trim(str_replace(" ", "", $seasonName));
+    // Season name must be in format 20xx/20xx
+    if (strlen($seasonName) !== 9) {
+      return null;
+    }
+
+    $seasons = explode("/", $seasonName, 2);
+    if (!is_numeric($seasons[0]) || !is_numeric($seasons[1])) {
+      return null;
+    }
+
+    $foundSeasons = $this->findOneByName($seasonName);
+    if ($foundSeasons) {
+      return $foundSeasons;
+    }
+
+    $season = new Season();
+    $season->setName("$seasons[0]/$seasons[1]");
+    $this->getEntityManager()->persist($season);
+
+    if ($autoFlush) {
+      $this->getEntityManager()->flush();
+    }
+
+    return $season;
   }
 
-  public function findPreviousSeason(): ?Season  {
-    return $this->findOneByName(SeasonService::getPreviousSeasonName());
+  public function findCurrentSeason(?Club $club = null): ?Season  {
+    return $this->findOrCreateOneByName(SeasonService::getCurrentSeasonName($club));
   }
 
-//    /**
-//     * @return Season[] Returns an array of Season objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('s.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Season
-//    {
-//        return $this->createQueryBuilder('s')
-//            ->andWhere('s.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+  public function findPreviousSeason(?Club $club = null): ?Season  {
+    return $this->findOrCreateOneByName(SeasonService::getPreviousSeasonName($club));
+  }
 }

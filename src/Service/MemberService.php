@@ -27,7 +27,7 @@ class MemberService {
   }
 
   public function setCurrentSeason(Member $member): void {
-    $currentSeason = $this->seasonRepository->findCurrentSeason();
+    $currentSeason = $this->seasonRepository->findCurrentSeason($member->getClub());
     if (!$currentSeason) return;
 
     foreach ($member->getMemberSeasons() as $season) {

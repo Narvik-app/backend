@@ -4,6 +4,7 @@ namespace App\Tests\Story;
 
 use App\Entity\Club;
 use App\Entity\Season;
+use App\Service\SeasonService;
 use App\Tests\Factory\SeasonFactory;
 use Zenstruck\Foundry\Story;
 
@@ -13,7 +14,8 @@ use Zenstruck\Foundry\Story;
  * @method static Season season_2021()
  * @method static Season season_2022()
  * @method static Season season_2023()
- * @method static Season season_2024()
+ * @method static Season season_previous()
+ * @method static Season season_current()
  */
 final class SeasonStory extends Story {
   public const SEASONS = [
@@ -24,9 +26,6 @@ final class SeasonStory extends Story {
     "2019/2020",
     "2020/2021",
     "2021/2022",
-    "2022/2023",
-    "2023/2024",
-    "2024/2025",
   ];
 
   public function build(): void {
@@ -35,5 +34,14 @@ final class SeasonStory extends Story {
         'name' => $season
       ]), 'seasons');
     }
+
+    // We dynamically set current and previous season (current season will have a end date of 31 december)
+    $this->addState('season_previous', SeasonFactory::createOne([
+      'name' => SeasonService::getPreviousSeasonName()
+    ]), 'seasons');
+
+    $this->addState('season_current', SeasonFactory::createOne([
+      'name' => SeasonService::getCurrentSeasonName()
+    ]), 'seasons');
   }
 }

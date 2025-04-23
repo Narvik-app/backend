@@ -35,7 +35,6 @@ class ItacSecondaryClubMembersMessageHandler implements ResetInterface {
     private readonly MemberSeasonRepository $memberSeasonRepository,
     private readonly ValidatorInterface $validator,
     private readonly MemberPresenceService $memberPresenceService,
-    private readonly SeasonService $seasonService,
   ) {
   }
 
@@ -131,7 +130,7 @@ class ItacSecondaryClubMembersMessageHandler implements ResetInterface {
         $season = $this->seasons[$seasonCsv];
       } else {
         // We create it
-        $season = $this->seasonService->getOrCreateSeason($seasonCsv, false);
+        $season = $this->seasonRepository->findOrCreateOneByName($seasonCsv, false);
         if (!$season) {
           return;
         }

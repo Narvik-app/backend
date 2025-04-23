@@ -77,7 +77,7 @@ final class MemberSeasonFactory extends PersistentProxyObjectFactory {
     return $this// ->afterInstantiate(function(MemberSeason $memberSeason): void {})
     ->afterInstantiate(function(MemberSeason $memberSeason): void {
       if (!$memberSeason->getSeason()) {
-        $season = SeasonStory::season_2024();
+        $season = SeasonStory::season_current();
         $memberSeason->setSeason($season->_real());
       }
     });
