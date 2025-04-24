@@ -128,8 +128,12 @@ class ClubService {
    * @return void
    */
   public function activateTrial(Club $club): void {
+    $trialEnd = new \DateTimeImmutable()->modify("+14 days");
+
     $club->setIsActivated(true);
-    $club->setRenewDate(new \DateTimeImmutable()->modify("+14 days"));
+    $club
+      ->setRenewDate($trialEnd)
+      ->setComment("Trial version end: " . $trialEnd->format("Y-m-d H:i:s"));
 
     // We enable all the modules
     $club

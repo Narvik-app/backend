@@ -118,7 +118,7 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactEmail = null;
 
-  #[ORM\OneToOne(mappedBy: 'club', targetEntity: ClubSetting::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+  #[ORM\OneToOne(targetEntity: ClubSetting::class, mappedBy: 'club', cascade: ['persist', 'remove'], orphanRemoval: true)]
   #[Groups(['club-read'])]
   private ?ClubSetting $settings = null;
 

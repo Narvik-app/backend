@@ -17,7 +17,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class UserInitiateRegister extends AbstractController {
 
   public function __invoke(Request $request, UserRepository $userRepository, UserService $userService, EntityManagerInterface $em, TurnstileService $turnstileService): JsonResponse {
-    $payloadRequiredFields = ['email'];
+    $payloadRequiredFields = ['email', 'accountType'];
+
     if ($turnstileService->isEnabled()) {
       $payloadRequiredFields[] = 'token';
     }
@@ -36,7 +37,7 @@ class UserInitiateRegister extends AbstractController {
 
     $user = $userRepository->findOneByEmail($email);
     if ($user) {
-      if ($user->isAccountActivated()) {
+      if ($payload['accountType'] !== 'club' && $user->isAccountActivated()) {
         throw new HttpException(Response::HTTP_BAD_REQUEST, 'User already registered.');
       }
     } else {
@@ -48,7 +49,8 @@ class UserInitiateRegister extends AbstractController {
       $em->flush();
     }
 
-    $initialised = $userService->initiateAccountValidation($user);
+    // We force the account validation for club creation (in that case user can already have an account)
+    $initialised = $userService->initiateAccountValidation($user, $payload['accountType'] === 'club');
     if (!$initialised) {
       throw new HttpException(Response::HTTP_BAD_REQUEST);
     }

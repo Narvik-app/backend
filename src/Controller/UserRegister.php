@@ -27,18 +27,23 @@ class UserRegister extends AbstractController {
 
 
   public function __invoke(Request $request): JsonResponse {
-    $payload = $this->checkAndGetJsonValues($request, ['accountType', 'email', 'securityCode', 'firstname', 'lastname', 'password']);
+    $payload = $this->checkAndGetJsonValues($request, ['accountType', 'email', 'securityCode']);
     $accountType = $payload['accountType'] === 'club' ? 'club' : 'personal'; // We force the account type to be either club or personal
+
+    // Not a club registration, we always require the fullname and password
+    if ($accountType !== 'club') {
+      $this->checkAndGetJsonValues($request, ['firstname', 'lastname', 'password']);
+    }
 
     $email = $payload['email'];
     $securityCode = $payload['securityCode'];
-    $firstname = $payload['firstname'];
-    $lastname = $payload['lastname'];
-    $password = $payload['password'];
+    $firstname = $payload['firstname'] ?? null;
+    $lastname = $payload['lastname'] ?? null;
+    $password = $payload['password'] ?? null;
 
     $user = $this->userRepository->findOneByEmail($email);
     if (!$user) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST);
+      throw new HttpException(Response::HTTP_BAD_REQUEST, "User not found.");
     }
 
     $validated = $this->userService->validateSecurityCode($user, UserSecurityCodeTrigger::accountValidation, $securityCode);
@@ -50,6 +55,9 @@ class UserRegister extends AbstractController {
     // We activate the account and check all fields match.
     // The account can be already activated in the case of a club creation (if the user email was already used by another club)
     if (!$user->isAccountActivated()) {
+      // We ensure that they are well-defined since the account is not activated
+      $this->checkAndGetJsonValues($request, ['firstname', 'lastname', 'password']);
+
       $this->userService->activateAccount($user, $firstname, $lastname, $password);
     }
 
@@ -81,7 +89,6 @@ class UserRegister extends AbstractController {
 
     $club = new Club();
     $club
-      ->setComment("Created from registration page")
       ->setName($name)
       ->setContactEmail($email)
       ->setContactPhone($phone)

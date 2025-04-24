@@ -317,6 +317,7 @@ class UserTest extends AbstractEntityTestCase {
     $this->makePostRequest($this->getRootUrl() . "/-/register", [
       "email" => "invalidemail",
       "securityCode" => "nop",
+      "accountType" => "personal",
       "password" => "P@ssword1234",
       "firstname" => "John",
       "lastname" => "Doe",
@@ -326,6 +327,7 @@ class UserTest extends AbstractEntityTestCase {
     $this->makePostRequest($this->getRootUrl() . "/-/register", [
       "email" => $user->getEmail(),
       "securityCode" => "wrong code",
+      "accountType" => "personal",
       "password" => "P@ssword1234",
       "firstname" => "John",
       "lastname" => "Doe",
@@ -344,6 +346,7 @@ class UserTest extends AbstractEntityTestCase {
 
     // Password too short
     $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "accountType" => "personal",
       "email" => $user->getEmail(),
       "securityCode" => $userSecurityCode->getCode(),
       "password" => "short",
@@ -357,6 +360,7 @@ class UserTest extends AbstractEntityTestCase {
 
 
     $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "accountType" => "personal",
       "email" => $user->getEmail(),
       "securityCode" => $userSecurityCode->getCode(),
       "password" => "P@ssword1234",
@@ -364,6 +368,58 @@ class UserTest extends AbstractEntityTestCase {
       "lastname" => "Doe",
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+  }
+
+  public function testClubAccountRegister(): void {
+    GlobalSettingStory::load(); // We load the default settings so we can send email
+    $user = UserFactory::createOne(["accountActivated" => false]);
+
+    // We create our security code
+    $userSecurityCode = UserSecurityCodeFactory::createOne([
+      "user" => $user,
+      "trigger" => UserSecurityCodeTrigger::accountValidation
+    ]);
+
+    $payload = [
+      "accountType" => "club",
+      "email" => $user->getEmail(),
+      "securityCode" => $userSecurityCode->getCode(),
+      "firstname" => "John",
+      "lastname" => "Doe",
+      "password" => "P@ssword1234",
+    ];
+
+    // Missing required club setting
+    $this->makePostRequest($this->getRootUrl() . "/-/register", $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Missing required field: 'clubName'",
+    ]);
+
+    // Club name already present
+    $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "clubName" => _InitStory::club_1()->getName(),
+      "clubEmail" => "contact@testclub.fr",
+      "clubAddress" => "test address",
+      "clubZipCode" => 14000,
+      "clubCity" => "CAEN",
+    ] + $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Club with same name already exists.",
+    ]);
+
+    // Success creating with a new account
+    $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "clubName" => "test success new account",
+      "clubEmail" => "contact@testclub.fr",
+      "clubAddress" => "test address",
+      "clubZipCode" => 14000,
+      "clubCity" => "CAEN",
+    ] + $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    // Success creating with an existing account
   }
 
   public function testSelfLegalsAccepted(): void {
