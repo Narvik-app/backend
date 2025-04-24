@@ -11,10 +11,10 @@
     .security-code > span {
         font-size: 20px;
         font-weight: bold;
-        margin: 0 6px;
+        margin-left: 6px;
         padding: 10px;
         border: 1px solid #eaeaeb;
-        border-radius: 24px;
+        border-radius: 6px;
     }
     </style
 {% endblock %}
@@ -30,7 +30,7 @@
     {% if frontend_path is not empty %}
         <br />
         <p>
-            Url de la demande: <a href="{{ frontend_url }}{{ frontend_path }}">{{ frontend_url }}{{ frontend_path }}</a>
+            Url de la demande: <a class="break-all" href="{{ frontend_url }}{{ frontend_path }}">{{ frontend_url }}{{ frontend_path }}</a>
         </p>
     {% endif %}
 {% endblock %}
