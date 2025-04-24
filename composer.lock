@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "268d4a725916de0703dece74b60c44cf",
+    "content-hash": "40e629736db2ddd4d1cfd558e3cee1a2",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -1322,6 +1322,136 @@
                 }
             ],
             "time": "2024-11-12T16:29:46+00:00"
+        },
+        {
+            "name": "ddeboer/vatin",
+            "version": "3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ddeboer/vatin.git",
+                "reference": "778c9e7d7619ee9ed5f30609b9b2a39b613933db"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ddeboer/vatin/zipball/778c9e7d7619ee9ed5f30609b9b2a39b613933db",
+                "reference": "778c9e7d7619ee9ed5f30609b9b2a39b613933db",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "ext-soap": "*",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-symfony": "^2.0",
+                "phpunit/phpunit": "^10.5"
+            },
+            "suggest": {
+                "ext-soap": "Required if you want to check the VAT number via VIES"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Ddeboer\\Vatin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David de Boer",
+                    "email": "david@ddeboer.nl",
+                    "homepage": "https://github.com/ddeboer"
+                },
+                {
+                    "name": "Community contributions",
+                    "homepage": "https://github.com/ddeboer/vatin/contributors"
+                }
+            ],
+            "description": "Validate VAT identification numbers",
+            "keywords": [
+                "btw",
+                "tax",
+                "vat",
+                "vies"
+            ],
+            "support": {
+                "issues": "https://github.com/ddeboer/vatin/issues",
+                "source": "https://github.com/ddeboer/vatin/tree/3.1.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ddeboer",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-02-27T22:06:37+00:00"
+        },
+        {
+            "name": "ddeboer/vatin-bundle",
+            "version": "4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ddeboer/vatin-bundle.git",
+                "reference": "2221668b41191160efbf21dfcfdb8f25937feaab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ddeboer/vatin-bundle/zipball/2221668b41191160efbf21dfcfdb8f25937feaab",
+                "reference": "2221668b41191160efbf21dfcfdb8f25937feaab",
+                "shasum": ""
+            },
+            "require": {
+                "ddeboer/vatin": "^3.0",
+                "php": ">=8.1",
+                "symfony/config": "^6.4 || ^7.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0",
+                "symfony/http-kernel": "^6.4 || ^7.0",
+                "symfony/validator": "^6.4 || ^7.0"
+            },
+            "require-dev": {
+                "ext-soap": "*",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-symfony": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "rector/rector": "^2.0",
+                "roave/security-advisories": "dev-latest",
+                "symfony/framework-bundle": "^6.4 || ^7.0",
+                "symfony/yaml": "^6.4 || ^7.0"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Ddeboer\\VatinBundle\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David de Boer",
+                    "email": "david@ddeboer.nl"
+                }
+            ],
+            "description": "Symfony bundle for the VATIN library",
+            "keywords": [
+                "btw",
+                "tax",
+                "vat"
+            ],
+            "support": {
+                "issues": "https://github.com/ddeboer/vatin-bundle/issues",
+                "source": "https://github.com/ddeboer/vatin-bundle/tree/4.0.0"
+            },
+            "time": "2025-02-27T22:08:21+00:00"
         },
         {
             "name": "defuse/php-encryption",
