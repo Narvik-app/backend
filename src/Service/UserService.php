@@ -27,7 +27,7 @@ class UserService {
   ) {
   }
 
-  public function initiateAccountValidation(User $user, bool $force = false): bool {
+  public function initiateAccountValidation(User $user, string $accountType = 'personal', bool $force = false): bool {
     if (!$force) {
       if ($user->isAccountActivated() || !$this->emailService->canSendEmail()) {
         return false;
@@ -46,8 +46,14 @@ class UserService {
     $this->em->persist($securityCode);
     $this->em->flush();
 
+    $frontendPath = "/login/register?security_code={$securityCode->getCode()}&account_type={$accountType}";
+    $frontendPath .= '&email=' . urlencode($user->getEmail());
+
     // We send the security code
-    $email = $this->emailService->getEmail('security-code.html.twig', 'Validation du compte', ['security_code' => $securityCode->getCode()]);
+    $email = $this->emailService->getEmail('security-code.html.twig', 'Validation du compte', [
+      'security_code' => $securityCode->getCode(),
+      'frontend_path' => $frontendPath,
+    ]);
     $this->emailService->sendEmail($email, $user->getEmail());
 
     return true;

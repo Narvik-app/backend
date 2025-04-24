@@ -20,7 +20,17 @@
 {% endblock %}
 
 {% block content %}
-    <div>Votre code de sécurité est :</div>
+    <p>Une action nécessitant un code de sécurité a été effectuée sur <a href="{{ frontend_url }}">Narvik</a></p>
+    <br />
+
+    <p>Votre code de sécurité est :</p>
     <div class="security-code">{% for code in security_code|split('') %}<span>{{ code }}</span>{% endfor %}</div>
-    <div>Le code est valable 10 minutes.</div>
+    <p>Le code est valable 10 minutes.</p>
+
+    {% if frontend_path is not empty %}
+        <br />
+        <p>
+            Url de la demande: <a href="{{ frontend_url }}{{ frontend_path }}">{{ frontend_url }}{{ frontend_path }}</a>
+        </p>
+    {% endif %}
 {% endblock %}

@@ -48,7 +48,7 @@ class UserRegister extends AbstractController {
 
     $validated = $this->userService->validateSecurityCode($user, UserSecurityCodeTrigger::accountValidation, $securityCode);
     if (!$validated) {
-      $this->userService->initiateAccountValidation($user, true); // We trigger a new password query
+      $this->userService->initiateAccountValidation($user, $accountType, true); // We trigger a new password query
       throw new HttpException(Response::HTTP_BAD_REQUEST, "A new security code has been sent.");
     }
 

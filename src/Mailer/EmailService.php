@@ -6,6 +6,7 @@ use App\Enum\GlobalSetting;
 use App\Service\GlobalSettingService;
 use App\Service\ImageService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
@@ -20,6 +21,7 @@ class EmailService {
     private readonly MessageBusInterface $bus,
     private readonly ImageService $imageService,
     private readonly Environment $twig,
+    private readonly ParameterBagInterface $params,
   ) {
   }
 
@@ -45,7 +47,7 @@ class EmailService {
     $email = new TemplatedEmail();
 
     $context['subject'] = $subject;
-    $context['home_url'] = '';
+    $context['frontend_url'] = $this->params->get('app.frontend_url');
 
     $logo = $this->imageService->getLogoFile();
     $context['logo'] = '';

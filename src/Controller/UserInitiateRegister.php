@@ -24,6 +24,8 @@ class UserInitiateRegister extends AbstractController {
     }
 
     $payload = $this->checkAndGetJsonValues($request, $payloadRequiredFields);
+
+    $accountType = $payload['accountType'] === 'club' ? 'club' : 'personal'; // We force the account type to be either club or personal
     $email = $payload['email'];
 
     // We must check the token is valid
@@ -37,7 +39,7 @@ class UserInitiateRegister extends AbstractController {
 
     $user = $userRepository->findOneByEmail($email);
     if ($user) {
-      if ($payload['accountType'] !== 'club' && $user->isAccountActivated()) {
+      if ($accountType !== 'club' && $user->isAccountActivated()) {
         throw new HttpException(Response::HTTP_BAD_REQUEST, 'User already registered.');
       }
     } else {
@@ -50,7 +52,7 @@ class UserInitiateRegister extends AbstractController {
     }
 
     // We force the account validation for club creation (in that case user can already have an account)
-    $initialised = $userService->initiateAccountValidation($user, $payload['accountType'] === 'club');
+    $initialised = $userService->initiateAccountValidation($user, $accountType, $accountType === 'club');
     if (!$initialised) {
       throw new HttpException(Response::HTTP_BAD_REQUEST);
     }
