@@ -62,6 +62,7 @@ class UserService {
 
     $user
       ->setAccountActivated(true)
+      ->setLegalsAccepted(new \DateTimeImmutable())
       ->setFirstname($firstname)
       ->setlastname($lastname);
 
