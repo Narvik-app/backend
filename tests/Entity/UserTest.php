@@ -281,6 +281,7 @@ class UserTest extends AbstractEntityTestCase {
 
     $this->makePostRequest($this->getRootUrl() . "/-/initiate-register", [
       "email" => "admin@admin.com",
+      "accountType" => "personal",
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
     $this->assertJsonContains([
@@ -288,6 +289,7 @@ class UserTest extends AbstractEntityTestCase {
     ]);
     $this->makePostRequest($this->getRootUrl() . "/-/initiate-register", [
       "email" => "admin@admin.com",
+      "accountType" => "personal",
       "token" => ""
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
@@ -296,6 +298,7 @@ class UserTest extends AbstractEntityTestCase {
     ]);
     $this->makePostRequest($this->getRootUrl() . "/-/initiate-register", [
       "email" => "admin@admin.com",
+      "accountType" => "personal",
       "token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from clouflare
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
@@ -305,6 +308,7 @@ class UserTest extends AbstractEntityTestCase {
 
     $this->makePostRequest($this->getRootUrl() . "/-/initiate-register", [
       "email" => "newaccount@example.com",
+      "accountType" => "personal",
       "token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from clouflare
     ]);
     $this->assertResponseIsSuccessful();
@@ -420,6 +424,22 @@ class UserTest extends AbstractEntityTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
 
     // Success creating with an existing account
+    $userSecurityCode = UserSecurityCodeFactory::createOne([
+      "user" => $user,
+      "trigger" => UserSecurityCodeTrigger::accountValidation
+    ]);
+    $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "accountType" => "club",
+      "email" => $user->getEmail(),
+      "securityCode" => $userSecurityCode->getCode(),
+
+      "clubName" => "test42",
+      "clubEmail" => "contact@testclub2.fr",
+      "clubAddress" => "test address",
+      "clubZipCode" => 14000,
+      "clubCity" => "CAEN",
+    ] );
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
   }
 
   public function testSelfLegalsAccepted(): void {
