@@ -27,9 +27,11 @@ class UserService {
   ) {
   }
 
-  public function initiateAccountValidation(User $user): bool {
-    if ($user->isAccountActivated() || !$this->emailService->canSendEmail()) {
-      return false;
+  public function initiateAccountValidation(User $user, bool $force = false): bool {
+    if (!$force) {
+      if ($user->isAccountActivated() || !$this->emailService->canSendEmail()) {
+        return false;
+      }
     }
 
     // We verify that we don't have more than 4 in progress reset for this user

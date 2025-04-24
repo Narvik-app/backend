@@ -82,40 +82,40 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   private ?string $comment = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $address = null;
 
   #[ORM\Column(nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?int $zipCode = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $city = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $siret = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   #[Vatin]
   private ?string $vat = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $website = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactName = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactPhone = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactEmail = null;
 
   #[ORM\OneToOne(mappedBy: 'club', targetEntity: ClubSetting::class, cascade: ['persist', 'remove'], orphanRemoval: true)]

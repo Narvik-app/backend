@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Member;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
@@ -119,6 +120,45 @@ class ClubService {
 
     $this->entityManager->persist($clubSettings);
     $this->entityManager->flush();
+  }
+
+  /**
+   * Activate the free trial and send the email with all the legal documents
+   * @param Club $club
+   * @return void
+   */
+  public function activateTrial(Club $club): void {
+    $club->setIsActivated(true);
+    $club->setRenewDate(new \DateTimeImmutable()->modify("+14 days"));
+
+    // We enable all the modules
+    $club
+      ->setSalesEnabled(true);
+
+    $this->entityManager->persist($club);
+    $this->entityManager->flush();
+
+    // Email notification
+
+  }
+
+  public function linkUserToClub(Club $club, User $user, ClubRole $role = ClubRole::admin): void {
+    // We create the member
+    $member = new Member();
+    $member
+      ->setClub($club)
+      ->setEmail($user->getEmail())
+      ->setLastname($user->getLastname())
+      ->setFirstname($user->getFirstname());
+
+    $userMember = new UserMember();
+    $userMember
+      ->setUser($user)
+      ->setMember($member)
+      ->setRole($role);
+
+    $this->entityManager->persist($member);
+    $this->entityManager->persist($userMember);
   }
 
 }
