@@ -129,8 +129,14 @@ class UserService {
     $this->em->persist($securityCode);
     $this->em->flush();
 
+    $frontendPath = "/login/password-reset?security_code={$securityCode->getCode()}";
+    $frontendPath .= '&email=' . urlencode($user->getEmail());
+
     // We sent the security code
-    $email = $this->emailService->getEmail('security-code.html.twig', 'Changement de mot de passe', ['security_code' => $securityCode->getCode()]);
+    $email = $this->emailService->getEmail('security-code.html.twig', 'Changement de mot de passe', [
+      'security_code' => $securityCode->getCode(),
+      'frontend_path' => $frontendPath,
+    ]);
     $this->emailService->sendEmail($email, $user->getEmail());
 
     return true;

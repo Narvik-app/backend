@@ -27,7 +27,7 @@
     <div class="security-code">{% for code in security_code|split('') %}<span>{{ code }}</span>{% endfor %}</div>
     <p>Le code est valable 10 minutes.</p>
 
-    {% if frontend_path is not empty %}
+    {% if frontend_path ?? false %}
         <br />
         <p>
             Url de la demande: <a class="break-all" href="{{ frontend_url }}{{ frontend_path }}">{{ frontend_url }}{{ frontend_path }}</a>
