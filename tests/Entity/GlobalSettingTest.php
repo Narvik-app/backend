@@ -7,10 +7,11 @@ use App\Entity\GlobalSetting;
 use App\Enum\GlobalSetting as GlobalSettingEnum;
 use App\Tests\Entity\Abstract\AbstractEntityTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
+use App\Tests\FixtureFileManager;
 use App\Tests\Story\GlobalSettingStory;
 
 class GlobalSettingTest extends AbstractEntityTestCase {
-  protected int $TOTAL_SUPER_ADMIN = 8;
+  protected int $TOTAL_SUPER_ADMIN = 11;
 
   protected function getClassname(): string {
     return GlobalSetting::class;
@@ -108,6 +109,33 @@ class GlobalSettingTest extends AbstractEntityTestCase {
       requestFunction: function (string $level, ?int $id) {
         $iri = $this->getRootUrl() . "/-/legals";
         $this->makePostRequest($iri, ['date' => '2025-03-25']);
+      },
+    );
+  }
+
+  public function testUpdatingLegalsFiles(): void {
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::PDF);
+    $fileFail = FixtureFileManager::getUploadedFile(FixtureFileManager::EDEN_MEMBERS);
+
+    $this->makeAllLoggedRequests(
+      memberClub1Code: ResponseCodeEnum::forbidden,
+      supervisorClub1Code: ResponseCodeEnum::forbidden,
+      adminClub1Code: ResponseCodeEnum::forbidden,
+      adminClub2Code: ResponseCodeEnum::forbidden,
+      superAdminCode: ResponseCodeEnum::ok,
+      badgerClub1Code: ResponseCodeEnum::forbidden,
+      badgerClub2Code: ResponseCodeEnum::forbidden,
+      requestFunction: function (string $level, ?int $id) use ($file, $fileFail) {
+        $iri = $this->getRootUrl() . "/-/legals-file";
+        $this->makePostRequest($iri, [
+          '_not_json' => true,
+          'headers' => ['Content-Type' => 'multipart/form-data'],
+          'extra' => [
+            'files' => [
+              'file' => $file,
+            ],
+          ],
+        ]);
       },
     );
   }

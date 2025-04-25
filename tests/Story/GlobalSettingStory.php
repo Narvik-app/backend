@@ -14,6 +14,21 @@ final class GlobalSettingStory extends Story {
       'name'  => GlobalSetting::LEGALS_LAST_UPDATE->name,
       'value' => null,
     ]));
+    $this->addToPool('required_settings', GlobalSettingFactory::createOne([
+      'name'  => GlobalSetting::LEGALS_CGU->name,
+      'value' => null,
+    ]));
+
+    $this->addToPool('required_settings', GlobalSettingFactory::createOne([
+      'name'  => GlobalSetting::LEGALS_CGV->name,
+      'value' => null,
+    ]));
+
+    $this->addToPool('required_settings', GlobalSettingFactory::createOne([
+      'name'  => GlobalSetting::LEGALS_PRIVACY_POLICY->name,
+      'value' => null,
+    ]));
+
 
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
       'name'  => GlobalSetting::SMTP_ON->name,

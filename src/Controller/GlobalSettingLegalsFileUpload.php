@@ -54,7 +54,6 @@ class GlobalSettingLegalsFileUpload extends AbstractPdfUploadController {
       $this->updateFile($file, GlobalSetting::LEGALS_PRIVACY_POLICY);
     }
 
-
     return $file;
   }
 
