@@ -3,6 +3,8 @@
 namespace App\Enum;
 
 enum GlobalSetting {
+  // Legals last update
+  case LEGALS_LAST_UPDATE;
 
   // Email configuration
   case SMTP_ON;

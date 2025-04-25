@@ -26,25 +26,10 @@ class InstallDefaultSettings extends Command {
 
     $this->io->section("Définition des settings globaux par défaut");
 
-//    if (!$this->globalSettingService->settingExist(GlobalSetting::CONTROL_SHOOTING_ACTIVITY_ID)) {
-//      $this->io->writeln("Activité correspondante au tir contrôlé");
-//      $this->globalSettingService->updateSettingValue(GlobalSetting::CONTROL_SHOOTING_ACTIVITY_ID, null);
-//    }
-//
-//    if (!$this->globalSettingService->settingExist(GlobalSetting::IGNORED_ACTIVITIES_OPENING_STATS)) {
-//      $this->io->writeln("Activités exclus du compte des jours ouverts");
-//      $this->globalSettingService->updateSettingValue(GlobalSetting::IGNORED_ACTIVITIES_OPENING_STATS, null);
-//    }
-//
-//    if (!$this->globalSettingService->settingExist(GlobalSetting::LAST_ITAC_IMPORT)) {
-//      $this->io->writeln("Date du dernier import depuis itac");
-//      $this->globalSettingService->updateSettingValue(GlobalSetting::LAST_ITAC_IMPORT, null);
-//    }
-//
-//    if (!$this->globalSettingService->settingExist(GlobalSetting::LAST_SECONDARY_CLUB_ITAC_IMPORT)) {
-//      $this->io->writeln("Date du dernier import club secondaire depuis itac");
-//      $this->globalSettingService->updateSettingValue(GlobalSetting::LAST_SECONDARY_CLUB_ITAC_IMPORT, null);
-//    }
+    if (!$this->globalSettingService->settingExist(GlobalSetting::LEGALS_LAST_UPDATE)) {
+      $this->io->writeln("Dernière modification documents légaux");
+      $this->globalSettingService->updateSettingValue(GlobalSetting::LEGALS_LAST_UPDATE, null);
+    }
 
     /** @var GlobalSetting[] $smtpFields */
     $smtpFields = [

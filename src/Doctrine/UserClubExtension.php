@@ -79,6 +79,11 @@ final class UserClubExtension implements QueryCollectionExtensionInterface, Quer
   }
 
   private function addWhere(string $resourceClass): void {
+    // User is anonymous, not logged, we don't add any more restriction
+    if (!$this->security->getUser()) {
+      return;
+    }
+
     $user = $this->getUser();
 
     // Super admin no restriction

@@ -3,6 +3,8 @@
 namespace App\EventSubscriber\Doctrine;
 
 use App\Entity\User;
+use App\Enum\GlobalSetting;
+use App\Service\GlobalSettingService;
 use App\Service\MemberService;
 use App\Service\UserService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
@@ -18,7 +20,7 @@ class UserSubscriber extends AbstractEventSubscriber {
   public function __construct(
     private readonly UserService $userService,
     private readonly MemberService $memberService,
-    private readonly ParameterBagInterface $params,
+    private readonly GlobalSettingService $globalSettingService,
   ) {
   }
 
@@ -49,7 +51,7 @@ class UserSubscriber extends AbstractEventSubscriber {
       return;
     }
 
-    $legalExpirationDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->params->get('app.legals_last_update'));
+    $legalExpirationDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->globalSettingService->getSettingValue(GlobalSetting::LEGALS_LAST_UPDATE) ?? date("Y-m-d"));
     $legalExpirationDate = $legalExpirationDate->setTime(0, 0, 0);
 
     if ($user->getLegalsAccepted() <= $legalExpirationDate) {
