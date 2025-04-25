@@ -3,7 +3,10 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ExposedFile;
 use App\Entity\File as FileEntity;
+use App\Repository\FileRepository;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\File\File as SfFile;
 use App\Enum\FileCategory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,15 +17,22 @@ class FileService {
 
   public function __construct(
     private readonly Filesystem $fs,
+    private readonly FileRepository $fileRepository,
     private readonly ContainerBagInterface $params,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
 
 
-  private function createFolderIfNotExist(string $path): void {
+  public function createFolderIfNotExist(string $path): void {
     if (!$this->fs->exists($path)) {
       mkdir($path, recursive: true);
+    }
+  }
+
+  public function removeFolder(string $path): void {
+    if ($this->fs->exists($path)) {
+      $this->fs->remove($path);
     }
   }
 
@@ -74,6 +84,69 @@ class FileService {
     }
 
     return $fileEntity;
+  }
+
+  public function decodeEncodedUriId(string $encodedId): UuidInterface {
+    return UuidService::fromReadable($encodedId);
+  }
+
+  public function generateFileLinks(FileEntity $file): void {
+    $fileId = $file->getEncodedUuid();
+
+    if ($file->getIsPublic()) {
+      $file->setPublicUrl("/public/files/$fileId");
+      $file->setPublicInlineUrl("/public/files/inline/$fileId");
+    }
+
+    $file->setPrivateUrl("/files/$fileId");
+  }
+
+  public function loadFileFromProtectedPath(string $publicId, bool $isInline = false): ?ExposedFile {
+    $uuid = $this->decodeEncodedUriId($publicId);
+    $file = $this->fileRepository->findOneByUuid($uuid->toString());
+    if (!$file instanceof FileEntity) {
+      return null;
+    }
+
+    return $this->loadFileFromFile($file, $isInline);
+  }
+
+  public function loadFileFromPublicPath(string $publicId, bool $isInline = false): ?ExposedFile {
+    $uuid = $this->decodeEncodedUriId($publicId);
+    $file = $this->fileRepository->findOneByUuid($uuid->toString());
+    if (!$file instanceof FileEntity || !$file->getIsPublic()) {
+      return null;
+    }
+
+    return $this->loadFileFromFile($file, $isInline);
+  }
+
+  private function loadFileFromFile(FileEntity $file, bool $isInline = false): ?ExposedFile {
+    $imageFolder = $this->params->get('app.files');
+    $path = "$imageFolder/{$file->getPath()}";
+
+    if ($this->fs->exists($path)) {
+      $image = new ExposedFile();
+      $image->setId(UuidService::encodeToReadable($file->getUuid()))
+            ->setName($file->getFilename())
+            ->setPath($path);
+
+      if (!$isInline) {
+        $this->setDataUri($path, $image);
+      }
+
+      return $image;
+    }
+    return null;
+  }
+
+  private function setDataUri($imagePath, ExposedFile $image): void {
+    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+    $type = $finfo->file($imagePath);
+
+    $data = "data:$type;base64," . base64_encode(file_get_contents($imagePath));
+    $image->setMimeType($type)
+          ->setBase64($data);
   }
 
   private function getUniqueFilename(SfFile $file, string $path): string {

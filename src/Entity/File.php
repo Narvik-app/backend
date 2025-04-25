@@ -3,15 +3,15 @@
 namespace App\Entity;
 
 use App\Entity\Abstract\UuidEntity;
-use App\Entity\Interface\UuidEntityInterface;
-use App\Entity\Trait\UuidTrait;
 use App\Enum\FileCategory;
 use App\Repository\FileRepository;
+use App\Service\UuidService;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: FileRepository::class)]
-class File extends UuidEntity{
+class File extends UuidEntity {
+  private ?string $encodedUuid = null;
 
   #[Groups(['common-read'])]
   private ?string $publicUrl = null;
@@ -40,6 +40,13 @@ class File extends UuidEntity{
   #[ORM\ManyToOne(targetEntity: Club::class)]
   #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
   private ?Club $club = null;
+
+  public function getEncodedUuid(): ?string {
+    if (!$this->getUuid()) {
+      return null;
+    }
+    return UuidService::encodeToReadable($this->getUuid());
+  }
 
   public function getPublicUrl(): ?string {
     return $this->publicUrl;

@@ -45,7 +45,7 @@ security:
         - { path: ^/users/-/initiate-reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/reset-password, roles: PUBLIC_ACCESS }
 
-        - { path: ^/images, roles: [ROLE_USER, ROLE_BADGER]}
+        - { path: ^/files, roles: [ROLE_USER, ROLE_BADGER]}
 
         - {path: ^/self, roles: [ ROLE_USER, ROLE_BADGER ]}
 

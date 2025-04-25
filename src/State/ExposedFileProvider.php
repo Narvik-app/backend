@@ -5,13 +5,14 @@ namespace App\State;
 use ApiPlatform\Metadata\CollectionOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use App\Service\FileService;
 use App\Service\ImageService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-class ImageProvider implements ProviderInterface {
+class ExposedFileProvider implements ProviderInterface {
 
   public function __construct(
-    private readonly ImageService $imageService,
+    private readonly FileService $fileService,
   ) {
   }
 
@@ -28,9 +29,9 @@ class ImageProvider implements ProviderInterface {
     }
 
     if (str_contains($operation->getName(), 'public_image')) {
-      $response = $this->imageService->loadImageFromPublicPath($uriVariables['id'], $isInline);
+      $response = $this->fileService->loadFileFromPublicPath($uriVariables['id'], $isInline);
     } else {
-      $response = $this->imageService->loadImageFromProtectedPath($uriVariables['id'], $isInline);
+      $response = $this->fileService->loadFileFromProtectedPath($uriVariables['id'], $isInline);
     }
 
     if ($response && $isInline) {
