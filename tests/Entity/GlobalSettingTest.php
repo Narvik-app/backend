@@ -106,8 +106,8 @@ class GlobalSettingTest extends AbstractEntityTestCase {
       badgerClub1Code: ResponseCodeEnum::forbidden,
       badgerClub2Code: ResponseCodeEnum::forbidden,
       requestFunction: function (string $level, ?int $id) {
-        $iri = $this->getRootUrl() . "/" . GlobalSettingEnum::LEGALS_LAST_UPDATE->name;
-        $this->makePatchRequest($iri, ['2025-03-25']);
+        $iri = $this->getRootUrl() . "/-/legals";
+        $this->makePostRequest($iri, ['date' => '2025-03-25']);
       },
     );
   }
