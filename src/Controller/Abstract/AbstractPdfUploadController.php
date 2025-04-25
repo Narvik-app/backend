@@ -24,7 +24,7 @@ abstract class AbstractPdfUploadController extends AbstractController {
 
     $allowedExtensions = ['pdf'];
     if (!in_array($uploadedFile->getClientOriginalExtension(), $allowedExtensions)) {
-      throw new BadRequestHttpException('The "file" must be pdf.');
+      throw new BadRequestHttpException('The "file" must be a PDF.');
     }
 
     return $uploadedFile;

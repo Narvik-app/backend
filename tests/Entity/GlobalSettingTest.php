@@ -114,29 +114,92 @@ class GlobalSettingTest extends AbstractEntityTestCase {
   }
 
   public function testUpdatingLegalsFiles(): void {
-    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::PDF);
-    $fileFail = FixtureFileManager::getUploadedFile(FixtureFileManager::EDEN_MEMBERS);
-
     $this->makeAllLoggedRequests(
       memberClub1Code: ResponseCodeEnum::forbidden,
       supervisorClub1Code: ResponseCodeEnum::forbidden,
       adminClub1Code: ResponseCodeEnum::forbidden,
       adminClub2Code: ResponseCodeEnum::forbidden,
-      superAdminCode: ResponseCodeEnum::ok,
+      superAdminCode: ResponseCodeEnum::created,
       badgerClub1Code: ResponseCodeEnum::forbidden,
       badgerClub2Code: ResponseCodeEnum::forbidden,
-      requestFunction: function (string $level, ?int $id) use ($file, $fileFail) {
+      requestFunction: function (string $level, ?int $id) {
         $iri = $this->getRootUrl() . "/-/legals-file";
+
+        $file = FixtureFileManager::getUploadedFile(FixtureFileManager::PDF, true);
         $this->makePostRequest($iri, [
           '_not_json' => true,
           'headers' => ['Content-Type' => 'multipart/form-data'],
           'extra' => [
+            'parameters' => [
+              'type' => 'cgu',
+            ],
             'files' => [
               'file' => $file,
             ],
           ],
         ]);
+        FixtureFileManager::removeUploadedFile(FixtureFileManager::PDF);
       },
     );
+
+  }
+
+  public function testUpdatingLegalsFilesAsSuperAdmin(): void {
+    $this->loggedAsSuperAdmin();
+
+    $iri = $this->getRootUrl() . "/-/legals-file";
+
+    $fileFail = FixtureFileManager::getUploadedFile(FixtureFileManager::EDEN_MEMBERS);
+
+    // Missing file
+    $this->makePostRequest($iri, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => [
+          'type' => 'cgu',
+        ],
+      ],
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "The \"file\" field is required.",
+    ]);
+
+    // Wrong file type
+    $this->makePostRequest($iri, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => [
+          'type' => 'cgu',
+        ],
+        'files' => [
+          'file' => $fileFail,
+        ],
+      ],
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "The \"file\" must be a PDF.",
+    ]);
+
+    // Unknown type
+    $this->makePostRequest($iri, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => [
+          'type' => 'toto',
+        ],
+        'files' => [
+          'file' => $fileFail,
+        ],
+      ],
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Missing or wrong type field.",
+    ]);
   }
 }

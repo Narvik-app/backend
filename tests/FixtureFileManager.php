@@ -37,6 +37,8 @@ class FixtureFileManager {
 
   public static function removeUploadedFile(string $filename): void {
     $path = sys_get_temp_dir() . '/' . $filename;
-    unlink($path);
+    if (file_exists($path)) {
+      unlink($path);
+    }
   }
 }
