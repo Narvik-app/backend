@@ -10,7 +10,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GlobalSettingGetPublic extends AbstractController {
   public const array AVAILABLE_PUBLICLY = [
-    GlobalSettingEnum::LEGALS_LAST_UPDATE->name
+    GlobalSettingEnum::LEGALS_LAST_UPDATE->name,
+    GlobalSettingEnum::LEGALS_CGU->name,
+    GlobalSettingEnum::LEGALS_CGV->name,
+    GlobalSettingEnum::LEGALS_PRIVACY_POLICY->name,
   ];
 
   public function __construct(

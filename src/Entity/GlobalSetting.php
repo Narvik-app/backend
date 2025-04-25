@@ -13,6 +13,7 @@ use ApiPlatform\OpenApi\Model;
 use App\Controller\GlobalSettingGetPublic;
 use App\Controller\GlobalSettingImportLogo;
 use App\Controller\GlobalSettingLegals;
+use App\Controller\GlobalSettingLegalsFileUpload;
 use App\Controller\GlobalSettingSmtp;
 use App\Controller\GlobalSettingTestEmail;
 use App\Enum\UserRole;
@@ -64,6 +65,32 @@ use Doctrine\ORM\Mapping as ORM;
                 'type' => 'object',
                 'properties' => [
                   'date' => ['type' => 'string'],
+                ]
+              ]
+            ]
+          ])
+        )
+      ),
+      security: "is_granted('".UserRole::super_admin->value."')",
+      deserialize: false,
+    ),
+    new Post(
+      uriTemplate: '/global-settings/-/legals-file',
+      controller: GlobalSettingLegalsFileUpload::class,
+      openapi: new Model\Operation(
+        requestBody: new Model\RequestBody(
+          content: new \ArrayObject([
+            'multipart/form-data' => [
+              'schema' => [
+                'type' => 'object',
+                'properties' => [
+                  'file' => [
+                    'type' => 'string',
+                    'format' => 'binary'
+                  ],
+                  'type' => [
+                    'type' => 'string',
+                  ]
                 ]
               ]
             ]
