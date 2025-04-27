@@ -2,7 +2,9 @@
 
 namespace App\Mailer;
 
+use App\Entity\File;
 use App\Enum\GlobalSetting;
+use App\Service\FileService;
 use App\Service\GlobalSettingService;
 use App\Service\ImageService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -22,6 +24,7 @@ class EmailService {
     private readonly ImageService $imageService,
     private readonly Environment $twig,
     private readonly ParameterBagInterface $params,
+    private readonly FileService $fileService,
   ) {
   }
 
@@ -87,6 +90,21 @@ class EmailService {
 
     $mailer = new Mailer($transport, $this->bus);
     $mailer->send($email);
+  }
+
+  public function joinFile(TemplatedEmail $email, File $file, string $filename, bool $inline = false): void {
+    $mimeFile =  $this->fileService->getMimePartFile($file);
+    if (!$mimeFile) {
+      return;
+    }
+
+    $attachment = (new DataPart($mimeFile, $filename));
+
+    if ($inline) {
+      $email->addPart($attachment->asInline());
+    } else {
+      $email->addPart($attachment);
+    }
   }
 
   public function getMailerTransport(): TransportInterface {

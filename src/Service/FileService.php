@@ -12,6 +12,7 @@ use App\Enum\FileCategory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Mime\Part\File as MimePartFile;
 
 class FileService {
 
@@ -101,6 +102,25 @@ class FileService {
     $file->setPrivateUrl("/files/$fileId");
   }
 
+  /**
+   * This format is used for email sending
+   *
+   * @param FileEntity $file
+   * @return MimePartFile|null
+   * @throws \Psr\Container\ContainerExceptionInterface
+   * @throws \Psr\Container\NotFoundExceptionInterface
+   */
+  public function getMimePartFile(FileEntity $file): ?MimePartFile {
+    $filesFolder = $this->params->get('app.files');
+    $path = "$filesFolder/{$file->getPath()}";
+
+    if (!$this->fs->exists($path)) {
+      return null;
+    }
+
+    return new MimePartFile($path);
+  }
+
   public function loadFileFromProtectedPath(string $publicId, bool $isInline = false): ?ExposedFile {
     $uuid = $this->decodeEncodedUriId($publicId);
     $file = $this->fileRepository->findOneByUuid($uuid->toString());
@@ -122,8 +142,8 @@ class FileService {
   }
 
   private function loadFileFromFile(FileEntity $file, bool $isInline = false): ?ExposedFile {
-    $imageFolder = $this->params->get('app.files');
-    $path = "$imageFolder/{$file->getPath()}";
+    $filesFolder = $this->params->get('app.files');
+    $path = "$filesFolder/{$file->getPath()}";
 
     if ($this->fs->exists($path)) {
       $image = new ExposedFile();
