@@ -1,0 +1,14 @@
+{% extends 'email/layout.html.twig' %}
+
+{% block content %}
+    <p>Votre association : <b>{{ club.name }}</b> a bien été créée.</p><br />
+
+    <p>Vous disposez de 14 jours d'essai gratuit afin de découvrir la plateforme.</p><br />
+
+    <p>N'hésitez pas à nous contacter en répondant à cet email si vous avez une question ou pour toute demande de fonctionnalité supplémentaire.</p><br />
+
+    <p>Vous trouverez en pièces jointes nos Conditions Générales de vente, nos Conditions Générales d'Utilisation ainsi que notre Politique de confidentialité.</p><br />
+
+    <p>Vous pouvez vous connecter sur le site en vous rendant sur l'adresse suivante : <a href="{{ frontend_url }}">{{ frontend_url }}</a></p>
+    <br />
+{% endblock %}
