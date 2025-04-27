@@ -60,7 +60,7 @@ class GlobalSettingLegalsFileUpload extends AbstractPdfUploadController {
   private function updateFile(File $file, GlobalSetting $fileType): void {
     $oldFile = $this->globalSettingService->getSettingValue($fileType);
     if ($oldFile) {
-      $dbOldFile = $this->fileRepository->findOneByUuid($oldFile);
+      $dbOldFile = $this->fileRepository->findOneByUuid($this->fileService->decodeEncodedUriId($oldFile));
       if ($dbOldFile) {
         $this->em->remove($dbOldFile);
       }
