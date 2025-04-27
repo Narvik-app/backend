@@ -3,6 +3,7 @@ name: CI
 env:
   IGNORE_MIGRATION: false
   OAUTH_PASSPHRASE: changeme
+  SALES_EMAIL: sales@localhost
 
 on:
   push:
