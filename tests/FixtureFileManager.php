@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FixtureFileManager {
   const string LOGO = 'logo-narvik.png';
+  const string PDF = 'file.pdf';
   const string PROFILE_PICTURES = 'profile-pictures.zip';
   const string EDEN_MEMBERS = 'eden-members.xlsx';
   const string ITAC_MEMBERS = 'itac-members.csv';
@@ -36,6 +37,8 @@ class FixtureFileManager {
 
   public static function removeUploadedFile(string $filename): void {
     $path = sys_get_temp_dir() . '/' . $filename;
-    unlink($path);
+    if (file_exists($path)) {
+      unlink($path);
+    }
   }
 }

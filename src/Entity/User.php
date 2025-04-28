@@ -137,11 +137,22 @@ use Symfony\Component\Validator\Constraints as Assert;
             'schema' => [
               'type'       => 'object',
               'properties' => [
-                'email'        => ['type' => 'string'],
                 'securityCode' => ['type' => 'string'],
+                'accountType'  => ['type' => 'string'],
+
+                'email'     => ['type' => 'string'],
                 'firstname' => ['type' => 'string'],
                 'lastname'  => ['type' => 'string'],
                 'password'  => ['type' => 'string'],
+
+                'clubName'    => ['type' => 'string'],
+                'clubSiret'   => ['type' => 'string'],
+                'clubVat'     => ['type' => 'string'],
+                'clubEmail'   => ['type' => 'string'],
+                'clubPhone'   => ['type' => 'string'],
+                'clubAddress' => ['type' => 'string'],
+                'clubZipCode' => ['type' => 'string'],
+                'clubCity'    => ['type' => 'string'],
               ],
             ],
           ],

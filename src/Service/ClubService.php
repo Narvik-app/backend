@@ -3,19 +3,30 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Member;
+use App\Entity\File;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
+use App\Enum\GlobalSetting;
 use App\Enum\UserRole;
+use App\Mailer\EmailService;
 use App\Repository\ClubRepository;
+use App\Repository\FileRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ClubService {
   public function __construct(
     private readonly EntityManagerInterface $entityManager,
     private readonly UserRepository $userRepository,
     private readonly ClubRepository $clubRepository,
+    private readonly EmailService $emailService,
+    private readonly ParameterBagInterface $params,
+    private readonly GlobalSettingService $globalSettingService,
+    private readonly FileService $fileService,
+    private readonly FileRepository $fileRepository,
   ) {
   }
 
@@ -119,6 +130,79 @@ class ClubService {
 
     $this->entityManager->persist($clubSettings);
     $this->entityManager->flush();
+  }
+
+  /**
+   * Activate the free trial and send the email with all the legal documents
+   * @param Club $club
+   * @return void
+   */
+  public function activateTrial(Club $club): void {
+    $trialEnd = new \DateTimeImmutable()->modify("+14 days");
+
+    $club->setIsActivated(true);
+    $club
+      ->setRenewDate($trialEnd)
+      ->setComment("Trial version end: " . $trialEnd->format("Y-m-d H:i:s"));
+
+    // We enable all the modules
+    $club
+      ->setSalesEnabled(true);
+
+    $this->entityManager->persist($club);
+    $this->entityManager->flush();
+
+    // Email notification
+    $email = $this->emailService->getEmail("club/trial.html.twig", "Création de votre association sur Narvik", [
+      'club' => $club,
+    ]);
+
+    // Copy to sales team
+    $email->addBcc($this->params->get('app.sales_email'));
+
+    // We join the pdf
+    $cgv = $this->getLegalFile(GlobalSetting::LEGALS_CGV);
+    if ($cgv) {
+      $this->emailService->joinFile($email, $cgv, 'narvik-cgv.pdf');
+    }
+    $cgu = $this->getLegalFile(GlobalSetting::LEGALS_CGU);
+    if ($cgv) {
+      $this->emailService->joinFile($email, $cgu, 'narvik-cgu.pdf');
+    }
+    $privacy = $this->getLegalFile(GlobalSetting::LEGALS_PRIVACY_POLICY);
+    if ($cgv) {
+      $this->emailService->joinFile($email, $privacy, 'narvik-politique-confidentialite.pdf');
+    }
+
+    $this->emailService->sendEmail($email, $club->getContactEmail());
+  }
+
+  private function getLegalFile(GlobalSetting $globalSetting): ?File {
+    $fileEncoded = $this->globalSettingService->getSettingValue($globalSetting);
+    if (!$fileEncoded) {
+      return null;
+    }
+
+    return $this->fileRepository->findOneByUuid($this->fileService->decodeEncodedUriId($fileEncoded));
+  }
+
+  public function linkUserToClub(Club $club, User $user, ClubRole $role = ClubRole::admin): void {
+    // We create the member
+    $member = new Member();
+    $member
+      ->setClub($club)
+      ->setEmail($user->getEmail())
+      ->setLastname($user->getLastname())
+      ->setFirstname($user->getFirstname());
+
+    $userMember = new UserMember();
+    $userMember
+      ->setUser($user)
+      ->setMember($member)
+      ->setRole($role);
+
+    $this->entityManager->persist($member);
+    $this->entityManager->persist($userMember);
   }
 
 }

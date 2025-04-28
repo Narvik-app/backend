@@ -16,6 +16,7 @@
         "api-platform/doctrine-orm": "^4.0",
         "api-platform/ramsey-uuid": "^4.0",
         "api-platform/symfony": "^4.0",
+        "ddeboer/vatin-bundle": "^4.0",
         "doctrine/annotations": "^2.0",
         "doctrine/doctrine-bundle": "^2.13",
         "doctrine/doctrine-migrations-bundle": "^3.4",

@@ -11,16 +11,26 @@
     .security-code > span {
         font-size: 20px;
         font-weight: bold;
-        margin: 0 6px;
+        margin-left: 6px;
         padding: 10px;
         border: 1px solid #eaeaeb;
-        border-radius: 24px;
+        border-radius: 6px;
     }
     </style
 {% endblock %}
 
 {% block content %}
-    <div>Votre code de sécurité est :</div>
+    <p>Une action nécessitant un code de sécurité a été effectuée sur <a href="{{ frontend_url }}">Narvik</a></p>
+    <br />
+
+    <p>Votre code de sécurité est :</p>
     <div class="security-code">{% for code in security_code|split('') %}<span>{{ code }}</span>{% endfor %}</div>
-    <div>Le code est valable 10 minutes.</div>
+    <p>Le code est valable 10 minutes.</p>
+
+    {% if frontend_path ?? false %}
+        <br />
+        <p>
+            Url de la demande: <a class="break-all" href="{{ frontend_url }}{{ frontend_path }}">{{ frontend_url }}{{ frontend_path }}</a>
+        </p>
+    {% endif %}
 {% endblock %}

@@ -3,8 +3,13 @@
 namespace App\Controller;
 
 use App\Controller\Abstract\AbstractController;
+use App\Entity\Club;
+use App\Entity\ClubDependent\Member;
+use App\Entity\User;
 use App\Enum\UserSecurityCodeTrigger;
+use App\Repository\ClubRepository;
 use App\Repository\UserRepository;
+use App\Service\ClubService;
 use App\Service\UserService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,33 +17,92 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UserRegister extends AbstractController {
+  public function __construct(
+    private readonly UserRepository $userRepository,
+    private readonly UserService $userService,
+    private readonly ClubRepository $clubRepository,
+    private readonly ClubService $clubService,
+  ) {
+  }
 
-  public function __invoke(Request $request, UserRepository $userRepository, UserService $userService): JsonResponse {
-    $payload = $this->checkAndGetJsonValues($request, ['email', 'securityCode', 'firstname', 'lastname', 'password']);
-    $email = $payload['email'];
-    $securityCode = $payload['securityCode'];
-    $firstname = $payload['firstname'];
-    $lastname = $payload['lastname'];
-    $password = $payload['password'];
 
-    $user = $userRepository->findOneByEmail($email);
-    if (!$user) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST);
+  public function __invoke(Request $request): JsonResponse {
+    $payload = $this->checkAndGetJsonValues($request, ['accountType', 'email', 'securityCode']);
+    $accountType = $payload['accountType'] === 'club' ? 'club' : 'personal'; // We force the account type to be either club or personal
+
+    // Not a club registration, we always require the fullname and password
+    if ($accountType !== 'club') {
+      $this->checkAndGetJsonValues($request, ['firstname', 'lastname', 'password']);
     }
 
-    $validated = $userService->validateSecurityCode($user, UserSecurityCodeTrigger::accountValidation, $securityCode, false);
+    $email = $payload['email'];
+    $securityCode = $payload['securityCode'];
+    $firstname = $payload['firstname'] ?? null;
+    $lastname = $payload['lastname'] ?? null;
+    $password = $payload['password'] ?? null;
+
+    $user = $this->userRepository->findOneByEmail($email);
+    if (!$user) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, "User not found.");
+    }
+
+    $validated = $this->userService->validateSecurityCode($user, UserSecurityCodeTrigger::accountValidation, $securityCode);
     if (!$validated) {
-      $userService->initiateAccountValidation($user); // We trigger a new password query
+      $this->userService->initiateAccountValidation($user, $accountType, true); // We trigger a new password query
       throw new HttpException(Response::HTTP_BAD_REQUEST, "A new security code has been sent.");
     }
 
-    // We activate the account and check all fields match
-    $userService->activateAccount($user, $firstname, $lastname, $password);
+    // We activate the account and check all fields match.
+    // The account can be already activated in the case of a club creation (if the user email was already used by another club)
+    if (!$user->isAccountActivated()) {
+      // We ensure that they are well-defined since the account is not activated
+      $this->checkAndGetJsonValues($request, ['firstname', 'lastname', 'password']);
+
+      $this->userService->activateAccount($user, $firstname, $lastname, $password);
+    }
+
+    if ($accountType === 'club') {
+      $this->createClub($request, $user);
+    }
 
     // We can now consume the security code
-    $userService->consumeAllSecurityCodes($user, UserSecurityCodeTrigger::accountValidation);
+    $this->userService->consumeAllSecurityCodes($user, UserSecurityCodeTrigger::accountValidation);
 
     return new JsonResponse();
+  }
+
+  private function createClub(Request $request, User $user): void {
+    $payload = $this->checkAndGetJsonValues($request, ['clubName', 'clubEmail', 'clubAddress', 'clubZipCode', 'clubCity']);
+
+    $name = $payload['clubName'];
+    $siret = $payload['clubSiret'] ?? null;
+    $vat = $payload['clubVat'] ?? null;
+    $email = $payload['clubEmail'];
+    $phone = $payload['clubPhone'] ?? null;
+    $address = $payload['clubAddress'];
+    $zipCode = $payload['clubZipCode'];
+    $city = $payload['clubCity'];
+
+    if ($this->clubRepository->findOneByName($name)) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, "Club with same name already exists.");
+    }
+
+    $club = new Club();
+    $club
+      ->setName($name)
+      ->setContactEmail($email)
+      ->setContactPhone($phone)
+      ->setAddress($address)
+      ->setZipCode($zipCode)
+      ->setCity($city)
+      ->setSiret($siret)
+      ->setVat($vat);
+
+    // Activate trial
+    $this->clubService->activateTrial($club);
+
+    // We link the current user to that club
+    $this->clubService->linkUserToClub($club, $user);
   }
 
 }

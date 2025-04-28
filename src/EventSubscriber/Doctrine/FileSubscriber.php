@@ -18,15 +18,7 @@ class FileSubscriber extends AbstractEventSubscriber {
 
 
   public function postLoad(File $file, PostLoadEventArgs $args): void {
-    $fileId = UuidService::encodeToReadable($file->getUuid());
-
-    // In the future we could manage different url for text files
-    if ($file->getIsPublic()) {
-      $file->setPublicUrl("/public/images/$fileId");
-      $file->setPublicInlineUrl("/public/images/inline/$fileId");
-    }
-
-    $file->setPrivateUrl("/images/$fileId");
+    $this->fileService->generateFileLinks($file);
   }
 
   public function postRemove(File $file, PostRemoveEventArgs $args): void {

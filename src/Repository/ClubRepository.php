@@ -38,4 +38,20 @@ class ClubRepository extends ServiceEntityRepository {
       return null;
     }
   }
+
+  public function findOneByName(string $name): ?Club {
+    $qb = $this->createQueryBuilder('c');
+    $query = $qb
+      ->andWhere($qb->expr()->eq($qb->expr()->lower('c.name'), $qb->expr()->lower(':name')))
+      ->setParameter('name', $name)
+      ->setMaxResults(1)
+      ->getQuery();
+
+    try {
+      return $query->getOneOrNullResult();
+    }
+    catch (\Exception $e) {
+      return null;
+    }
+  }
 }

@@ -5,41 +5,43 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
-use App\State\ImageProvider;
+use App\State\ExposedFileProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 
 #[ApiResource(
   operations: [
-    new Get(),
+    new Get(
+      uriTemplate: '/files/{id}',
+    ),
 
     new Get(
-      uriTemplate: '/public/images/{id}',
-      name: 'public_image'
+      uriTemplate: '/public/files/{id}',
+      name: 'public_file'
     ),
     new Get(
-      uriTemplate: '/public/images/inline/{id}',
-      name: 'inline_public_image'
+      uriTemplate: '/public/files/inline/{id}',
+      name: 'inline_public_file'
     ),
   ],
   normalizationContext: [
-    'groups' => ['image']
+    'groups' => ['exposed-file']
   ],
-  provider: ImageProvider::class,
+  provider: ExposedFileProvider::class,
 )]
-class Image {
+class ExposedFile {
 
   #[ApiProperty(identifier: true)]
-  #[Groups(['image'])]
+  #[Groups(['exposed-file'])]
   private string $id; // UUID of File
 
-  #[Groups(['image'])]
+  #[Groups(['exposed-file'])]
   private string $name;
 
-  #[Groups(['image'])]
+  #[Groups(['exposed-file'])]
   private string $base64;
 
-  #[Groups(['image'])]
+  #[Groups(['exposed-file'])]
   private string $mimeType;
 
   private string $path;
@@ -48,7 +50,7 @@ class Image {
     return $this->id;
   }
 
-  public function setId(string $id): Image {
+  public function setId(string $id): ExposedFile {
     $this->id = $id;
     return $this;
   }
@@ -57,7 +59,7 @@ class Image {
     return $this->name;
   }
 
-  public function setName(string $name): Image {
+  public function setName(string $name): ExposedFile {
     $this->name = $name;
     return $this;
   }
@@ -66,7 +68,7 @@ class Image {
     return $this->base64;
   }
 
-  public function setBase64(string $base64): Image {
+  public function setBase64(string $base64): ExposedFile {
     $this->base64 = $base64;
     return $this;
   }
@@ -75,7 +77,7 @@ class Image {
     return $this->mimeType;
   }
 
-  public function setMimeType(string $mimeType): Image {
+  public function setMimeType(string $mimeType): ExposedFile {
     $this->mimeType = $mimeType;
     return $this;
   }
@@ -84,7 +86,7 @@ class Image {
     return $this->path;
   }
 
-  public function setPath(string $path): Image {
+  public function setPath(string $path): ExposedFile {
     $this->path = $path;
     return $this;
   }

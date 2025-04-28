@@ -20,6 +20,7 @@ use App\Enum\ClubRole;
 use App\Enum\UserRole;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubRepository;
+use Ddeboer\VatinBundle\Validator\Constraints\Vatin;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -81,22 +82,43 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   private ?string $comment = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?string $address = null;
+
+  #[ORM\Column(nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?int $zipCode = null;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?string $city = null;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?string $siret = null;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  #[Vatin]
+  private ?string $vat = null;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $website = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactName = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactPhone = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['super-admin-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'super-admin-write'])]
   private ?string $contactEmail = null;
 
-  #[ORM\OneToOne(mappedBy: 'club', targetEntity: ClubSetting::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+  #[ORM\OneToOne(targetEntity: ClubSetting::class, mappedBy: 'club', cascade: ['persist', 'remove'], orphanRemoval: true)]
   #[Groups(['club-read'])]
   private ?ClubSetting $settings = null;
 
@@ -212,6 +234,51 @@ class Club extends UuidEntity implements TimestampEntityInterface {
 
   public function setContactEmail(?string $contactEmail): Club {
     $this->contactEmail = $contactEmail;
+    return $this;
+  }
+
+  public function getAddress(): ?string {
+    return $this->address;
+  }
+
+  public function setAddress(?string $address): Club {
+    $this->address = $address;
+    return $this;
+  }
+
+  public function getZipCode(): ?int {
+    return $this->zipCode;
+  }
+
+  public function setZipCode(?int $zipCode): Club {
+    $this->zipCode = $zipCode;
+    return $this;
+  }
+
+  public function getCity(): ?string {
+    return $this->city;
+  }
+
+  public function setCity(?string $city): Club {
+    $this->city = $city;
+    return $this;
+  }
+
+  public function getSiret(): ?string {
+    return $this->siret;
+  }
+
+  public function setSiret(?string $siret): Club {
+    $this->siret = $siret;
+    return $this;
+  }
+
+  public function getVat(): ?string {
+    return $this->vat;
+  }
+
+  public function setVat(?string $vat): Club {
+    $this->vat = $vat;
     return $this;
   }
 }
