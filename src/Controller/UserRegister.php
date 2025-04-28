@@ -90,6 +90,7 @@ class UserRegister extends AbstractController {
     $club = new Club();
     $club
       ->setName($name)
+      ->setContactName($user->getFullName())
       ->setContactEmail($email)
       ->setContactPhone($phone)
       ->setAddress($address)
