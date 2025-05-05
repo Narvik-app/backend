@@ -5,17 +5,21 @@
 
 ## Fonctionnalités
 - Gestion de la présence des membres
-- Import manuel des membres depuis itac
-- Import des données de présence depuis le logiciel Cerbère
+- Import manuel des membres
+- Import des présences
 
+[Plus d'informations](https://docs.narvik.app/)
 ## Roadmaps
-- Export des données en csv
+- [x] Export des données en csv
 
 ## Documentations
 
 0. [Développement](docs/0.README.md)
-1. [TODO: Documentation utilisateur](./)
 
+## Démarrage rapide
+Un [makefile](makefile) est présent afin de faciliter le développement.
+
+- `make up` pour démarrer le projet
 
 ## License
 
