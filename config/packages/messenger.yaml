@@ -10,6 +10,7 @@ framework:
                 options:
                     # queue_name is specific to the doctrine transport
                     queue_name: high
+                    use_notify: false # We disable the postgresql notify since it's looks like it's slower to react
             async_medium:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
