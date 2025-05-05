@@ -31,6 +31,10 @@ build: ## Builds the Docker images
 build-cloud-local:
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t narvik-php --target frankenphp_dev
 
+build-push-cloud-latest-only: ## Build using cloud and push it under latest tag (use for preprod testing)
+	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t $(BUILD_REPO):latest --target frankenphp_prod
+	@docker image push $(BUILD_REPO):latest
+
 build-prod:
 	@docker build --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
 
