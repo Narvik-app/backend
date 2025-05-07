@@ -6,6 +6,7 @@ use App\Controller\Abstract\AbstractController;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
 use App\Entity\User;
+use App\Enum\ClubActivity;
 use App\Enum\UserSecurityCodeTrigger;
 use App\Repository\ClubRepository;
 use App\Repository\UserRepository;
@@ -74,6 +75,7 @@ class UserRegister extends AbstractController {
   private function createClub(Request $request, User $user): void {
     $payload = $this->checkAndGetJsonValues($request, ['clubName', 'clubEmail', 'clubAddress', 'clubZipCode', 'clubCity']);
 
+    $activity = $payload['clubActivity'] ?? null;
     $name = $payload['clubName'];
     $siret = $payload['clubSiret'] ?? null;
     $vat = $payload['clubVat'] ?? null;
@@ -98,6 +100,10 @@ class UserRegister extends AbstractController {
       ->setCity($city)
       ->setSiret($siret)
       ->setVat($vat);
+
+    if ($activity) {
+      $club->getSettings()?->setActivity(ClubActivity::tryFrom($activity) ?? ClubActivity::generic);
+    }
 
     // Activate trial
     $this->clubService->activateTrial($club);
