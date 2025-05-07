@@ -31,7 +31,7 @@ build: ## Builds the Docker images
 build-cloud-local:
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t narvik-php --target frankenphp_dev
 
-build-push-cloud-latest-only: ## Build using cloud and push it under latest tag (use for preprod testing)
+build-cloud-latest-only: ## Build using cloud and push it under latest tag (use for preprod testing)
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t $(BUILD_REPO):latest --target frankenphp_prod
 	@docker image push $(BUILD_REPO):latest
 
