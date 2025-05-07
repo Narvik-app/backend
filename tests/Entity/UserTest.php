@@ -3,6 +3,7 @@
 namespace App\Tests\Entity;
 
 use App\Entity\User;
+use App\Enum\ClubActivity;
 use App\Enum\UserSecurityCodeTrigger;
 use App\Tests\Entity\Abstract\AbstractEntityTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
@@ -415,6 +416,7 @@ class UserTest extends AbstractEntityTestCase {
 
     // Success creating with a new account
     $this->makePostRequest($this->getRootUrl() . "/-/register", [
+      "clubActivity" => ClubActivity::fftir->value,
       "clubName" => "test success new account",
       "clubEmail" => "contact@testclub.fr",
       "clubAddress" => "test address",

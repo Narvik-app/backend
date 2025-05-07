@@ -16,6 +16,7 @@ use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Season;
+use App\Enum\ClubActivity;
 use App\Enum\ClubRole;
 use App\Repository\ClubDependent\ClubSettingRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -74,6 +75,10 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[ORM\OneToOne(inversedBy: 'settings', targetEntity: Club::class)]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   private ?Club $club = null;
+
+  #[ORM\Column(type: "string", enumType: ClubActivity::class, options: ['default' => ClubActivity::generic])]
+  #[Groups(['club-setting'])]
+  private ClubActivity $activity = ClubActivity::generic;
 
   #[ORM\OneToOne(targetEntity: File::class)]
   #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -265,6 +270,15 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setCurrentSeason(?Season $currentSeason): ClubSetting {
     $this->currentSeason = $currentSeason;
+    return $this;
+  }
+
+  public function getActivity(): ClubActivity {
+    return $this->activity;
+  }
+
+  public function setActivity(ClubActivity $activity): ClubSetting {
+    $this->activity = $activity;
     return $this;
   }
 }
