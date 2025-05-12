@@ -56,7 +56,7 @@ class ClubTest extends AbstractEntityTestCase {
     $this->makeAllLoggedRequests(
       $payload,
       supervisorClub1Code: ResponseCodeEnum::forbidden,
-      adminClub1Code: ResponseCodeEnum::forbidden,
+      adminClub1Code: ResponseCodeEnum::ok,
       adminClub2Code: ResponseCodeEnum::not_found,
       badgerClub2Code: ResponseCodeEnum::not_found,
       requestFunction: function (string $level, ?int $id) use ($iri, $payload) {
@@ -248,6 +248,23 @@ class ClubTest extends AbstractEntityTestCase {
     $response = $this->makeGetRequest($iri);
     $this->assertResponseIsSuccessful();
     $this->assertNotEquals("club1longbadgertoken", $response->toArray()["badgerToken"]);
+  }
+
+  public function testClubAdminCantEditSuperAdminFields(): void {
+    $club1 = _InitStory::club_1();
+    $iri = $this->getIriFromResource($club1);
+
+    $payload = [
+      "name" => 'Update club de test',
+      "contactName" => 'Nom de test',
+    ];
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makePatchRequest($iri, $payload);
+
+    $this->assertNotEquals("Update club de test", $response->toArray()["name"]);
+    $this->assertEquals($club1->getName(), $response->toArray()["name"]);
+    $this->assertEquals("Nom de test", $response->toArray()["contactName"]);
   }
 
   public function testClubProgramDeletion(): void {

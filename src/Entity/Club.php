@@ -34,7 +34,7 @@ use Symfony\Component\Validator\Constraints as Assert;
   new GetCollection(security: "is_granted('".UserRole::super_admin->value."')"), // Collection only to super admin, other should get them through /self
   new Get(),
   new Post(security: "is_granted('".UserRole::super_admin->value."')"),
-  new Patch(security: "is_granted('".UserRole::super_admin->value."')",),
+  new Patch(security: "is_granted('" . ClubRole::admin->value . "', object)"),
   new Delete(security: "is_granted('".UserRole::super_admin->value."')",),
 
   new Patch(
@@ -94,40 +94,40 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   private ?string $comment = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $address = null;
 
   #[ORM\Column(nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?int $zipCode = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $city = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $siret = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   #[Vatin]
   private ?string $vat = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $website = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactName = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactPhone = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactEmail = null;
 
   #[ORM\OneToOne(targetEntity: ClubSetting::class, mappedBy: 'club', cascade: ['persist', 'remove'], orphanRemoval: true)]
