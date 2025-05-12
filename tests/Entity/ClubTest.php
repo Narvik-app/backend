@@ -8,6 +8,7 @@ use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
+use App\Tests\Story\GlobalSettingStory;
 use App\Tests\Story\SalePaymentModeStory;
 use Zenstruck\Foundry\Persistence\Proxy;
 
@@ -247,6 +248,25 @@ class ClubTest extends AbstractEntityTestCase {
     $response = $this->makeGetRequest($iri);
     $this->assertResponseIsSuccessful();
     $this->assertNotEquals("club1longbadgertoken", $response->toArray()["badgerToken"]);
+  }
+
+  public function testClubProgramDeletion(): void {
+    GlobalSettingStory::load(); // We load the default settings so we can send email
+
+    $club1 = _InitStory::club_1();
+    $iri = $this->getIriFromResource($club1);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonNotHasKey("deletionDate", $response);
+
+    $this->makePatchRequest($this->getIriFromResource($club1) . "/delete");
+    $this->assertResponseIsSuccessful();
+
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonHasKey("deletionDate", $response);
   }
 
 }

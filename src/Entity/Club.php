@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Controller\ClubGenerateBadger;
+use App\Controller\ClubProgramDeletion;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\ClubDependent\ClubSetting;
 use App\Entity\Interface\TimestampEntityInterface;
@@ -43,6 +44,13 @@ use Symfony\Component\Validator\Constraints as Assert;
     deserialize: false,
     write: false
   ),
+  new Patch(
+    uriTemplate: '/clubs/{uuid}/delete',
+    controller: ClubProgramDeletion::class,
+    security: "is_granted('".ClubRole::admin->value."', object)",
+    deserialize: false,
+    write: false
+  ),
 ], normalizationContext: [
   'groups' => ['club', 'club-read', 'common-read'],
 ], denormalizationContext: [
@@ -66,6 +74,10 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
   #[Groups(['club-read', 'super-admin-write'])]
   private ?\DateTimeImmutable $renewDate = null;
+
+  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?\DateTimeImmutable $deletionDate = null;
 
   #[ORM\Column(options: ['default' => false])]
   #[Groups(['club-read', 'super-admin-write'])]
@@ -198,6 +210,18 @@ class Club extends UuidEntity implements TimestampEntityInterface {
       $renewDate = $renewDate->setTime(23, 59, 59);
     }
     $this->renewDate = $renewDate;
+    return $this;
+  }
+
+  public function getDeletionDate(): ?\DateTimeImmutable {
+    return $this->deletionDate;
+  }
+
+  public function setDeletionDate(?\DateTimeImmutable $deletionDate): Club {
+    if ($deletionDate) {
+      $deletionDate = $deletionDate->setTime(23, 59, 59);
+    }
+    $this->deletionDate = $deletionDate;
     return $this;
   }
 

@@ -1,0 +1,14 @@
+{% extends 'email/layout.html.twig' %}
+
+{% block content %}
+    <p>Votre demande de suppression pour l'association : <b>{{ club.name }}</b> a bien été prise en compte.</p><br />
+
+    <p>L'association ainsi que toutes ces données relatives seront supprimées le : <b>{{ club.deletionDate | date("d/m/Y") }}</b>.</p><br />
+
+    <p>À partir de cette date, il ne sera plus possible de récupérer les données.</p><br />
+
+    <p>N'hésitez pas à nous contacter en répondant à cet email si vous souhaitez annuler cette demande.</p><br />
+
+    <p>Vous pouvez consulter le status de votre demande en vous rendant à l'adresse suivante : <a href="{{ frontend_url }}/admin/subscription">{{ frontend_url }}/admin/subscription</a></p>
+    <br />
+{% endblock %}

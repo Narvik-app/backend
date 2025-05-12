@@ -177,6 +177,30 @@ class ClubService {
     $this->emailService->sendEmail($email, $club->getContactEmail());
   }
 
+  public function programDeletion(Club $club): void {
+    $subscriptionEnd = new \DateTimeImmutable();
+    if ($club->getRenewDate() > $subscriptionEnd) {
+      $subscriptionEnd = $club->getRenewDate();
+    }
+
+    $subscriptionEnd = $subscriptionEnd->modify("+1 months");
+
+    $club
+      ->setDeletionDate($subscriptionEnd);
+
+    $this->entityManager->persist($club);
+    $this->entityManager->flush();
+
+    // Email notification
+    $email = $this->emailService->getEmail("club/programmed-removal.html.twig", "Suppression de votre association sur Narvik", [
+      'club' => $club,
+    ]);
+
+    // Copy to sales team
+    $email->addBcc($this->params->get('app.sales_email'));
+    $this->emailService->sendEmail($email, $club->getContactEmail());
+  }
+
   private function getLegalFile(GlobalSetting $globalSetting): ?File {
     $fileEncoded = $this->globalSettingService->getSettingValue($globalSetting);
     if (!$fileEncoded) {
