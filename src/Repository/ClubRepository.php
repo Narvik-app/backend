@@ -54,4 +54,12 @@ class ClubRepository extends ServiceEntityRepository {
       return null;
     }
   }
+
+  public function findDeletionDateExpired(): array {
+    return $this->createQueryBuilder('c')
+      ->andWhere('c.deletionDate <= :today')
+      ->setParameter('today', new \DateTimeImmutable())
+      ->getQuery()
+      ->getResult();
+  }
 }

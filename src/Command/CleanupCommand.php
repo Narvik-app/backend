@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
 use App\Repository\UserSecurityCodeRepository;
 use App\Service\SeasonService;
@@ -21,6 +22,7 @@ class CleanupCommand extends Command {
     private readonly EntityManagerInterface $entityManager,
     private readonly UserSecurityCodeRepository $memberSecurityCodeRepository,
     private readonly SeasonRepository $seasonRepository,
+    private readonly ClubRepository $clubRepository,
   ) {
     parent::__construct();
   }
@@ -32,6 +34,7 @@ class CleanupCommand extends Command {
     $this->cleanJwt();
     $this->cleanSecurityCodes();
     $this->updateSeasons();
+    $this->deleteFlaggedClubs();
 
     return Command::SUCCESS;
   }
@@ -61,6 +64,15 @@ class CleanupCommand extends Command {
     $this->io->section("Updating seasons");
     $currentSeason = SeasonService::getCurrentSeasonName();
     $this->seasonRepository->findOrCreateOneByName($currentSeason);
+  }
+
+  private function deleteFlaggedClubs(): void {
+    $this->io->section("Deleting flagged clubs");
+    $expired = $this->clubRepository->findDeletionDateExpired();
+    foreach ($expired as $item) {
+      $this->entityManager->remove($item);
+    }
+    $this->entityManager->flush();
   }
 
 }
