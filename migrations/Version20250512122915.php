@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+/**
+ * Auto-generated Migration: Please modify to your needs!
+ */
+final class Version20250512122915 extends AbstractMigration {
+  public function getDescription(): string {
+    return 'Add club deletion request';
+  }
+
+  public function up(Schema $schema): void {
+    $this->addSql(<<<'SQL'
+            ALTER TABLE club ADD deletion_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL
+        SQL
+    );
+  }
+
+  public function down(Schema $schema): void {
+    $this->addSql(<<<'SQL'
+            ALTER TABLE club DROP deletion_date
+        SQL
+    );
+  }
+}

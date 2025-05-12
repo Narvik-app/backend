@@ -21,6 +21,10 @@ final readonly class RequestService {
     $uuid = $request->attributes->get("clubUuid");
     $resourceClass = $request->attributes->get('_api_resource_class');
 
+    if (!$uuid && $resourceClass === Club::class) {
+      $uuid = $request->attributes->get('uuid');
+    }
+
     if (!$uuid) {
       if ($resourceClass && is_subclass_of($resourceClass, ClubLinkedEntityInterface::class)) {
         // We try getting the information from the body

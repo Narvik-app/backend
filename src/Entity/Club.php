@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Controller\ClubGenerateBadger;
+use App\Controller\ClubProgramDeletion;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\ClubDependent\ClubSetting;
 use App\Entity\Interface\TimestampEntityInterface;
@@ -33,12 +34,19 @@ use Symfony\Component\Validator\Constraints as Assert;
   new GetCollection(security: "is_granted('".UserRole::super_admin->value."')"), // Collection only to super admin, other should get them through /self
   new Get(),
   new Post(security: "is_granted('".UserRole::super_admin->value."')"),
-  new Patch(security: "is_granted('".UserRole::super_admin->value."')",),
+  new Patch(security: "is_granted('" . ClubRole::admin->value . "', object)"),
   new Delete(security: "is_granted('".UserRole::super_admin->value."')",),
 
   new Patch(
     uriTemplate: '/clubs/{uuid}/generate-badger',
     controller: ClubGenerateBadger::class,
+    security: "is_granted('".ClubRole::admin->value."', object)",
+    deserialize: false,
+    write: false
+  ),
+  new Patch(
+    uriTemplate: '/clubs/{uuid}/delete',
+    controller: ClubProgramDeletion::class,
     security: "is_granted('".ClubRole::admin->value."', object)",
     deserialize: false,
     write: false
@@ -67,6 +75,10 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   #[Groups(['club-read', 'super-admin-write'])]
   private ?\DateTimeImmutable $renewDate = null;
 
+  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+  #[Groups(['club-read', 'super-admin-write'])]
+  private ?\DateTimeImmutable $deletionDate = null;
+
   #[ORM\Column(options: ['default' => false])]
   #[Groups(['club-read', 'super-admin-write'])]
   #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
@@ -82,40 +94,40 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   private ?string $comment = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $address = null;
 
   #[ORM\Column(nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?int $zipCode = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $city = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $siret = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   #[Vatin]
   private ?string $vat = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $website = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactName = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactPhone = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['club-read', 'super-admin-write'])]
+  #[Groups(['club-read', 'club-admin-write'])]
   private ?string $contactEmail = null;
 
   #[ORM\OneToOne(targetEntity: ClubSetting::class, mappedBy: 'club', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -198,6 +210,18 @@ class Club extends UuidEntity implements TimestampEntityInterface {
       $renewDate = $renewDate->setTime(23, 59, 59);
     }
     $this->renewDate = $renewDate;
+    return $this;
+  }
+
+  public function getDeletionDate(): ?\DateTimeImmutable {
+    return $this->deletionDate;
+  }
+
+  public function setDeletionDate(?\DateTimeImmutable $deletionDate): Club {
+    if ($deletionDate) {
+      $deletionDate = $deletionDate->setTime(23, 59, 59);
+    }
+    $this->deletionDate = $deletionDate;
     return $this;
   }
 
