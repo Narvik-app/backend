@@ -46,6 +46,7 @@ final class _InitStory extends Story {
     $this->addState('club_1', ClubFactory::createOne([
         'uuid' => Uuid::fromString('0193b683-b858-73ee-a9c7-41c84cd27fe2'),
         'name' => 'Club 1',
+        'presencesEnabled' => true,
         'salesEnabled' => true,
         'badgerToken' => 'club1longbadgertoken',
       ]), 'clubs');
