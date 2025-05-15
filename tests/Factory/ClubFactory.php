@@ -61,8 +61,9 @@ final class ClubFactory extends PersistentProxyObjectFactory {
    */
   protected function defaults(): array|callable {
     return [
-      'name'         => self::faker()->company(),
-      'salesEnabled' => self::faker()->boolean(),
+      'name'             => self::faker()->company(),
+      'presencesEnabled' => self::faker()->boolean(),
+      'salesEnabled'     => self::faker()->boolean(),
     ];
   }
 

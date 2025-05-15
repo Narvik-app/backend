@@ -200,7 +200,12 @@ class ClubTest extends AbstractEntityTestCase {
 
   public function testClubPresencesDisabled(): void {
     $club1 = _InitStory::club_1();
-    $presence = $this->getIriFromResource(MemberPresenceFactory::randomOrCreate());
+    $presenceFactory = MemberPresenceFactory::new([
+      'date'       => new \DateTimeImmutable('tomorrow'),
+      'member' => _InitStory::MEMBER_member_club_1(),
+    ])->create();
+
+    $presence = $this->getIriFromResource($presenceFactory);
 
     $payload = [
       'activities' => [],
