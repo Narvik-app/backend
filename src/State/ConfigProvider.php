@@ -68,32 +68,21 @@ class ConfigProvider implements ProviderInterface {
       /** @var Club $club */
       $club = $profile->getClub();
 
-      if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club) || $this->authorizationChecker->isGranted(ClubRole::badger->value, $club)) {
-      $config->addProfileModule($id, 'presences', [
-        'enabled' => true,
-      ]);
-    }
+      // User is badger or supervisor
+      if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club) ||
+          $this->authorizationChecker->isGranted(ClubRole::badger->value, $club)) {
+        $config->addProfileModule($id, 'presences', [
+          'enabled' => $club->getPresencesEnabled(),
+        ]);
+      }
 
-    // User a supervisor, he can have access to the sale management
-    if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club)) {
-      $config->addProfileModule($id, 'sales', [
-        'enabled' => $club->getSalesEnabled(),
-      ]);
+      // User a supervisor, he can have access to the sale management
+      if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club)) {
+        $config->addProfileModule($id, 'sales', [
+          'enabled' => $club->getSalesEnabled(),
+        ]);
+      }
     }
-  }
-
-//    if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value) || $this->authorizationChecker->isGranted(ClubRole::badger->value)) {
-//      $config->addProfileModule('presences', [
-//        'enabled' => true,
-//      ]);
-//    }
-//
-//    // User a supervisor, he can have access to the sale management
-//    if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value)) {
-//      $config->addProfileModule('sales', [
-//        'enabled' => true,
-//      ]);
-//    }
   }
 
 }

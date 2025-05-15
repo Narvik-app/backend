@@ -147,6 +147,7 @@ class ClubService {
 
     // We enable all the modules
     $club
+      ->setPresencesEnabled(true)
       ->setSalesEnabled(true);
 
     $this->entityManager->persist($club);

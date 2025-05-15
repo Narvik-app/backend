@@ -91,20 +91,37 @@ final class ClubLinkedEntitySubscriber implements EventSubscriberInterface {
   }
 
   private function verifyAccessForPlugins(RequestEvent $event, Club $club, string $cleanedPath): void {
+    $presencesPattern = [
+      '/member-presences',
+      '/external-presences',
+    ];
+    $checked = $this->verifyAccessForPlugin("Presences", $presencesPattern, $club->getPresencesEnabled(), $cleanedPath, $event);
+    if ($checked) {
+      return;
+    }
+
     $salesPattern = [
       '/sales',
       '/sale-payment-modes',
       '/inventory-'
     ];
+    $checked = $this->verifyAccessForPlugin("Sales", $salesPattern, $club->getSalesEnabled(), $cleanedPath, $event);
+    if ($checked) {
+      return;
+    }
+  }
 
-    foreach ($salesPattern as $salePattern) {
-      if (str_starts_with($cleanedPath, $salePattern)) {
-        if (!$club->getSalesEnabled()) {
-          $this->throwLockedException($event, 'Sales plugin not activated.');
+  private function verifyAccessForPlugin(string $pluginName, array $urlPatterns, bool $pluginEnabled, string $requestedPath, RequestEvent $event): bool {
+    foreach ($urlPatterns as $urlPattern) {
+      if (str_starts_with($requestedPath, $urlPattern)) {
+        if (!$pluginEnabled) {
+          $this->throwLockedException($event, "$pluginName plugin not activated.");
         }
-        return;
+        return true;
       }
     }
+
+    return false;
   }
 
   private function throwLockedException(RequestEvent $event, string $message = ''): void {
