@@ -20,6 +20,7 @@ use App\Controller\ClubDependent\Plugin\Presence\MemberPresencesImportFromExtern
 use App\Controller\ClubDependent\Plugin\Presence\MemberPresenceToday;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
+use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\TimestampEntityInterface;

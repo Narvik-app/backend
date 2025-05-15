@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Repository\ClubDependent\Plugin\Presence;
+namespace App\Repository\ClubDependent;
 
 use App\Entity\Club;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
+use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Plugin\Presence\ExternalPresence;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Repository\Interface\ClubLinkedInterface;

@@ -3,8 +3,8 @@
 namespace App\Controller\ClubDependent\Plugin\Presence;
 
 use App\Controller\Abstract\AbstractClubDependentController;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
-use App\Repository\ClubDependent\Plugin\Presence\ActivityRepository;
+use App\Entity\ClubDependent\Activity;
+use App\Repository\ClubDependent\ActivityRepository;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

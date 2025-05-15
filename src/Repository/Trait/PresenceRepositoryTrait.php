@@ -3,8 +3,7 @@
 namespace App\Repository\Trait;
 
 use App\Entity\Club;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
-use App\Enum\GlobalSetting;
+use App\Entity\ClubDependent\Activity;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
