@@ -2,13 +2,12 @@
 
 namespace App\Service;
 
+use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
 use App\Repository\ClubDependent\MemberRepository;
-use App\Repository\ClubDependent\Plugin\Presence\ActivityRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\SeasonRepository;
 use App\Repository\UserMemberRepository;

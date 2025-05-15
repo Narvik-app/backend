@@ -3,7 +3,6 @@
 namespace App\Importer;
 
 use App\Entity\Club;
-use App\Entity\ClubDependent\Plugin\Presence\ExternalPresence;
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
 use App\Entity\ClubDependent\Plugin\Sale\SalePurchasedItem;
 use App\Importer\Model\AbstractImportedItemResult;
@@ -11,8 +10,6 @@ use App\Importer\Model\ErrorImportedItem;
 use App\Importer\Model\SuccessImportedItem;
 use App\Importer\Model\WarningImportedItem;
 use App\Repository\ClubDependent\MemberRepository;
-use App\Repository\ClubDependent\Plugin\Presence\ActivityRepository;
-use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
 use App\Repository\ClubDependent\Plugin\Sale\SaleRepository;
 use Doctrine\ORM\EntityManagerInterface;

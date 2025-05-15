@@ -3,13 +3,13 @@
 namespace App\MessageHandler;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\ClubDependent\Plugin\Presence\ExternalPresence;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Message\CerberePresencesDateMessage;
+use App\Repository\ClubDependent\ActivityRepository;
 use App\Repository\ClubDependent\MemberRepository;
-use App\Repository\ClubDependent\Plugin\Presence\ActivityRepository;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubRepository;
 use Doctrine\ORM\EntityManagerInterface;

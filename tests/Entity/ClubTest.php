@@ -6,6 +6,7 @@ use App\Entity\Club;
 use App\Tests\Entity\Abstract\AbstractEntityTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubFactory;
+use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use App\Tests\Story\GlobalSettingStory;
@@ -194,6 +195,47 @@ class ClubTest extends AbstractEntityTestCase {
     // Super admin can still do whatever he wants
     $this->loggedAsSuperAdmin();
     $this->makePatchRequest($clubSettingIri, $payload);
+    $this->assertResponseIsSuccessful();
+  }
+
+  public function testClubPresencesDisabled(): void {
+    $club1 = _InitStory::club_1();
+    $presenceFactory = MemberPresenceFactory::new([
+      'date'       => new \DateTimeImmutable('tomorrow'),
+      'member' => _InitStory::MEMBER_member_club_1(),
+    ])->create();
+
+    $presence = $this->getIriFromResource($presenceFactory);
+
+    $payload = [
+      'activities' => [],
+    ];
+
+    $this->loggedAsAdminClub1();
+    $this->makePatchRequest($presence, $payload);
+    $this->assertResponseIsSuccessful();
+
+    // We disable the club, the patch should be denied
+    $this->loggedAsSuperAdmin();
+    $this->makePatchRequest($this->getIriFromResource($club1), ['presencesEnabled' => false]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      "presencesEnabled" => false,
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $this->makeGetRequest($presence);
+    $this->assertResponseIsSuccessful(); // Read only
+
+    $this->makePatchRequest($presence, $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::locked_423->value);
+    $this->assertJsonContains([
+      "detail" => "Presences plugin not activated.",
+    ]);
+
+    // Super admin can still do whatever he wants
+    $this->loggedAsSuperAdmin();
+    $this->makePatchRequest($presence, $payload);
     $this->assertResponseIsSuccessful();
   }
 

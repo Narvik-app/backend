@@ -2,8 +2,8 @@
 
 namespace App\Repository\ClubDependent\Plugin\Presence;
 
+use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Repository\Interface\ClubLinkedInterface;
 use App\Repository\Interface\PresenceRepositoryInterface;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Tests\Entity\ClubDependent\Plugin\Presence;
+namespace App\Tests\Entity\ClubDependent;
 
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
+use App\Entity\ClubDependent\Activity;
 use App\Enum\ClubRole;
 use App\Tests\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;

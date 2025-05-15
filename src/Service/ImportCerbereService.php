@@ -3,9 +3,9 @@
 namespace App\Service;
 
 use App\Entity\Club;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
+use App\Entity\ClubDependent\Activity;
 use App\Message\CerberePresencesDateMessage;
-use App\Repository\ClubDependent\Plugin\Presence\ActivityRepository;
+use App\Repository\ClubDependent\ActivityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Reader\Xls;
 use Symfony\Component\Messenger\MessageBusInterface;

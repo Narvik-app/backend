@@ -12,7 +12,6 @@ use ApiPlatform\OpenApi\Model;
 use App\Controller\ClubDependent\ClubSettingImportLogo;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
-use App\Entity\ClubDependent\Plugin\Presence\Activity;
 use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Season;

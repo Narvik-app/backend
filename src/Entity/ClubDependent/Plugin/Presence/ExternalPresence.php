@@ -17,6 +17,7 @@ use App\Controller\ClubDependent\Plugin\Presence\ExternalPresencesFromCsv;
 use App\Controller\ClubDependent\Plugin\Presence\ExternalPresenceToday;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
+use App\Entity\ClubDependent\Activity;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
