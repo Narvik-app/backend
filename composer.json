@@ -22,7 +22,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
         "league/csv": "^9.16",
-        "league/oauth2-server-bundle": "*",
+        "league/oauth2-server-bundle": "^1.0",
         "nelmio/cors-bundle": "^2.4",
         "phpdocumentor/reflection-docblock": "^5.3",
         "phpoffice/phpspreadsheet": "^4.0",
