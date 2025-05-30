@@ -1,0 +1,12 @@
+{% extends 'email/layout.html.twig' %}
+
+{% block content %}
+    {{ content }}
+{% endblock %}
+
+{% block footer_left %}
+    <p>Cet email vous a été envoyé de la part de <b>{{ club.name }}</b> en utilisant la plateforme <a href="{{ frontend_url }}">Narvik</a></p>
+    {% if isNewsletter %}
+        <p>Vous ne souhaitez plus recevoir de newsletter de la part de ce club, vous pouvez vous désinscrire en vous rendant sur l'adresse suivante : <a href="{{ frontend_url }}/unsubscribe?club=uuid-encoded&member=uuid-encoded">URL TO COPY</a></p>
+    {% endif %}
+{% endblock %}

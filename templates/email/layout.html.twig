@@ -96,21 +96,24 @@
             }
 
             .footer {
+                color: #ffffff;
+
                 background-color: #0f172a;
                 margin: 0;
                 padding: 30px 20px;
                 width: 100%;
                 height: 100%;
+
+                font-size: 10px;
+                line-height: 12px;
             }
 
-            .footer-text {
-                color: #ffffff;
-
+            .footer-about {
                 font-size: 14px;
                 font-weight: bold;
                 line-height: 30px;
                 text-align: right;
-                min-width: auto !important;
+                min-width: 150px !important;
             }
 
 
@@ -204,12 +207,19 @@
                                                     <td class="footer">
                                                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                             <tr>
-                                                                <td class="footer-text">
+                                                                <td>{% block footer_left %}{% endblock %}</td>
+                                                                <td class="footer-about">
                                                                     <a href="https://about.narvik.app/" target="_blank"
                                                                        class="button"
                                                                        title="Narvik">
                                                                         À propos de Narvik
                                                                     </a>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="2" style="text-align: center;">
+                                                                    <p style="margin-top: 12px !important;">Narvik, la solution SaaS qui simplifie la gestion des associations.</p>
+                                                                    <p>Gagnez du temps, simplifiez votre organisation et concentrez-vous sur l’essentiel : vos adhérents.</p>
                                                                 </td>
                                                             </tr>
                                                         </table>
