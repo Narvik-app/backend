@@ -63,11 +63,8 @@ use Symfony\Component\Validator\Constraints as Assert;
                     'type' => 'string',
                   ],
                   'members' => [
-                    'type' => 'array',
-                    'description' => 'List of members uuid',
-                    'items' => [
-                      'type' => 'string',
-                    ]
+                    'type' => 'string',
+                    'description' => 'List of members uuid, separated by comma',
                   ],
                   'isNewsletter' => [
                     'type' => 'boolean',
