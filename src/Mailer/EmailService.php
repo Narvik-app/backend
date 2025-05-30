@@ -2,6 +2,7 @@
 
 namespace App\Mailer;
 
+use App\Entity\Club;
 use App\Entity\File;
 use App\Enum\GlobalSetting;
 use App\Service\FileService;
@@ -76,9 +77,53 @@ class EmailService {
     return $email;
   }
 
-  public function sendEmail(?TemplatedEmail $email, ?string $to = null): void {
+  public function getClubEmail(Club $club, string $subject, string $content): ?TemplatedEmail {
+
+    if (!$this->canSendEmail()) {
+      return null;
+    }
+
+    $email = new TemplatedEmail();
+
+    $context['subject'] = $subject;
+    $context['frontend_url'] = $this->params->get('app.frontend_url');
+    $context['content'] = $content;
+
+    // We set email logo
+    $logo = $this->imageService->getClubLogoFile($club);
+
+    // Logo fallback to Narvik one
+    if (!$logo) {
+      $logo = $this->imageService->getLogoFile();
+    }
+
+    if ($logo) {
+      $logoPart = (new DataPart($logo, 'logo.png'));
+      $context['logo'] = $logoPart->getFilename();
+      $email->addPart($logoPart->asInline());
+    }
+
+    // We set the sender
+    $smtpSender = $this->globalSettingService->getSettingValue(GlobalSetting::SMTP_SENDER); // TODO: Add new var SMTP_NEWSLETTER_SENDER
+    $smtpSenderName = "{$club->getName()} via Narvik";
+
+    // We render the html
+    $htmlBody = $this->twig->render('email/club-emailing/default.html.twig', $context);
+
+    // We set the email
+    $email
+      ->from(new Address($smtpSender, $smtpSenderName))
+      ->replyTo(null ?? $club->getContactEmail()) // TODO: Get the replyTo from clubSetting
+      ->subject($subject)
+      ->html($htmlBody)
+      ->context($context);
+
+    return $email;
+  }
+
+  public function sendEmail(?TemplatedEmail $email, ?string $to = null): bool {
     if (!$this->canSendEmail() || !$email) {
-      return;
+      return false;
     }
 
     if (!empty($to)) {
@@ -90,6 +135,8 @@ class EmailService {
 
     $mailer = new Mailer($transport, $this->bus);
     $mailer->send($email);
+
+    return true;
   }
 
   public function joinFile(TemplatedEmail $email, File $file, string $filename, bool $inline = false): void {

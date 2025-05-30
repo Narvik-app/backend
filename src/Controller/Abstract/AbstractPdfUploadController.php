@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-abstract class AbstractPdfUploadController extends AbstractFileUploadController {
+abstract class AbstractPdfUploadController extends AbstractController {
 
   public function validateFileUpload(Request $request, string $fieldName = 'file'): UploadedFile {
     $uploadedFile = parent::validateFileUpload($request, $fieldName);

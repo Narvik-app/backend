@@ -3,8 +3,10 @@
 namespace App\Controller\Abstract;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as SymfonyAbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 abstract class AbstractController extends SymfonyAbstractController {
@@ -36,6 +38,21 @@ abstract class AbstractController extends SymfonyAbstractController {
 
   protected function toBoolean($value): bool {
     return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+  }
+
+  public function validateFileUpload(Request $request, string $fieldName = 'file'): UploadedFile {
+    $uploadedFile = $this->getUploadedFile($request, $fieldName);
+
+    if (!$uploadedFile) {
+      throw new BadRequestHttpException('The "'.$fieldName.'" field is required.');
+    }
+
+    return $uploadedFile;
+  }
+
+  public function getUploadedFile(Request $request, string $fieldName = 'file'): ?UploadedFile {
+    /** @var UploadedFile|null $uploadedFile */
+    return $request->files->get($fieldName);
   }
 
 }

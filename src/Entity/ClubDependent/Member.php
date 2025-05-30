@@ -29,6 +29,7 @@ use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\UserMember;
+use App\Enum\ClubActivity;
 use App\Enum\ClubRole;
 use App\Filter\ClubDependent\CurrentSeasonFilter;
 use App\Filter\ClubDependent\PreviousSeasonFilter;
@@ -254,6 +255,10 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
    */
   #[ORM\OneToMany(mappedBy: 'seller', targetEntity: Sale::class)]
   private Collection $sales;
+
+  #[ORM\Column(type: 'boolean' , options: ['default' => true])]
+  #[Groups(['member', 'self-read', 'self-write'])]
+  private bool $clubNewsletter = true;
 
   #[ORM\OneToOne(targetEntity: File::class)]
   #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]

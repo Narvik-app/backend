@@ -42,6 +42,21 @@ class ImageService {
     return new File($path);
   }
 
+  public function getClubLogoFile(Club $club): ?File {
+    $logoPath = $club->getSettings()?->getLogo();
+    if (!$logoPath || !$logoPath->getPath()) {
+      return null;
+    }
+
+    $path = $this->params->get('app.public_images') . $logoPath->getFilename();
+
+    if (!$this->fs->exists($path)) {
+      return null;
+    }
+
+    return new File($path);
+  }
+
   public function importClubLogo(Club $club, ?UploadedFile $file): void {
     $clubSettings = $club->getSettings();
     if (!$clubSettings) return;

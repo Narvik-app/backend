@@ -4,17 +4,21 @@ namespace App\Service;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
+use App\Enum\EmailStatus;
 use App\Enum\GlobalSetting;
 use App\Enum\UserRole;
 use App\Mailer\EmailService;
+use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubRepository;
 use App\Repository\FileRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ClubService {
@@ -27,6 +31,7 @@ class ClubService {
     private readonly GlobalSettingService $globalSettingService,
     private readonly FileService $fileService,
     private readonly FileRepository $fileRepository,
+    private readonly MemberRepository $memberRepository,
   ) {
   }
 
@@ -230,4 +235,52 @@ class ClubService {
     $this->entityManager->persist($userMember);
   }
 
+  /**
+   * @param Club $club
+   * @param User $user
+   * @return int|null Number of email defined and so to be billed
+   */
+  private function applyClubMembersToEmail(Club $club, TemplatedEmail $email, string $memberUuids, bool $isNewsletter = true): ?int {
+    // We extract the uuids
+    $uuids = explode(",", $memberUuids);
+    $this->memberRepository->getAllByUuidsAndNewsletter($club, $uuids, $isNewsletter);
+
+    // We send the email as cci so nobody can see other emails
+
+    return 0;
+  }
+
+  public function sendClubEmail(Club $club, Email $email, ?string $membersUUids): bool {
+    if (empty($membersUUids)) {
+      $email->setStatus(EmailStatus::FAILED);
+      return false;
+    }
+
+    // We generate the email template
+    $smtpEmail = $this->emailService->getClubEmail($club, $email->getTitle(), $email->getContent());
+    $numberOfRecipients = $this->applyClubMembersToEmail($club, $smtpEmail, $membersUUids);
+
+    // Check quota is ok
+    if ($numberOfRecipients === 0) { // TODO: Simulate adding the number to the clubSetting->emailSent
+      $email->setStatus(EmailStatus::FAILED);
+      return false;
+    }
+
+    // We add the attachement if any
+
+    // We send the email
+    $sent = $this->emailService->sendEmail($smtpEmail);
+
+    if ($sent) {
+      // Consume the quota
+
+      $email->setStatus(EmailStatus::SENT);
+    } else {
+      $email->setStatus(EmailStatus::FAILED);
+    }
+
+    // We delete the attachment from our server
+
+    return false;
+  }
 }
