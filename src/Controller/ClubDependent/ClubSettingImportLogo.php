@@ -15,10 +15,10 @@ class ClubSettingImportLogo extends AbstractClubDependentController {
     /** @var UploadedFile|null $uploadedFile */
     $uploadedFile = $request->files->get('file');
     if ($uploadedFile) {
-      $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp'];
+      $allowedExtensions = ['png'];
 
       if (!in_array($uploadedFile->getClientOriginalExtension(), $allowedExtensions)) {
-        throw new BadRequestHttpException('The "file" must be an image (png, jpg, webp).');
+        throw new BadRequestHttpException('The "file" must be a png.');
       }
     }
 
