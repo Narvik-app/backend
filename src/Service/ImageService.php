@@ -48,7 +48,7 @@ class ImageService {
       return null;
     }
 
-    $path = $this->params->get('app.public_images') . $logoPath->getFilename();
+    $path = $this->params->get('app.files') . $logoPath->getPath();
 
     if (!$this->fs->exists($path)) {
       return null;

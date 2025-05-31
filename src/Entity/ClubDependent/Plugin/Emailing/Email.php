@@ -23,6 +23,7 @@ use App\Enum\EmailStatus;
 use App\Repository\ClubDependent\Plugin\Emailing\EmailRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -65,6 +66,10 @@ use Symfony\Component\Validator\Constraints as Assert;
                   'members' => [
                     'type' => 'string',
                     'description' => 'List of members uuid, separated by comma',
+                  ],
+                  'replyTo' => [
+                    'type' => 'string',
+                    'description' => 'Custom reply to email, otherwise fallback to the club contact email',
                   ],
                   'isNewsletter' => [
                     'type' => 'boolean',
@@ -121,6 +126,15 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   #[Groups(['email-read'])]
   private ?string $sender = null;
 
+  // Field not saved in the database
+  // Use for sending the email
+
+  private ?string $replyTo = null;
+
+  private ?UploadedFile $attachment = null;
+
+  private array $members = [];
+
   public function getId(): ?int {
     return $this->id;
   }
@@ -171,7 +185,7 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
     return $this;
   }
 
-  public function getIsNewsletter(): ?bool {
+  public function getIsNewsletter(): bool {
       return $this->isNewsletter;
   }
 
@@ -179,4 +193,32 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
       $this->isNewsletter = $isNewsletter;
       return $this;
   }
+
+  public function getReplyTo(): ?string {
+      return $this->replyTo;
+  }
+
+  public function setReplyTo(?string $replyTo): static {
+      $this->replyTo = $replyTo;
+      return $this;
+  }
+
+  public function getAttachment(): ?UploadedFile {
+    return $this->attachment;
+  }
+
+  public function setAttachment(?UploadedFile $attachment): static {
+    $this->attachment = $attachment;
+    return $this;
+  }
+
+  public function getMembers(): array {
+    return $this->members;
+  }
+
+  public function setMembers(array $members): static {
+    $this->members = $members;
+    return $this;
+  }
+
 }

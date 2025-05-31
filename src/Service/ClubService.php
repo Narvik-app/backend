@@ -240,25 +240,33 @@ class ClubService {
    * @param User $user
    * @return int|null Number of email defined and so to be billed
    */
-  private function applyClubMembersToEmail(Club $club, TemplatedEmail $email, string $memberUuids, bool $isNewsletter = true): ?int {
-    // We extract the uuids
-    $uuids = explode(",", $memberUuids);
-    $this->memberRepository->getAllByUuidsAndNewsletter($club, $uuids, $isNewsletter);
+  private function applyClubMembersToEmail(Club $club, Email $email, TemplatedEmail $smtpEmail): ?int {
+    $recipients = 0;
 
+    $members = $this->memberRepository->getAllByUuidsAndNewsletter($club, $email->getMembers(), $email->getIsNewsletter());
     // We send the email as cci so nobody can see other emails
+    foreach ($members as $member) {
+      if (!$member->getEmail()) {
+        continue;
+      }
 
-    return 0;
+      $smtpEmail->addBcc($member->getEmail());
+      $recipients++;
+    }
+
+    return $recipients;
   }
 
-  public function sendClubEmail(Club $club, Email $email, ?string $membersUUids): bool {
-    if (empty($membersUUids)) {
+  public function sendClubEmail(Club $club, Email $email): bool {
+    if (empty($email->getMembers())) {
       $email->setStatus(EmailStatus::FAILED);
       return false;
     }
 
     // We generate the email template
-    $smtpEmail = $this->emailService->getClubEmail($club, $email->getTitle(), $email->getContent());
-    $numberOfRecipients = $this->applyClubMembersToEmail($club, $smtpEmail, $membersUUids);
+    $smtpEmail = $this->emailService->getClubEmail($club, $email);
+    $numberOfRecipients = $this->applyClubMembersToEmail($club, $email, $smtpEmail);
+    $email->setRecipientCount($numberOfRecipients);
 
     // Check quota is ok
     if ($numberOfRecipients === 0) { // TODO: Simulate adding the number to the clubSetting->emailSent
@@ -267,6 +275,9 @@ class ClubService {
     }
 
     // We add the attachement if any
+    if ($email->getAttachment()) {
+      $this->emailService->joinUploadedFile($smtpEmail, $email->getAttachment());
+    }
 
     // We send the email
     $sent = $this->emailService->sendEmail($smtpEmail);
@@ -280,6 +291,9 @@ class ClubService {
     }
 
     // We delete the attachment from our server
+
+    $this->entityManager->persist($email);
+    $this->entityManager->persist($club->getSettings());
 
     return false;
   }

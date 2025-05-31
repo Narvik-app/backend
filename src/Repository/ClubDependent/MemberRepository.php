@@ -159,6 +159,12 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
       ->getQuery()->getSingleScalarResult();
   }
 
+  /**
+   * @param Club $club
+   * @param array $uuids
+   * @param bool $isNewsletter
+   * @return Member[]
+   */
   public function getAllByUuidsAndNewsletter(Club $club, array $uuids, bool $isNewsletter): array {
     $qb = $this->qbByUuids($club, $uuids);
     if ($isNewsletter) {

@@ -3,6 +3,7 @@
 namespace App\Mailer;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
 use App\Enum\GlobalSetting;
 use App\Service\FileService;
@@ -10,6 +11,7 @@ use App\Service\GlobalSettingService;
 use App\Service\ImageService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
@@ -17,6 +19,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Part\DataPart;
 use Twig\Environment;
+use Symfony\Component\Mime\Part\File as MimePartFile;
+
 
 class EmailService {
   public function __construct(
@@ -77,17 +81,18 @@ class EmailService {
     return $email;
   }
 
-  public function getClubEmail(Club $club, string $subject, string $content): ?TemplatedEmail {
-
+  public function getClubEmail(Club $club, Email $email): ?TemplatedEmail {
     if (!$this->canSendEmail()) {
       return null;
     }
 
-    $email = new TemplatedEmail();
+    $smtpEmail = new TemplatedEmail();
 
-    $context['subject'] = $subject;
     $context['frontend_url'] = $this->params->get('app.frontend_url');
-    $context['content'] = $content;
+    $context['club'] = $club;
+    $context['subject'] = $email->getTitle();
+    $context['content'] = $email->getContent();
+    $context['isNewsletter'] = $email->getIsNewsletter();
 
     // We set email logo
     $logo = $this->imageService->getClubLogoFile($club);
@@ -98,9 +103,9 @@ class EmailService {
     }
 
     if ($logo) {
-      $logoPart = (new DataPart($logo, 'logo.png'));
+      $logoPart = new DataPart($logo, 'logo.png');
       $context['logo'] = $logoPart->getFilename();
-      $email->addPart($logoPart->asInline());
+      $smtpEmail->addPart($logoPart->asInline());
     }
 
     // We set the sender
@@ -111,14 +116,14 @@ class EmailService {
     $htmlBody = $this->twig->render('email/club-emailing/default.html.twig', $context);
 
     // We set the email
-    $email
+    $smtpEmail
       ->from(new Address($smtpSender, $smtpSenderName))
-      ->replyTo(null ?? $club->getContactEmail()) // TODO: Get the replyTo from clubSetting
-      ->subject($subject)
+      ->replyTo($email->getReplyTo())
+      ->subject($email->getTitle())
       ->html($htmlBody)
       ->context($context);
 
-    return $email;
+    return $smtpEmail;
   }
 
   public function sendEmail(?TemplatedEmail $email, ?string $to = null): bool {
@@ -145,7 +150,22 @@ class EmailService {
       return;
     }
 
-    $attachment = (new DataPart($mimeFile, $filename));
+    $this->joinMimePartFile($email, $mimeFile, $inline);
+  }
+
+  public function joinUploadedFile(TemplatedEmail $email, UploadedFile $file, bool $inline = false): void {
+    // FIXME: Since it's async the attachment disappear and make the mail fail
+    // To fix it :
+    //   - create a File with new type (emailing)
+    //   - Cron to remove emailing files that are 1 week old
+
+    // Will be replaced by $this->joinFile()
+    // $mimeFile = new MimePartFile($file->getPathname(), $file->getFilename());
+    // $this->joinMimePartFile($email, $mimeFile, $inline);
+  }
+
+  private function joinMimePartFile(TemplatedEmail $email, MimePartFile $mimeFile, bool $inline = false): void {
+    $attachment = (new DataPart($mimeFile, $mimeFile->getFilename()));
 
     if ($inline) {
       $email->addPart($attachment->asInline());

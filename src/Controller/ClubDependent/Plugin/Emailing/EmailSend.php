@@ -4,11 +4,14 @@ namespace App\Controller\ClubDependent\Plugin\Emailing;
 
 use App\Controller\Abstract\AbstractClubDependentController;
 use App\Entity\ClubDependent\Plugin\Emailing\Email;
+use App\Entity\User;
 use App\Service\ClubService;
 use App\Service\RequestService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EmailSend extends AbstractClubDependentController {
   public function __construct(
@@ -18,7 +21,11 @@ class EmailSend extends AbstractClubDependentController {
   }
 
 
-  public function __invoke(Request $request): Email {
+  public function __invoke(Request $request, EntityManagerInterface $em): Email {
+    $user = $this->getUser();
+    if (!$user instanceof User) {
+      throw new NotFoundHttpException(); // User not logged, should never happen
+    }
 
     $requiredFields = [
       'title',
@@ -31,23 +38,33 @@ class EmailSend extends AbstractClubDependentController {
       }
     }
 
+    $club = $this->getClub($request);
+
     $title = $request->request->get('title');
     $content = $request->request->get('content');
     $members = $request->request->get('members');
 
     $isNewsLetter = $this->toBoolean($request->request->get('isNewsletter') ?? '1');
+    $replyTo = $request->request->get('replyTo');
     $file = $this->getUploadedFile($request);
 
     $email = new Email();
     $email
+      ->setClub($club)
+      ->setSender($user->getEmail())
+      ->setReplyTo($replyTo ?? $club->getContactEmail()) // TODO: Add fallback to clubSettings->emailReplyTo ?? club->getContactEmail()
       ->setIsNewsletter($isNewsLetter)
+      ->setMembers(explode(",", $members))
       ->setTitle($title)
-      ->setContent($content);
+      ->setContent($content)
+      ->setAttachment($file);
 
     // We send it
-    $this->clubService->sendClubEmail($this->getClub($request), $email, $members);
+    $this->clubService->sendClubEmail($club, $email);
 
     // We persist the email object
+    $em->persist($email);
+    $em->flush();
 
     return $email;
   }
