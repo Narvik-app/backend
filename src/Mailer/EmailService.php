@@ -5,6 +5,7 @@ namespace App\Mailer;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
+use App\Enum\FileCategory;
 use App\Enum\GlobalSetting;
 use App\Service\FileService;
 use App\Service\GlobalSettingService;
@@ -150,28 +151,24 @@ class EmailService {
     return true;
   }
 
-  public function joinFile(TemplatedEmail $email, File $file, string $filename, bool $inline = false): void {
+  public function joinFile(TemplatedEmail $email, File $file, ?string $filename = null, bool $inline = false): void {
     $mimeFile =  $this->fileService->getMimePartFile($file);
     if (!$mimeFile) {
       return;
     }
 
-    $this->joinMimePartFile($email, $mimeFile, $inline);
+    $this->joinMimePartFile($email, $mimeFile, $filename, $inline);
   }
 
-  public function joinUploadedFile(TemplatedEmail $email, UploadedFile $file, bool $inline = false): void {
-    // FIXME: Since it's async the attachment disappear and make the mail fail
-    // To fix it :
-    //   - create a File with new type (emailing)
-    //   - Cron to remove emailing files that are 1 week old
-
-    // Will be replaced by $this->joinFile()
-    // $mimeFile = new MimePartFile($file->getPathname(), $file->getFilename());
-    // $this->joinMimePartFile($email, $mimeFile, $inline);
+  public function joinUploadedFile(TemplatedEmail $email, UploadedFile $uploadedFile, bool $inline = false, ?Club $club = null): void {
+    $file = $this->fileService->importFile($uploadedFile, $uploadedFile->getClientOriginalName(), FileCategory::club_email, true, $club);
+    $this->joinFile($email, $file, $file->getFilename(), $inline);
   }
 
-  private function joinMimePartFile(TemplatedEmail $email, MimePartFile $mimeFile, bool $inline = false): void {
-    $attachment = (new DataPart($mimeFile, $mimeFile->getFilename()));
+  private function joinMimePartFile(TemplatedEmail $email, MimePartFile $mimeFile, ?string $filename = null, bool $inline = false): void {
+    $attachmentName = $filename ?? $mimeFile->getFilename();
+
+    $attachment = (new DataPart($mimeFile, $attachmentName));
 
     if ($inline) {
       $email->addPart($attachment->asInline());

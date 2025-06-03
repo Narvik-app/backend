@@ -278,7 +278,7 @@ class ClubService {
 
     // We add the attachement if any
     if ($email->getAttachment()) {
-      $this->emailService->joinUploadedFile($smtpEmail, $email->getAttachment());
+      $this->emailService->joinUploadedFile($smtpEmail, $email->getAttachment(), club: $email->getClub());
     }
 
     // We send the email
@@ -292,8 +292,6 @@ class ClubService {
       $email->setStatus(EmailStatus::FAILED);
       $email->setExplanation("Server error.");
     }
-
-    // We delete the attachment from our server
 
     $this->entityManager->persist($email);
     $this->entityManager->persist($club->getSettings());
