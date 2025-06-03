@@ -108,6 +108,10 @@
                 line-height: 12px;
             }
 
+            .footer a {
+                color: #60a5fa;
+            }
+
             .footer-about {
                 font-size: 14px;
                 font-weight: bold;
@@ -145,6 +149,8 @@
                                     <tr>
                                         <td>
                                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                                {% block header_before %}{% endblock %}
+
                                                 <!-- Header -->
                                                 <tr>
                                                     <td style="padding: 12px 0;">

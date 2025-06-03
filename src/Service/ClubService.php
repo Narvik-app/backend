@@ -260,6 +260,7 @@ class ClubService {
   public function sendClubEmail(Club $club, Email $email): bool {
     if (empty($email->getMembers())) {
       $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("No members defined.");
       return false;
     }
 
@@ -271,6 +272,7 @@ class ClubService {
     // Check quota is ok
     if ($numberOfRecipients === 0) { // TODO: Simulate adding the number to the clubSetting->emailSent
       $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("No matching members to send email to.");
       return false;
     }
 
@@ -288,6 +290,7 @@ class ClubService {
       $email->setStatus(EmailStatus::SENT);
     } else {
       $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("Server error.");
     }
 
     // We delete the attachment from our server

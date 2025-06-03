@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Entity\Abstract\UuidEntity;
+use App\Entity\Interface\TimestampEntityInterface;
+use App\Entity\Trait\TimestampTrait;
 use App\Enum\FileCategory;
 use App\Repository\FileRepository;
 use App\Service\UuidService;
@@ -10,7 +12,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: FileRepository::class)]
-class File extends UuidEntity {
+class File extends UuidEntity implements TimestampEntityInterface {
+  use TimestampTrait;
+
   private ?string $encodedUuid = null;
 
   #[Groups(['common-read'])]

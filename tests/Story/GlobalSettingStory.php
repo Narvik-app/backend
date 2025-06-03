@@ -61,6 +61,11 @@ final class GlobalSettingStory extends Story {
     ]));
 
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
+      'name'  => GlobalSetting::SMTP_NEWSLETTER_SENDER->name,
+      'value' => 'narvik-newsletter@example.com',
+    ]));
+
+    $this->addToPool('required_settings', GlobalSettingFactory::createOne([
       'name'  => GlobalSetting::SMTP_SENDER_NAME->name,
       'value' => null,
     ]));

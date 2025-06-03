@@ -101,8 +101,12 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   use SelfClubLinkedEntityTrait;
 
   #[ORM\Column(type: "string", enumType: EmailStatus::class)]
-  #[Groups(['email'])]
+  #[Groups(['email-read'])]
   private EmailStatus $status = EmailStatus::DRAFT;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['email-read'])]
+  private ?string $explanation = null;
 
   #[ORM\Column]
   #[Groups(['email'])]
@@ -218,6 +222,15 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
 
   public function setMembers(array $members): static {
     $this->members = $members;
+    return $this;
+  }
+
+  public function getExplanation(): ?string {
+    return $this->explanation;
+  }
+
+  public function setExplanation(?string $explanation): static {
+    $this->explanation = $explanation;
     return $this;
   }
 

@@ -84,6 +84,10 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['club-setting-read'])]
   private ?File $logo = null;
 
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['club-setting'])]
+  private ?string $emailReplyTo = null;
+
   #[ORM\Column(type: 'string', length: 5, options: ["default" => '08-31'])]
   #[Groups(['club-setting'])]
   #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
@@ -278,6 +282,15 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setActivity(ClubActivity $activity): ClubSetting {
     $this->activity = $activity;
+    return $this;
+  }
+
+  public function getEmailReplyTo(): ?string {
+    return $this->emailReplyTo;
+  }
+
+  public function setEmailReplyTo(?string $emailReplyTo): static {
+    $this->emailReplyTo = $emailReplyTo;
     return $this;
   }
 }

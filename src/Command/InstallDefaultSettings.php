@@ -39,6 +39,7 @@ class InstallDefaultSettings extends Command {
       GlobalSetting::SMTP_USERNAME,
       GlobalSetting::SMTP_PASSWORD,
       GlobalSetting::SMTP_SENDER,
+      GlobalSetting::SMTP_NEWSLETTER_SENDER,
       GlobalSetting::SMTP_SENDER_NAME,
     ];
     foreach ($smtpFields as $field) {

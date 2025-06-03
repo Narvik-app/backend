@@ -9,6 +9,7 @@ use App\Enum\GlobalSetting;
 use App\Service\FileService;
 use App\Service\GlobalSettingService;
 use App\Service\ImageService;
+use App\Service\UuidService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -93,6 +94,11 @@ class EmailService {
     $context['subject'] = $email->getTitle();
     $context['content'] = $email->getContent();
     $context['isNewsletter'] = $email->getIsNewsletter();
+    if ($email->getIsNewsletter()) {
+      $context['unsubscribe_url'] = $context['frontend_url'] . "/unsubscribe?club=" . UuidService::encodeToReadable($club->getUuid());
+      $smtpEmail->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+      $smtpEmail->getHeaders()->addTextHeader('List-Unsubscribe', '<'. $context['unsubscribe_url'] . '>');
+    }
 
     // We set email logo
     $logo = $this->imageService->getClubLogoFile($club);
@@ -109,7 +115,7 @@ class EmailService {
     }
 
     // We set the sender
-    $smtpSender = $this->globalSettingService->getSettingValue(GlobalSetting::SMTP_SENDER); // TODO: Add new var SMTP_NEWSLETTER_SENDER
+    $smtpSender = $this->globalSettingService->getSettingValue(GlobalSetting::SMTP_NEWSLETTER_SENDER);
     $smtpSenderName = "{$club->getName()} via Narvik";
 
     // We render the html

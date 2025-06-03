@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
@@ -27,6 +28,8 @@ class AppFixtures extends Fixture {
     // We record some presence
     MemberPresenceFactory::new()->many(20, 40)->create();
     ExternalPresenceFactory::new()->many(20, 40)->create();
+
+    EmailFactory::new()->many(5, 10)->create();
 
     /*******************************************************
      *                    INVENTORY                        *

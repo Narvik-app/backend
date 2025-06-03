@@ -52,7 +52,7 @@ class EmailSend extends AbstractClubDependentController {
     $email
       ->setClub($club)
       ->setSender($user->getEmail())
-      ->setReplyTo($replyTo ?? $club->getContactEmail()) // TODO: Add fallback to clubSettings->emailReplyTo ?? club->getContactEmail()
+      ->setReplyTo($replyTo ?? $club->getSettings()->getEmailReplyTo() ?? $club->getContactEmail())
       ->setIsNewsletter($isNewsLetter)
       ->setMembers(explode(",", $members))
       ->setTitle($title)

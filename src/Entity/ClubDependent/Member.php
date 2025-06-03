@@ -394,6 +394,15 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     return 'valid';
   }
 
+  public function getClubNewsletter(): bool {
+    return $this->clubNewsletter;
+  }
+
+  public function setClubNewsletter(bool $clubNewsletter): Member {
+    $this->clubNewsletter = $clubNewsletter;
+    return $this;
+  }
+
   public function getProfileImage(): ?File {
     return $this->profileImage;
   }
