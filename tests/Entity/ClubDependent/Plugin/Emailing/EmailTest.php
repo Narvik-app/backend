@@ -8,6 +8,7 @@ use App\Enum\EmailStatus;
 use App\Tests\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
+use App\Tests\FixtureFileManager;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\GlobalSettingStory;
 
@@ -206,6 +207,97 @@ class EmailTest extends AbstractEntityClubLinkedTestCase {
       ],
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+  }
+
+  public function testSendEmailWithAttachment(): void {
+    GlobalSettingStory::load(); // We load the default settings so we can send email
+
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_member_club_1();
+    $member2 = _InitStory::MEMBER_supervisor_club_1();
+
+    $this->loggedAsAdminClub1();
+
+    $endpoint = $this->getRootWClubUrl($club1) . "/-/send";
+    $payload = [
+      "title" => "Email Test",
+      "content" => "<p>This is a test</p>",
+      "members" => $member->getUuid()->toString() . ', ' . $member2->getUuid()->toString(),
+      "isNewsletter" => false,
+      "replyTo" => "test-email@narvik.app"
+    ];
+
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::PDF, true);
+
+    // First is send
+    $this->makePostRequest($endpoint, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => $payload,
+        'files' => [
+          'file' => $file,
+        ],
+      ],
+    ]);
+    FixtureFileManager::removeUploadedFile(FixtureFileManager::PDF);
+    $this->assertResponseIsSuccessful();
+
+    $quotas = $this->getQuotas();
+    $this->assertEquals(2, $quotas["sent"]);
+  }
+
+  public function testSendEmailMaxMonthQuotaReached(): void {
+    GlobalSettingStory::load(); // We load the default settings so we can send email
+
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_member_club_1();
+    $member2 = _InitStory::MEMBER_supervisor_club_1();
+
+    $this->loggedAsSuperAdmin();
+    $this->makePatchRequest($this->getIriFromResource($club1), ['maxMonthlyEmails' => 3]);
+
+    $this->loggedAsAdminClub1();
+
+    $endpoint = $this->getRootWClubUrl($club1) . "/-/send";
+    $payload = [
+      "title" => "Email Test",
+      "content" => "<p>This is a test</p>",
+      "members" => $member->getUuid()->toString() . ', ' . $member2->getUuid()->toString(),
+      "isNewsletter" => false,
+      "replyTo" => "test-email@narvik.app"
+    ];
+
+    $quotas = $this->getQuotas();
+    $this->assertEquals(3, $quotas["max"]);
+    $this->assertEquals(0, $quotas["sent"]);
+
+    // First is send
+    $this->makePostRequest($endpoint, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => $payload,
+      ],
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    $quotas = $this->getQuotas();
+    $this->assertEquals(3, $quotas["max"]);
+    $this->assertEquals(2, $quotas["sent"]);
+
+    // Second email batch is out of quota
+    $this->makePostRequest($endpoint, [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [
+        'parameters' => $payload,
+      ],
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Monthly email limit reached.",
+    ]);
   }
 
   public function testUserUnsubscribeFail(): void {
