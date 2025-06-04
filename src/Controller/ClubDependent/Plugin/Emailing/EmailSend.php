@@ -60,11 +60,15 @@ class EmailSend extends AbstractClubDependentController {
       ->setAttachment($file);
 
     // We send it
-    $this->clubService->sendClubEmail($club, $email);
+    $sent = $this->clubService->sendClubEmail($club, $email);
 
     // We persist the email object
     $em->persist($email);
     $em->flush();
+
+    if (!$sent) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, $email->getExplanation());
+    }
 
     return $email;
   }

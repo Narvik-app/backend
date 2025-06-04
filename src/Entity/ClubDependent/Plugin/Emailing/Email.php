@@ -21,6 +21,7 @@ use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
 use App\Enum\EmailStatus;
 use App\Repository\ClubDependent\Plugin\Emailing\EmailRepository;
+use App\Security\Voter\EmailVoter;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -38,7 +39,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       security: "is_granted('" . ClubRole::admin->value . "', request)",
     ),
     new Get(security: "is_granted('" . ClubRole::admin->value . "', object)",),
-    new Patch(security: "is_granted('" . ClubRole::admin->value . "', object) && object.getStatus() === " . EmailStatus::DRAFT->value . ")",),
+    new Patch(security: "is_granted('".EmailVoter::UPDATE."', object)",),
 
     new Post(
       uriTemplate: '/clubs/{clubUuid}/emails/-/send',
@@ -83,7 +84,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".ClubRole::admin->value."', request)",
       read: false,
       deserialize: false
     ),
@@ -221,7 +222,7 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   }
 
   public function setMembers(array $members): static {
-    $this->members = $members;
+    $this->members = array_unique(array_filter(array_map('trim', $members))); // array_filter remove empty values
     return $this;
   }
 

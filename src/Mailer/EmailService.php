@@ -125,10 +125,13 @@ class EmailService {
     // We set the email
     $smtpEmail
       ->from(new Address($smtpSender, $smtpSenderName))
-      ->replyTo($email->getReplyTo())
       ->subject($email->getTitle())
       ->html($htmlBody)
       ->context($context);
+
+    if ($email->getReplyTo()) {
+      $smtpEmail->replyTo($email->getReplyTo());
+    }
 
     return $smtpEmail;
   }

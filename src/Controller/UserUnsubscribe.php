@@ -22,13 +22,13 @@ class UserUnsubscribe extends AbstractController {
     /** @var Club|null $club */
     $club = $clubRepository->findOneByUuid($payload['club']);
     if (!$club) {
-      throw new HttpException(Response::HTTP_NOT_FOUND, 'Club not found.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Club not found.');
     }
 
     /** @var Member|null $member */
     $member = $memberRepository->findOneByEmail($club, $payload['email']);
     if (!$member) {
-      throw new HttpException(Response::HTTP_NOT_FOUND, 'Member not found.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Member not found.');
     }
 
     $member->setClubNewsletter(false);

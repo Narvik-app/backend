@@ -242,6 +242,9 @@ class ClubService {
    */
   private function applyClubMembersToEmail(Club $club, Email $email, TemplatedEmail $smtpEmail): ?int {
     $recipients = 0;
+    if (empty($email->getMembers())) {
+      return 0;
+    }
 
     $members = $this->memberRepository->getAllByUuidsAndNewsletter($club, $email->getMembers(), $email->getIsNewsletter());
     // We send the email as cci so nobody can see other emails
@@ -260,19 +263,35 @@ class ClubService {
   public function sendClubEmail(Club $club, Email $email): bool {
     if (empty($email->getMembers())) {
       $email->setStatus(EmailStatus::FAILED);
+      $email->setRecipientCount(0);
       $email->setExplanation("No members defined.");
       return false;
     }
 
     // We generate the email template
     $smtpEmail = $this->emailService->getClubEmail($club, $email);
+    if (!$smtpEmail) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setRecipientCount(0);
+      $email->setExplanation("Email not enabled.");
+      return false;
+    }
+
     $numberOfRecipients = $this->applyClubMembersToEmail($club, $email, $smtpEmail);
     $email->setRecipientCount($numberOfRecipients);
 
-    // Check quota is ok
-    if ($numberOfRecipients === 0) { // TODO: Simulate adding the number to the clubSetting->emailSent
+    if ($numberOfRecipients === 0) {
       $email->setStatus(EmailStatus::FAILED);
       $email->setExplanation("No matching members to send email to.");
+      return false;
+    }
+
+    // Check quota is ok
+    $emailLimit = $club->getMaxMonthlyEmails();
+    $emailCurrentUsage = $club->getCurrentMonthEmailsSent();
+    if ($emailCurrentUsage + $numberOfRecipients > $emailLimit) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("Monthly email limit reached.");
       return false;
     }
 
@@ -286,16 +305,17 @@ class ClubService {
 
     if ($sent) {
       // Consume the quota
-
+      $club->incrementCurrentMonthEmailsSent($numberOfRecipients);
       $email->setStatus(EmailStatus::SENT);
     } else {
       $email->setStatus(EmailStatus::FAILED);
       $email->setExplanation("Server error.");
+      return false;
     }
 
     $this->entityManager->persist($email);
-    $this->entityManager->persist($club->getSettings());
+    $this->entityManager->persist($club);
 
-    return false;
+    return true;
   }
 }
