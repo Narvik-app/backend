@@ -10,7 +10,6 @@ use App\Enum\UserRole;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Story\_InitStory;
 use Doctrine\DBAL\Connection;
-use JetBrains\PhpStorm\NoReturn;
 use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Attributes\BeforeClass;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -40,7 +39,6 @@ abstract class AbstractTestCase extends ApiTestCase {
     $this->initDefaultFixtures();
   }
 
-  #[Before]
   public static function _resetDatabaseBeforeEachTest(): void {
     $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
