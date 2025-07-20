@@ -39,6 +39,7 @@ abstract class AbstractTestCase extends ApiTestCase {
     $this->initDefaultFixtures();
   }
 
+  #[Before]
   public static function _resetDatabaseBeforeEachTest(): void {
     $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
@@ -60,7 +61,6 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   public function initDefaultFixtures(): void {}
 
-  #[NoReturn]
   public function debugTestDatabase(): never {
     \DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver::commit();
     die; // The DB changes are actually persisted
