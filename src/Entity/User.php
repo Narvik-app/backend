@@ -112,6 +112,7 @@ use Symfony\Component\Validator\Constraints as Assert;
               'type'       => 'object',
               'properties' => [
                 'securityCode' => ['type' => 'string'],
+                'cf_token'     => ['type' => 'string'],
               ],
             ],
           ],
