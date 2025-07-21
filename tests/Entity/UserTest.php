@@ -234,7 +234,7 @@ class UserTest extends AbstractEntityTestCase {
     $user = _InitStory::USER_member_club_1();
     $this->makePostRequest($this->getRootUrl() . "/-/initiate-reset-password", [
       "email" => $user->getEmail(),
-      "token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from clouflare
+      "token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from cloudflare
     ]);
     $this->assertResponseIsSuccessful();
   }

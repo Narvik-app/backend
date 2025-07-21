@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\Controller\ClubBadgerQuickLogin;
 use App\Controller\ClubGenerateBadger;
 use App\Controller\ClubProgramDeletion;
 use App\Entity\Abstract\UuidEntity;
@@ -44,6 +45,15 @@ use Symfony\Component\Validator\Constraints as Assert;
     deserialize: false,
     write: false
   ),
+
+  new Get(
+    uriTemplate: '/clubs/{uuid}/badger-quick-login',
+    controller: ClubBadgerQuickLogin::class,
+    security: "is_granted('".ClubRole::admin->value."', object)",
+    deserialize: false,
+    write: false
+  ),
+
   new Patch(
     uriTemplate: '/clubs/{uuid}/delete',
     controller: ClubProgramDeletion::class,
