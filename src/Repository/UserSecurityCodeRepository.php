@@ -16,7 +16,7 @@ class UserSecurityCodeRepository extends ServiceEntityRepository {
     parent::__construct($registry, UserSecurityCode::class);
   }
 
-  public function findOneBySecurityCode(string $securityCode, UserSecurityCodeTrigger $trigger): ?UserSecurityCode {
+  public function findLastOneBySecurityCode(string $securityCode, UserSecurityCodeTrigger $trigger): ?UserSecurityCode {
     return $this->createQueryBuilder('m')
                 ->andWhere('m.code = :securityCode')
                 ->andWhere('m.trigger = :trigger')

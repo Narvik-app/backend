@@ -31,7 +31,7 @@ class BadgerQuickLogin extends AbstractController {
     $payload = $this->checkAndGetJsonValues($request, ['securityCode']);
 
     $securityCode = $payload['securityCode'];
-    $userSecurityCode = $this->userSecurityCodeRepository->findOneBySecurityCode($securityCode, UserSecurityCodeTrigger::badgerQuickLogin);
+    $userSecurityCode = $this->userSecurityCodeRepository->findLastOneBySecurityCode($securityCode, UserSecurityCodeTrigger::badgerQuickLogin);
     $user = $userSecurityCode?->getUser();
 
     /** @var UserMember|null $userMember */
