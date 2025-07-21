@@ -118,6 +118,7 @@ class LoginTest extends AbstractTestCase {
   public function testBadgerQuickLogin(): void {
     $this->makePostRequest("/auth/quick-login/bdg", [
       "securityCode" => "invalid",
+      "cf_token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from cloudflare
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
     $this->assertJsonContains([
@@ -139,6 +140,7 @@ class LoginTest extends AbstractTestCase {
 
     $this->makePostRequest("/auth/quick-login/bdg", [
       "securityCode" => $securityCode,
+      "cf_token" => "XXXX.DUMMY.TOKEN.XXXX" // We send the dummy token from cloudflare
     ]);
     $this->assertResponseIsSuccessful();
     $this->assertJsonContains([
