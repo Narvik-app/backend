@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\OpenApi\Model;
+use App\Controller\BadgerQuickLogin;
 use App\Controller\UserPasswordReset;
 use App\Controller\UserPasswordResetInitiate;
 use App\Controller\UserInitiateRegister;
@@ -95,6 +96,32 @@ use Symfony\Component\Validator\Constraints as Assert;
     ),
     read: false,
     write: false
+  ),
+
+  new Post(
+    uriTemplate: '/auth/quick-login/bdg',
+    controller: BadgerQuickLogin::class,
+    openapi:
+    new Model\Operation(
+      summary: 'Return the login information for a badger.',
+      requestBody:
+      new Model\RequestBody(
+        content: new \ArrayObject([
+          'application/json' => [
+            'schema' => [
+              'type'       => 'object',
+              'properties' => [
+                'securityCode' => ['type' => 'string'],
+              ],
+            ],
+          ],
+        ]),
+      ),
+    ),
+    read: false,
+    deserialize: false,
+    write: false,
+    serialize: false
   ),
 
   new Post(

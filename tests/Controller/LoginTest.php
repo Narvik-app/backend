@@ -4,12 +4,15 @@ namespace App\Tests\Controller;
 
 use App\Enum\ClubRole;
 use App\Enum\UserRole;
+use App\Enum\UserSecurityCodeTrigger;
 use App\Tests\AbstractTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserMemberFactory;
+use App\Tests\Factory\UserSecurityCodeFactory;
 use App\Tests\Story\_InitStory;
+use App\Tests\Story\GlobalSettingStory;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoginTest extends AbstractTestCase {
@@ -110,5 +113,37 @@ class LoginTest extends AbstractTestCase {
     $this->selectedProfile($adminProfile['id']);
     $this->makeGetRequest($this->getIriFromResource($club1) . '/members');
     $this->assertResponseIsSuccessful();
+  }
+
+  public function testBadgerQuickLogin(): void {
+    $this->makePostRequest("/auth/quick-login/bdg", [
+      "securityCode" => "invalid",
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Invalid security code.",
+    ]);
+
+    $club1 = _InitStory::club_1();
+    $iri = $this->getIriFromResource($club1);
+
+    // We log as a club admin
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($iri . "/badger-quick-login");
+    $this->assertResponseIsSuccessful();
+
+    $securityCode = $response->toArray()['securityCode'];
+
+    // We log out
+    $this->logout();
+
+    $this->makePostRequest("/auth/quick-login/bdg", [
+      "securityCode" => $securityCode,
+    ]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      "token" => $club1->getBadgerToken(),
+    ]);
+
   }
 }
