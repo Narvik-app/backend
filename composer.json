@@ -135,6 +135,7 @@
             "bin/phpunit"
         ],
         "ci-test": [
+            "Composer\\Config::disableProcessTimeout",
             "XDEBUG_MODE=coverage bin/phpunit --coverage-clover coverage.xml --log-junit junit.xml"
         ],
         "test-with-coverage": [
