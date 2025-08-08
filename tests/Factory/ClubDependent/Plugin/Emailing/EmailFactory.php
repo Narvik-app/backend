@@ -29,7 +29,7 @@ final class EmailFactory extends PersistentProxyObjectFactory {
       'club'           => _InitStory::club_1(),
       'content'        => self::faker()->text(),
       'isNewsletter'   => self::faker()->boolean(),
-      'recipientCount' => self::faker()->randomNumber(),
+      'recipientCount' => self::faker()->numberBetween(1, 250),
       'sender'         => self::faker()->email(),
       'status'         => self::faker()->randomElement(EmailStatus::cases()),
       'title'          => self::faker()->text(255),
