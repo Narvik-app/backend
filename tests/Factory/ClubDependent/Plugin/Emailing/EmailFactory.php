@@ -30,7 +30,7 @@ final class EmailFactory extends PersistentProxyObjectFactory {
       'content'        => self::faker()->text(),
       'isNewsletter'   => self::faker()->boolean(),
       'recipientCount' => self::faker()->randomNumber(),
-      'sender'         => self::faker()->text(255),
+      'sender'         => self::faker()->email(),
       'status'         => self::faker()->randomElement(EmailStatus::cases()),
       'title'          => self::faker()->text(255),
     ];
