@@ -12,7 +12,7 @@ final class GlobalSettingStory extends Story {
   public function build(): void {
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
       'name'  => GlobalSetting::LEGALS_LAST_UPDATE->name,
-      'value' => null,
+      'value' => '2025-03-31',
     ]));
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
       'name'  => GlobalSetting::LEGALS_CGU->name,

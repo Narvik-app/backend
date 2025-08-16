@@ -6,7 +6,9 @@ use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
+use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\MemberPresenceFactory;
+use App\Tests\Factory\MemberSeasonFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use App\Tests\Story\AgeCategoryStory;
@@ -21,6 +23,8 @@ class AppFixtures extends Fixture {
   public function load(ObjectManager $manager): void {
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
+
+    $members = MemberFactory::new()->many(250, 350)->create();
 
     // We create the default global settings
     GlobalSettingStory::load();
