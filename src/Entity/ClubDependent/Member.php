@@ -2,6 +2,7 @@
 
 namespace App\Entity\ClubDependent;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
@@ -239,12 +240,14 @@ use Symfony\Component\Validator\Constraints as Assert;
   ],
 )]
 #[ApiFilter(ExistsFilter::class, properties: ['licence'])]
+#[ApiFilter(ExistsFilter::class, properties: ['email'])]
 #[ApiFilter(SearchFilter::class, properties: ['userMember.role' => 'exact'])]
 #[ApiFilter(OrderFilter::class, properties: ['lastname' => 'ASC', 'firstname' => 'ASC'])]
 #[ApiFilter(MultipleFilter::class, properties: ['firstname', 'lastname', 'licence', 'email', 'phone', 'mobilePhone'])]
 #[ApiFilter(CurrentSeasonFilter::class, properties: ['memberSeasons.season'])]
 #[ApiFilter(PreviousSeasonFilter::class, properties: ['memberSeasons.season'])]
 #[ApiFilter(MemberSeasonNotRenewedFilter::class, properties: ['memberSeasons.season'])]
+#[ApiFilter(BooleanFilter::class, properties: ['clubNewsletter'])]
 class Member extends UuidEntity implements ClubLinkedEntityInterface {
   use SelfClubLinkedEntityTrait;
 
