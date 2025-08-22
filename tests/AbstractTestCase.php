@@ -10,7 +10,6 @@ use App\Enum\UserRole;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Story\_InitStory;
 use Doctrine\DBAL\Connection;
-use JetBrains\PhpStorm\NoReturn;
 use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Attributes\BeforeClass;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -62,7 +61,6 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   public function initDefaultFixtures(): void {}
 
-  #[NoReturn]
   public function debugTestDatabase(): never {
     \DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver::commit();
     die; // The DB changes are actually persisted

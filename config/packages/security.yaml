@@ -39,6 +39,7 @@ security:
         - { path: ^/$, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI
         - { path: ^/docs, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI docs
         - { route: 'auth_bdg', roles: PUBLIC_ACCESS }
+        - { path: ^/auth/quick-login, roles: PUBLIC_ACCESS }
         - { path: ^/public, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/initiate-register, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/register, roles: PUBLIC_ACCESS }

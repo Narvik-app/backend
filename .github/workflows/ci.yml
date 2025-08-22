@@ -57,10 +57,10 @@ jobs:
         run: curl -v --fail-with-body http://localhost
       -
         name: Check HTTPS reachability
-        run: curl -vk --fail-with-body https://localhost
+        run: curl -v --insecure --fail-with-body https://localhost
       -
         name: Check Mercure reachability
-        run: curl -vkI --fail-with-body https://localhost/.well-known/mercure?topic=test
+        run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
       -
         name: Run PHPUnit
         run: | 
