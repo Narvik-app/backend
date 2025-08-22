@@ -24,7 +24,7 @@ class AppFixtures extends Fixture {
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
 
-    $members = MemberFactory::new()->many(250, 350)->create();
+    MemberFactory::new()->many(250, 350)->create();
 
     // We create the default global settings
     GlobalSettingStory::load();
