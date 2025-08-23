@@ -22,6 +22,7 @@ use App\Controller\UserSelfDeleteAccount;
 use App\Controller\UserSelfLegalsAccepted;
 use App\Controller\UserSelfUpdatePassword;
 use App\Controller\UserRegister;
+use App\Controller\UserUnsubscribe;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\ClubDependent\Member;
 use App\Entity\Interface\TimestampEntityInterface;
@@ -247,7 +248,36 @@ use Symfony\Component\Validator\Constraints as Assert;
     deserialize: false,
     write: false,
     serialize: false
-  )], normalizationContext: [
+  ),
+
+  new Post(
+    uriTemplate: '/unsubscribe',
+    controller: UserUnsubscribe::class,
+    openapi:
+    new Model\Operation(
+      summary: 'User unsubscribe from a club newsletter.',
+      requestBody:
+      new Model\RequestBody(
+        content: new \ArrayObject([
+          'application/json' => [
+            'schema' => [
+              'type'       => 'object',
+              'properties' => [
+                'club'     => ['type' => 'string'],
+                'email'   => ['type' => 'string'],
+              ],
+              'required' => ['club', 'email']
+            ],
+          ],
+        ]),
+      ),
+    ),
+    read: false,
+    deserialize: false,
+    write: false,
+    serialize: false
+  )
+  ], normalizationContext: [
     'groups' => ['user', 'user-read'],
   ], denormalizationContext: [
     'groups' => ['user', 'user-write'],

@@ -111,13 +111,14 @@ use Doctrine\ORM\Mapping as ORM;
               'schema' => [
                 'type' => 'object',
                 'properties' => [
-                  'on'         => ['type' => 'string'],
-                  'host'       => ['type' => 'string'],
-                  'port'       => ['type' => 'string'],
-                  'username'   => ['type' => 'string'],
-                  'password'   => ['type' => 'string'],
-                  'sender'     => ['type' => 'string'],
-                  'senderName' => ['type' => 'string'],
+                  'on'                => ['type' => 'string'],
+                  'host'              => ['type' => 'string'],
+                  'port'              => ['type' => 'string'],
+                  'username'          => ['type' => 'string'],
+                  'password'          => ['type' => 'string'],
+                  'sender'            => ['type' => 'string'],
+                  'newsletterSender'  => ['type' => 'string'],
+                  'senderName'        => ['type' => 'string'],
                 ]
               ]
             ]

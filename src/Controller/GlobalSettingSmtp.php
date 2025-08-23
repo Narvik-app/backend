@@ -26,6 +26,10 @@ class GlobalSettingSmtp extends AbstractController {
     $globalSettingService->updateSettingValue(GlobalSetting::SMTP_SENDER, $json['sender']);
     $globalSettingService->updateSettingValue(GlobalSetting::SMTP_SENDER_NAME, !empty($json['senderName']) ? $json['senderName'] : 'Narvik');
 
+    if ($json['newsletterSender']) {
+      $globalSettingService->updateSettingValue(GlobalSetting::SMTP_NEWSLETTER_SENDER, $json['newsletterSender']);
+    }
+
     // We restart the messenger so the cache is refreshed
     $application = new Application($kernel);
     $command = new ArrayInput([

@@ -11,7 +11,7 @@ use App\Tests\FixtureFileManager;
 use App\Tests\Story\GlobalSettingStory;
 
 class GlobalSettingTest extends AbstractEntityTestCase {
-  protected int $TOTAL_SUPER_ADMIN = 11;
+  protected int $TOTAL_SUPER_ADMIN = 12;
 
   protected function getClassname(): string {
     return GlobalSetting::class;

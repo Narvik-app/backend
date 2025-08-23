@@ -10,6 +10,7 @@ use App\Repository\Interface\ClubLinkedInterface;
 use App\Repository\Trait\ClubLinkedTrait;
 use App\Repository\Trait\UuidEntityRepositoryTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 
@@ -156,5 +157,31 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
       ->select($qb->expr()->count("m.id"))
       ->andWhere($qb->expr()->isNotNull("m.licence"))
       ->getQuery()->getSingleScalarResult();
+  }
+
+  /**
+   * @param Club $club
+   * @param array $uuids
+   * @param bool $isNewsletter
+   * @return Member[]
+   */
+  public function getAllByUuidsAndNewsletter(Club $club, array $uuids, bool $isNewsletter): array {
+    $qb = $this->qbByUuids($club, $uuids);
+    if ($isNewsletter) {
+      $qb
+        ->andWhere("m.clubNewsletter = :clubNewsletter")
+        ->setparameter('clubNewsletter', true);
+    }
+
+    return $qb->getQuery()->getResult();
+  }
+
+  private function qbByUuids(Club $club, array $uuids): QueryBuilder {
+    $qb = $this->createQueryBuilder("m");
+    $this->applyClubRestriction($qb, $club);
+
+    return $qb
+      ->andWhere($qb->expr()->in('m.uuid', ':uuids'))
+      ->setParameter('uuids', $uuids);
   }
 }
