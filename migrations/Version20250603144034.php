@@ -22,7 +22,7 @@ final class Version20250603144034 extends AbstractMigration {
         SQL
     );
     $this->addSql(<<<'SQL'
-            CREATE TABLE email (status VARCHAR(255) NOT NULL, explanation VARCHAR(255) DEFAULT NULL, is_newsletter BOOLEAN NOT NULL, title VARCHAR(255) NOT NULL, content TEXT NOT NULL, recipient_count INT NOT NULL, sender VARCHAR(255) NOT NULL, id INT NOT NULL, uuid UUID NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY(id))
+            CREATE TABLE email (status VARCHAR(255) NOT NULL, explanation VARCHAR(255) DEFAULT NULL, is_newsletter BOOLEAN NOT NULL, title VARCHAR(255) NOT NULL, content TEXT NOT NULL, recipient_count INT NOT NULL, sender VARCHAR(255) NOT NULL, reply_to VARCHAR(255) DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY(id))
         SQL
     );
     $this->addSql(<<<'SQL'
