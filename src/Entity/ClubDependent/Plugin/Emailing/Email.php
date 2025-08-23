@@ -129,10 +129,12 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
 
   #[ORM\Column(length: 255)]
   #[Groups(['email-read'])]
+  #[Assert\Email]
   private ?string $sender = null;
 
   #[ORM\Column(length: 255, nullable: true)]
   #[Groups(['email-read'])]
+  #[Assert\Email]
   private ?string $replyTo = null;
 
   // Field not saved in the database
