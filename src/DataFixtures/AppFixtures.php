@@ -2,10 +2,13 @@
 
 namespace App\DataFixtures;
 
+use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
+use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\MemberPresenceFactory;
+use App\Tests\Factory\MemberSeasonFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use App\Tests\Story\AgeCategoryStory;
@@ -21,12 +24,16 @@ class AppFixtures extends Fixture {
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
 
+    MemberFactory::new()->many(250, 350)->create();
+
     // We create the default global settings
     GlobalSettingStory::load();
 
     // We record some presence
     MemberPresenceFactory::new()->many(20, 40)->create();
     ExternalPresenceFactory::new()->many(20, 40)->create();
+
+    EmailFactory::new()->many(5, 10)->create();
 
     /*******************************************************
      *                    INVENTORY                        *

@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\Controller\ClubBadgerQuickLogin;
 use App\Controller\ClubGenerateBadger;
 use App\Controller\ClubProgramDeletion;
 use App\Entity\Abstract\UuidEntity;
@@ -44,6 +45,15 @@ use Symfony\Component\Validator\Constraints as Assert;
     deserialize: false,
     write: false
   ),
+
+  new Get(
+    uriTemplate: '/clubs/{uuid}/badger-quick-login',
+    controller: ClubBadgerQuickLogin::class,
+    security: "is_granted('".ClubRole::admin->value."', object)",
+    deserialize: false,
+    write: false
+  ),
+
   new Patch(
     uriTemplate: '/clubs/{uuid}/delete',
     controller: ClubProgramDeletion::class,
@@ -89,6 +99,16 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
   private bool $presencesEnabled = false;
 
+  #[ORM\Column(options: ['default' => 0])]
+  #[Groups(['club-read', 'super-admin-write'])]
+  #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
+  private int $currentMonthEmailsSent = 0;
+
+  #[ORM\Column(options: ['default' => 200])]
+  #[Groups(['club-read', 'super-admin-write'])]
+  #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
+  private int $maxMonthlyEmails = 200;
+
   #[ORM\Column(length: 255, nullable: true)]
   #[Groups(['club-read', 'club-admin-write'])]
   #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property only viewable & writable by the club admin
@@ -133,6 +153,7 @@ class Club extends UuidEntity implements TimestampEntityInterface {
 
   #[ORM\Column(length: 255, nullable: true)]
   #[Groups(['club-read', 'club-admin-write'])]
+  #[Assert\Email]
   private ?string $contactEmail = null;
 
   #[ORM\OneToOne(targetEntity: ClubSetting::class, mappedBy: 'club', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -175,25 +196,48 @@ class Club extends UuidEntity implements TimestampEntityInterface {
     return $this->presencesEnabled;
   }
 
-  public function setPresencesEnabled(bool $presencesEnabled): Club {
+  public function getCurrentMonthEmailsSent(): int {
+    return $this->currentMonthEmailsSent;
+  }
+
+  public function setCurrentMonthEmailsSent(int $currentMonthEmailsSent): static {
+    $this->currentMonthEmailsSent = $currentMonthEmailsSent;
+    return $this;
+  }
+
+  public function incrementCurrentMonthEmailsSent(int $increment): static {
+    $this->setCurrentMonthEmailsSent($this->getCurrentMonthEmailsSent() + $increment);
+    return $this;
+  }
+
+  public function getMaxMonthlyEmails(): int {
+    return $this->maxMonthlyEmails;
+  }
+
+  public function setMaxMonthlyEmails(int $maxMonthlyEmails): static {
+    $this->maxMonthlyEmails = $maxMonthlyEmails;
+    return $this;
+  }
+
+  public function setPresencesEnabled(bool $presencesEnabled): static {
     $this->presencesEnabled = $presencesEnabled;
     return $this;
   }
 
   public function getBadgerToken(): ?string {
-      return $this->badgerToken;
+    return $this->badgerToken;
   }
 
   public function setBadgerToken(?string $badgerToken): static {
-      $this->badgerToken = $badgerToken;
-      return $this;
+    $this->badgerToken = $badgerToken;
+    return $this;
   }
 
   public function getComment(): ?string {
     return $this->comment;
   }
 
-  public function setComment(?string $comment): Club {
+  public function setComment(?string $comment): static {
     if (empty($comment)) {
       $comment = null;
     }

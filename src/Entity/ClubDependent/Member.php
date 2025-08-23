@@ -2,6 +2,7 @@
 
 namespace App\Entity\ClubDependent;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
@@ -29,6 +30,7 @@ use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\UserMember;
+use App\Enum\ClubActivity;
 use App\Enum\ClubRole;
 use App\Filter\ClubDependent\CurrentSeasonFilter;
 use App\Filter\ClubDependent\PreviousSeasonFilter;
@@ -238,12 +240,14 @@ use Symfony\Component\Validator\Constraints as Assert;
   ],
 )]
 #[ApiFilter(ExistsFilter::class, properties: ['licence'])]
+#[ApiFilter(ExistsFilter::class, properties: ['email'])]
 #[ApiFilter(SearchFilter::class, properties: ['userMember.role' => 'exact'])]
 #[ApiFilter(OrderFilter::class, properties: ['lastname' => 'ASC', 'firstname' => 'ASC'])]
 #[ApiFilter(MultipleFilter::class, properties: ['firstname', 'lastname', 'licence', 'email', 'phone', 'mobilePhone'])]
 #[ApiFilter(CurrentSeasonFilter::class, properties: ['memberSeasons.season'])]
 #[ApiFilter(PreviousSeasonFilter::class, properties: ['memberSeasons.season'])]
 #[ApiFilter(MemberSeasonNotRenewedFilter::class, properties: ['memberSeasons.season'])]
+#[ApiFilter(BooleanFilter::class, properties: ['clubNewsletter'])]
 class Member extends UuidEntity implements ClubLinkedEntityInterface {
   use SelfClubLinkedEntityTrait;
 
@@ -254,6 +258,10 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
    */
   #[ORM\OneToMany(mappedBy: 'seller', targetEntity: Sale::class)]
   private Collection $sales;
+
+  #[ORM\Column(type: 'boolean' , options: ['default' => true])]
+  #[Groups(['member', 'self-read', 'self-write'])]
+  private bool $clubNewsletter = true;
 
   #[ORM\OneToOne(targetEntity: File::class)]
   #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -387,6 +395,15 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     }
 
     return 'valid';
+  }
+
+  public function getClubNewsletter(): bool {
+    return $this->clubNewsletter;
+  }
+
+  public function setClubNewsletter(bool $clubNewsletter): Member {
+    $this->clubNewsletter = $clubNewsletter;
+    return $this;
   }
 
   public function getProfileImage(): ?File {

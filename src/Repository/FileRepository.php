@@ -33,6 +33,19 @@ class FileRepository extends ServiceEntityRepository {
                 ->getResult();
   }
 
+  /**
+   * @return File[]
+   */
+  public function findAllExpiredEmailAttachments(): array {
+    return $this->createQueryBuilder('f')
+                ->andWhere('f.category <= :category')
+                ->andWhere('f.createdAt <= :date')
+                ->setParameter('category', FileCategory::club_email)
+                ->setParameter('date', (new \DateTimeImmutable())->sub(new \DateInterval('P7D')))
+                ->getQuery()
+                ->getResult();
+  }
+
   //    /**
   //     * @return File[] Returns an array of File objects
   //     */

@@ -4,17 +4,21 @@ namespace App\Service;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
+use App\Enum\EmailStatus;
 use App\Enum\GlobalSetting;
 use App\Enum\UserRole;
 use App\Mailer\EmailService;
+use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubRepository;
 use App\Repository\FileRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ClubService {
@@ -27,6 +31,7 @@ class ClubService {
     private readonly GlobalSettingService $globalSettingService,
     private readonly FileService $fileService,
     private readonly FileRepository $fileRepository,
+    private readonly MemberRepository $memberRepository,
   ) {
   }
 
@@ -230,4 +235,87 @@ class ClubService {
     $this->entityManager->persist($userMember);
   }
 
+  /**
+   * @param Club $club
+   * @param User $user
+   * @return int|null Number of email defined and so to be billed
+   */
+  private function applyClubMembersToEmail(Club $club, Email $email, TemplatedEmail $smtpEmail): ?int {
+    $recipients = 0;
+    if (empty($email->getMembers())) {
+      return 0;
+    }
+
+    $members = $this->memberRepository->getAllByUuidsAndNewsletter($club, $email->getMembers(), $email->getIsNewsletter());
+    // We send the email as cci so nobody can see other emails
+    foreach ($members as $member) {
+      if (!$member->getEmail()) {
+        continue;
+      }
+
+      $smtpEmail->addBcc($member->getEmail());
+      $recipients++;
+    }
+
+    return $recipients;
+  }
+
+  public function sendClubEmail(Club $club, Email $email): bool {
+    if (empty($email->getMembers())) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setRecipientCount(0);
+      $email->setExplanation("No members defined.");
+      return false;
+    }
+
+    // We generate the email template
+    $smtpEmail = $this->emailService->getClubEmail($club, $email);
+    if (!$smtpEmail) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setRecipientCount(0);
+      $email->setExplanation("Email not enabled.");
+      return false;
+    }
+
+    $numberOfRecipients = $this->applyClubMembersToEmail($club, $email, $smtpEmail);
+    $email->setRecipientCount($numberOfRecipients);
+
+    if ($numberOfRecipients === 0) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("No matching members to send email to.");
+      return false;
+    }
+
+    // Check quota is ok
+    $emailLimit = $club->getMaxMonthlyEmails();
+    $emailCurrentUsage = $club->getCurrentMonthEmailsSent();
+    if ($emailCurrentUsage + $numberOfRecipients > $emailLimit) {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("Monthly email limit reached.");
+      return false;
+    }
+
+    // We add the attachement if any
+    if ($email->getAttachment()) {
+      $this->emailService->joinUploadedFile($smtpEmail, $email->getAttachment(), club: $email->getClub());
+    }
+
+    // We send the email
+    $sent = $this->emailService->sendEmail($smtpEmail);
+
+    if ($sent) {
+      // Consume the quota
+      $club->incrementCurrentMonthEmailsSent($numberOfRecipients);
+      $email->setStatus(EmailStatus::SENT);
+    } else {
+      $email->setStatus(EmailStatus::FAILED);
+      $email->setExplanation("Server error.");
+      return false;
+    }
+
+    $this->entityManager->persist($email);
+    $this->entityManager->persist($club);
+
+    return true;
+  }
 }

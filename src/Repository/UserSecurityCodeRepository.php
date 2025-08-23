@@ -16,6 +16,21 @@ class UserSecurityCodeRepository extends ServiceEntityRepository {
     parent::__construct($registry, UserSecurityCode::class);
   }
 
+  public function findLastOneBySecurityCode(string $securityCode, UserSecurityCodeTrigger $trigger): ?UserSecurityCode {
+    return $this->createQueryBuilder('m')
+                ->andWhere('m.code = :securityCode')
+                ->andWhere('m.trigger = :trigger')
+                ->andWhere(':expire_at <= m.expireAt')
+                ->setParameter('securityCode', $securityCode)
+                ->setParameter('trigger', $trigger)
+                ->setParameter('expire_at', new \DateTimeImmutable())
+                ->orderBy('m.createdAt', 'DESC')
+                ->orderBy('m.id', 'DESC')
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
+  }
+
   public function findLastOneForUser(User $user, UserSecurityCodeTrigger $trigger): ?UserSecurityCode {
     return $this->createQueryBuilder('m')
                 ->andWhere('m.user = :user')

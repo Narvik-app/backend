@@ -49,7 +49,7 @@ class ClubSettingTest extends AbstractTestCase {
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
     $this->assertJsonContains([
-      "detail" => "The \"file\" must be an image (png, jpg, webp).",
+      "detail" => "The \"file\" must be a png.",
     ]);
 
     $file = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);

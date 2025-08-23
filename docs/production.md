@@ -60,10 +60,14 @@ git clone git@github.com:<username>/<project-name>.git
 Go into the directory containing your project (`<project-name>`), and start the app in production mode:
 
 ```console
+# Build fresh production image
+docker compose -f compose.yaml -f compose.prod.yaml build --pull --no-cache
+
+# Start container
 SERVER_NAME=your-domain-name.example.com \
 APP_SECRET=ChangeMe \
 CADDY_MERCURE_JWT_SECRET=ChangeThisMercureHubJWTSecretKey \
-docker compose -f compose.yaml -f compose.prod.yaml up -d --wait
+docker compose -f compose.yaml -f compose.prod.yaml up --wait
 ```
 
 Be sure to replace `your-domain-name.example.com` with your actual domain name and to set the values of `APP_SECRET`, `CADDY_MERCURE_JWT_SECRET` to cryptographically secure random values.
@@ -85,7 +89,7 @@ Alternatively, if you don't want to expose an HTTPS server but only an HTTP one,
 SERVER_NAME=:80 \
 APP_SECRET=ChangeMe \
 CADDY_MERCURE_JWT_SECRET=ChangeThisMercureHubJWTSecretKey \
-docker compose -f compose.yaml -f compose.prod.yaml up -d --wait
+docker compose -f compose.yaml -f compose.prod.yaml up --wait
 ```
 
 ## Deploying on Multiple Nodes

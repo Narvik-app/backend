@@ -2,13 +2,18 @@
 
 namespace App\Mailer;
 
+use App\Entity\Club;
+use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
+use App\Enum\FileCategory;
 use App\Enum\GlobalSetting;
 use App\Service\FileService;
 use App\Service\GlobalSettingService;
 use App\Service\ImageService;
+use App\Service\UuidService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
@@ -16,6 +21,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Part\DataPart;
 use Twig\Environment;
+use Symfony\Component\Mime\Part\File as MimePartFile;
+
 
 class EmailService {
   public function __construct(
@@ -76,9 +83,62 @@ class EmailService {
     return $email;
   }
 
-  public function sendEmail(?TemplatedEmail $email, ?string $to = null): void {
+  public function getClubEmail(Club $club, Email $email): ?TemplatedEmail {
+    if (!$this->canSendEmail()) {
+      return null;
+    }
+
+    $smtpEmail = new TemplatedEmail();
+
+    $context['frontend_url'] = $this->params->get('app.frontend_url');
+    $context['club'] = $club;
+    $context['subject'] = $email->getTitle();
+    $context['content'] = $email->getContent();
+    $context['isNewsletter'] = $email->getIsNewsletter();
+    if ($email->getIsNewsletter()) {
+      $context['unsubscribe_url'] = $context['frontend_url'] . "/unsubscribe?club=" . UuidService::encodeToReadable($club->getUuid());
+      $smtpEmail->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+      $smtpEmail->getHeaders()->addTextHeader('List-Unsubscribe', '<'. $context['unsubscribe_url'] . '>');
+    }
+
+    // We set email logo
+    $logo = $this->imageService->getClubLogoFile($club);
+
+    // Logo fallback to Narvik one
+    if (!$logo) {
+      $logo = $this->imageService->getLogoFile();
+    }
+
+    if ($logo) {
+      $logoPart = new DataPart($logo, 'logo.png');
+      $context['logo'] = $logoPart->getFilename();
+      $smtpEmail->addPart($logoPart->asInline());
+    }
+
+    // We set the sender
+    $smtpSender = $this->globalSettingService->getSettingValue(GlobalSetting::SMTP_NEWSLETTER_SENDER);
+    $smtpSenderName = "{$club->getName()} via Narvik";
+
+    // We render the html
+    $htmlBody = $this->twig->render('email/club-emailing/default.html.twig', $context);
+
+    // We set the email
+    $smtpEmail
+      ->from(new Address($smtpSender, $smtpSenderName))
+      ->subject($email->getTitle())
+      ->html($htmlBody)
+      ->context($context);
+
+    if ($email->getReplyTo()) {
+      $smtpEmail->replyTo($email->getReplyTo());
+    }
+
+    return $smtpEmail;
+  }
+
+  public function sendEmail(?TemplatedEmail $email, ?string $to = null): bool {
     if (!$this->canSendEmail() || !$email) {
-      return;
+      return false;
     }
 
     if (!empty($to)) {
@@ -90,15 +150,28 @@ class EmailService {
 
     $mailer = new Mailer($transport, $this->bus);
     $mailer->send($email);
+
+    return true;
   }
 
-  public function joinFile(TemplatedEmail $email, File $file, string $filename, bool $inline = false): void {
+  public function joinFile(TemplatedEmail $email, File $file, ?string $filename = null, bool $inline = false): void {
     $mimeFile =  $this->fileService->getMimePartFile($file);
     if (!$mimeFile) {
       return;
     }
 
-    $attachment = (new DataPart($mimeFile, $filename));
+    $this->joinMimePartFile($email, $mimeFile, $filename, $inline);
+  }
+
+  public function joinUploadedFile(TemplatedEmail $email, UploadedFile $uploadedFile, bool $inline = false, ?Club $club = null): void {
+    $file = $this->fileService->importFile($uploadedFile, $uploadedFile->getClientOriginalName(), FileCategory::club_email, true, $club);
+    $this->joinFile($email, $file, $file->getFilename(), $inline);
+  }
+
+  private function joinMimePartFile(TemplatedEmail $email, MimePartFile $mimeFile, ?string $filename = null, bool $inline = false): void {
+    $attachmentName = $filename ?? $mimeFile->getFilename();
+
+    $attachment = (new DataPart($mimeFile, $attachmentName));
 
     if ($inline) {
       $email->addPart($attachment->asInline());

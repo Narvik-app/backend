@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Repository\ClubRepository;
+use App\Repository\FileRepository;
 use App\Repository\SeasonRepository;
 use App\Repository\UserSecurityCodeRepository;
 use App\Service\SeasonService;
@@ -23,6 +24,7 @@ class CleanupCommand extends Command {
     private readonly UserSecurityCodeRepository $memberSecurityCodeRepository,
     private readonly SeasonRepository $seasonRepository,
     private readonly ClubRepository $clubRepository,
+    private readonly FileRepository $fileRepository,
   ) {
     parent::__construct();
   }
@@ -35,6 +37,7 @@ class CleanupCommand extends Command {
     $this->cleanSecurityCodes();
     $this->updateSeasons();
     $this->deleteFlaggedClubs();
+    $this->deleteEmailingAttachments();
 
     return Command::SUCCESS;
   }
@@ -70,6 +73,17 @@ class CleanupCommand extends Command {
     $this->io->section("Deleting flagged clubs");
     $expired = $this->clubRepository->findDeletionDateExpired();
     foreach ($expired as $item) {
+      $this->io->writeln("Removing Club {$item->getUuid()}");
+      $this->entityManager->remove($item);
+    }
+    $this->entityManager->flush();
+  }
+
+  private function deleteEmailingAttachments(): void {
+    $this->io->section("Deleting emailing attachments after 1 week");
+    $expired = $this->fileRepository->findAllExpiredEmailAttachments();
+    foreach ($expired as $item) {
+      $this->io->writeln("Removing File {$item->getUuid()}");
       $this->entityManager->remove($item);
     }
     $this->entityManager->flush();

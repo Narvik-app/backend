@@ -39,23 +39,25 @@ security:
         - { path: ^/$, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI
         - { path: ^/docs, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI docs
         - { route: 'auth_bdg', roles: PUBLIC_ACCESS }
+        - { path: ^/auth/quick-login, roles: PUBLIC_ACCESS }
         - { path: ^/public, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/initiate-register, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/register, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/initiate-reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/users/-/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/unsubscribe, roles: PUBLIC_ACCESS }
 
-        - { path: ^/files, roles: [ROLE_USER, ROLE_BADGER]}
+        - { path: ^/files, roles: [ROLE_USER, ROLE_BADGER] }
 
-        - {path: ^/self, roles: [ ROLE_USER, ROLE_BADGER ]}
+        - { path: ^/self, roles: [ ROLE_USER, ROLE_BADGER ] }
 
-        - { path: ^/clubs, roles: [ROLE_USER, ROLE_BADGER]} # ClubDepend access control is defined directly in the entities
+        - { path: ^/clubs, roles: [ROLE_USER, ROLE_BADGER] } # ClubDepend access control is defined directly in the entities
 
-        - { path: ^/age-categories, roles: [ROLE_USER]}
-        - { path: ^/global-settings, roles: [ROLE_SUPER_ADMIN]}
-        - { path: ^/metrics, roles: [ROLE_SUPER_ADMIN]}
-        - { path: ^/seasons, roles: [ROLE_USER]}
-        - { path: ^/users, roles: [ROLE_SUPER_ADMIN]}
+        - { path: ^/age-categories, roles: [ROLE_USER] }
+        - { path: ^/global-settings, roles: [ROLE_SUPER_ADMIN] }
+        - { path: ^/metrics, roles: [ROLE_SUPER_ADMIN] }
+        - { path: ^/seasons, roles: [ROLE_USER] }
+        - { path: ^/users, roles: [ROLE_SUPER_ADMIN] }
             
         # - { route: 'presence_list', roles: ROLE_BADGER } # route will also include presence_list_* it's like path, it's regex 
 

@@ -26,6 +26,7 @@ final class SeasonStory extends Story {
     "2019/2020",
     "2020/2021",
     "2021/2022",
+    "2022/2023",
   ];
 
   public function build(): void {
@@ -36,11 +37,11 @@ final class SeasonStory extends Story {
     }
 
     // We dynamically set current and previous season (current season will have a end date of 31 december)
-    $this->addState('season_previous', SeasonFactory::createOne([
+    $this->addState('season_previous', SeasonFactory::findOrCreate([
       'name' => SeasonService::getPreviousSeasonName()
     ]), 'seasons');
 
-    $this->addState('season_current', SeasonFactory::createOne([
+    $this->addState('season_current', SeasonFactory::findOrCreate([
       'name' => SeasonService::getCurrentSeasonName()
     ]), 'seasons');
   }
