@@ -6,7 +6,6 @@ use App\Entity\ClubDependent\Plugin\Emailing\EmailTemplate;
 use App\Enum\ClubRole;
 use App\Tests\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
-use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailTemplateFactory;
 use App\Tests\Story\_InitStory;
 
@@ -26,7 +25,7 @@ class EmailTemplateTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function initDefaultFixtures(): void {
-    EmailFactory::createMany(10);
+    EmailTemplateFactory::createMany(10);
   }
 
   protected function getCollectionGrantedAccess() : array {
@@ -77,13 +76,9 @@ class EmailTemplateTest extends AbstractEntityClubLinkedTestCase {
   public function testDelete(): void {
     // Deleting a template created today
     $this->makeAllLoggedRequests(
-      memberClub1Code: ResponseCodeEnum::not_allowed,
-      supervisorClub1Code: ResponseCodeEnum::not_allowed,
-      adminClub1Code: ResponseCodeEnum::ok,
-      adminClub2Code: ResponseCodeEnum::not_allowed,
-      superAdminCode: ResponseCodeEnum::ok,
-      badgerClub1Code: ResponseCodeEnum::not_allowed,
-      badgerClub2Code: ResponseCodeEnum::not_allowed,
+      supervisorClub1Code: ResponseCodeEnum::forbidden,
+      adminClub1Code: ResponseCodeEnum::no_content,
+      superAdminCode: ResponseCodeEnum::no_content,
       requestFunction: function (string $level, ?int $id) {
         $item = EmailTemplateFactory::createOne(['createdAt' => new \DateTimeImmutable()]);
         $this->makeDeleteRequest($this->getIriFromResource($item));
