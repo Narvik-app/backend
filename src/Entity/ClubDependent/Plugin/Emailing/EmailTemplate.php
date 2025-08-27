@@ -61,7 +61,7 @@ class EmailTemplate extends UuidEntity implements TimestampEntityInterface, Club
 
   #[ORM\Column(length: 255)]
   #[Groups(['email-template'])]
-  #[Assert\NotBlank()]
+  #[Assert\NotBlank(allowNull: false)]
   private string $name;
 
   #[ORM\Column]
