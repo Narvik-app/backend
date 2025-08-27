@@ -37,16 +37,22 @@ class EmailTemplateTest extends AbstractEntityClubLinkedTestCase {
   public function testCreate(): void {
     $club1 = _InitStory::club_1();
 
+    $payload = [
+      "name" => 'Test',
+      "title" => 'Email title',
+      "content" => 'Contenu du mail'
+    ];
+
     $this->makeAllLoggedRequests(
-      memberClub1Code: ResponseCodeEnum::not_allowed,
-      supervisorClub1Code: ResponseCodeEnum::not_allowed,
-      adminClub1Code: ResponseCodeEnum::not_allowed,
-      adminClub2Code: ResponseCodeEnum::not_allowed,
-      superAdminCode: ResponseCodeEnum::not_allowed,
-      badgerClub1Code: ResponseCodeEnum::not_allowed,
-      badgerClub2Code: ResponseCodeEnum::not_allowed,
-      requestFunction: function (string $level, ?int $id) use ($club1) {
-        $this->makePostRequest($this->getRootWClubUrl($club1));
+      memberClub1Code: ResponseCodeEnum::forbidden,
+      supervisorClub1Code: ResponseCodeEnum::forbidden,
+      adminClub1Code: ResponseCodeEnum::created,
+      adminClub2Code: ResponseCodeEnum::forbidden,
+      superAdminCode: ResponseCodeEnum::created,
+      badgerClub1Code: ResponseCodeEnum::forbidden,
+      badgerClub2Code: ResponseCodeEnum::forbidden,
+      requestFunction: function (string $level, ?int $id) use ($club1, &$payload) {
+        $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
       },
     );
   }

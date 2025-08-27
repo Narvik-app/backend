@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
@@ -32,6 +33,15 @@ use Symfony\Component\Validator\Constraints as Assert;
       ],
       security: "is_granted('" . ClubRole::admin->value . "', request)",
     ),
+    new Post(
+      uriTemplate: '/clubs/{clubUuid}/email-templates.{_format}',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+      ],
+      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      read: false,
+    ),
+
     new Get(security: "is_granted('" . ClubRole::admin->value . "', object)",),
     new Patch(security: "is_granted('" . ClubRole::admin->value . "', object)",),
     new Delete(security: "is_granted('" . ClubRole::admin->value . "', request)",),
@@ -49,6 +59,11 @@ class EmailTemplate extends UuidEntity implements TimestampEntityInterface, Club
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;
 
+  #[ORM\Column(length: 255)]
+  #[Groups(['email-template'])]
+  #[Assert\NotBlank()]
+  private string $name;
+
   #[ORM\Column]
   #[Groups(['email-template'])]
   private bool $isNewsletter = true;
@@ -63,8 +78,13 @@ class EmailTemplate extends UuidEntity implements TimestampEntityInterface, Club
   #[Assert\NotBlank(allowNull: false)]
   private ?string $content = null;
 
-  public function getId(): ?int {
-    return $this->id;
+  public function getName(): string {
+    return $this->name;
+  }
+
+  public function setName(string $name): EmailTemplate {
+    $this->name = $name;
+    return $this;
   }
 
   public function getTitle(): ?string {

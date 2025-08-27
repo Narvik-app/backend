@@ -26,6 +26,7 @@ final class EmailTemplateFactory extends PersistentProxyObjectFactory {
   protected function defaults(): array|callable {
     return [
       'club'           => _InitStory::club_1(),
+      'name'           => self::faker()->text(12),
       'content'        => self::faker()->text(),
       'isNewsletter'   => self::faker()->boolean(),
       'title'          => self::faker()->text(255),
