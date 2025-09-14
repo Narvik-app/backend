@@ -38,13 +38,13 @@ class MemberSeasonRepository extends ServiceEntityRepository {
   }
 
   public function countTotalMembersForThisSeason(?Club $club): int {
-    $currentSeason = $this->getEntityManager()->getRepository(Season::class)->findCurrentSeason();
+    $currentSeason = $this->getEntityManager()->getRepository(Season::class)->findCurrentSeason($club);
     if (!$currentSeason) return 0;
     return $this->countTotalMembersForSeason($club, $currentSeason);
   }
 
   public function countTotalMembersForPreviousSeason(?Club $club): int {
-    $currentSeason = $this->getEntityManager()->getRepository(Season::class)->findPreviousSeason();
+    $currentSeason = $this->getEntityManager()->getRepository(Season::class)->findPreviousSeason($club);
     if (!$currentSeason) return 0;
     return $this->countTotalMembersForSeason($club, $currentSeason);
   }
