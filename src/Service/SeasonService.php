@@ -14,22 +14,31 @@ class SeasonService {
   ) {
   }
 
-  public static function getCurrentSeasonName(?Club $club = null): string {
+  public static function getSeasonEndDate(?Club $club): string {
     $seasonEnd = '12-31'; // Regular annual year
 
     if ($club?->getSettings()) {
       $seasonEnd = $club->getSettings()->getSeasonEnd();
     }
 
+    return $seasonEnd;
+  }
+
+  public static function getCurrentSeasonEndDate(?Club $club): \DateTimeImmutable {
+    $seasonEnd = self::getSeasonEndDate($club);
+
     $today = new \DateTimeImmutable();
     $endYearSeason = \DateTimeImmutable::createFromFormat("m-d", $seasonEnd);
-    $seasonName = "";
     if ($today < $endYearSeason) {
-      $seasonName = $today->modify("-1year")->format("Y") . "/" . $today->format("Y");
+      return $endYearSeason;
     } else {
-      $seasonName = $today->format("Y") . "/" . $today->modify("+1year")->format("Y");
+      return $endYearSeason->modify('+1 year');
     }
-    return $seasonName;
+  }
+
+  public static function getCurrentSeasonName(?Club $club = null): string {
+    $currentSeasonEndDate = self::getCurrentSeasonEndDate($club);
+    return $currentSeasonEndDate->modify("-1 year")->format("Y") . "/" . $currentSeasonEndDate->format("Y");
   }
 
   public static function getPreviousSeasonName(?Club $club = null): string {

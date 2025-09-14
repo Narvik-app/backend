@@ -4,6 +4,7 @@ namespace App\Repository\Trait;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
+use App\Service\SeasonService;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
@@ -65,10 +66,27 @@ trait PresenceRepositoryTrait {
    *                        METRICS
    *********************************************************/
 
-  public function countTotalPresencesYearlyUntilDate(?Club $club,\DateTime $maxDate): int {
-    $startYear = (new \DateTime())
-      ->setDate((int) $maxDate->format("Y"), 1, 1)
-      ->setTime(0, 0, 0);
+  /**
+   * @param Club|null $club
+   * @param \DateTimeImmutable $maxDate
+   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
+\   */
+  private function calculateStartEndDate(?Club $club, \DateTimeImmutable $maxDate): array {
+    $currentDate = new \DateTimeImmutable();
+
+    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
+
+    $startDate = $maxDate->setDate($maxDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
+    $maxDate = $maxDate->setDate($maxDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+
+    return [
+      "start" => $startDate,
+      "end" => $maxDate,
+    ];
+  }
+
+  public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
+    $dateRange = $this->calculateStartEndDate($club, $maxDate);
 
     $qb = $this->createQueryBuilder("m");
     if ($club) {
@@ -77,15 +95,13 @@ trait PresenceRepositoryTrait {
     return $qb
       ->select($qb->expr()->count("m.id"))
       ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $startYear)
-      ->setParameter("to", $maxDate)
+      ->setParameter("from", $dateRange['start'])
+      ->setParameter("to", $dateRange['end'])
       ->getQuery()->getSingleScalarResult();
   }
 
-  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTime $maxDate): int {
-    $startYear = (new \DateTime())
-      ->setDate((int) $maxDate->format("Y"), 1, 1)
-      ->setTime(0, 0, 0);
+  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
+    $dateRange = $this->calculateStartEndDate($club, $maxDate);
 
     $qb = $this->createQueryBuilder("m");
     $this->applyActivityExclusionConstraint($club, $qb);
@@ -93,19 +109,19 @@ trait PresenceRepositoryTrait {
     return $qb
       ->select($qb->expr()->countDistinct("m.date"))
       ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $startYear)
-      ->setParameter("to", $maxDate)
+      ->setParameter("from", $dateRange['start'])
+      ->setParameter("to", $dateRange['end'])
       ->getQuery()->getSingleScalarResult();
   }
 
-  public function countTotalPresencesYearlyUntilToday(?Club $club): int {
-    return $this->countTotalPresencesYearlyUntilDate($club, new \DateTime());
+  public function countTotalPresencesYearlyForCurrentSeason(?Club $club): int {
+    dump('current season');
+    return $this->countTotalPresencesYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
   }
 
-  public function countTotalPresencesYearlyForPreviousYear(?Club $club): int {
-    $lastYear = new \DateTime();
-    $lastYear->setDate((int) $lastYear->format("Y") - 1, $lastYear->format("m"), $lastYear->format("d"));
-
+  public function countTotalPresencesYearlyForPreviousSeason(?Club $club): int {
+    dump('previous season');
+    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
     return $this->countTotalPresencesYearlyUntilDate($club, $lastYear);
   }
 
@@ -119,21 +135,17 @@ trait PresenceRepositoryTrait {
       ->getQuery()->getSingleScalarResult();
   }
 
-  public function countNumberOfPresenceDaysYearlyUntilToday(?Club $club): int {
-    return $this->countNumberOfPresenceDaysYearlyUntilDate($club, new \DateTime());
+  public function countNumberOfPresenceDaysForCurrentSeason(?Club $club): int {
+    return $this->countNumberOfPresenceDaysYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
   }
 
-  public function countNumberOfPresenceDaysYearlyForPreviousYear(?Club $club): int {
-    $lastYear = new \DateTime();
-    $lastYear->setDate((int) $lastYear->format("Y") - 1, $lastYear->format("m"), $lastYear->format("d"));
-
+  public function countNumberOfPresenceDaysForPreviousSeason(?Club $club): int {
+    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
     return $this->countNumberOfPresenceDaysYearlyUntilDate($club, $lastYear);
   }
 
-  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTime $maxDate) {
-    $startYear = (new \DateTime())
-      ->setDate((int) $maxDate->format("Y"), 1, 1)
-      ->setTime(0, 0, 0);
+  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate) {
+    $dateRange = $this->calculateStartEndDate($club, $maxDate);
 
     $qb = $this->createQueryBuilder("m");
     if ($club) {
@@ -147,18 +159,17 @@ trait PresenceRepositoryTrait {
       ->orderBy("a.name")
 
       ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $startYear)
-      ->setParameter("to", $maxDate)
+      ->setParameter("from", $dateRange['start'])
+      ->setParameter("to", $dateRange['end'])
       ->getQuery()->getResult();
   }
 
-  public function countPresencesPerActivitiesYearlyUntilToday(?Club $club) {
-    return $this->countPresencesPerActivitiesYearlyUntilDate($club, new \DateTime());
+  public function countPresencesPerActivitiesForCurrentSeason(?Club $club) {
+    return $this->countPresencesPerActivitiesYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
   }
 
-  public function countPresencesPerActivitiesYearlyForPreviousYear(?Club $club) {
-    $lastYear = new \DateTime();
-    $lastYear->setDate((int) $lastYear->format("Y") - 1, $lastYear->format("m"), $lastYear->format("d"));
+  public function countPresencesPerActivitiesForPreviousSeason(?Club $club) {
+    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
     return $this->countPresencesPerActivitiesYearlyUntilDate($club, $lastYear);
   }
 }

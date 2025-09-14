@@ -13,15 +13,15 @@ interface PresenceRepositoryInterface {
    *                        METRICS
    *********************************************************/
 
-  public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTime $maxDate): int;
-  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTime $maxDate): int;
-  public function countTotalPresencesYearlyUntilToday(?Club $club): int;
-  public function countTotalPresencesYearlyForPreviousYear(?Club $club): int;
+  public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int;
+  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int;
+  public function countTotalPresencesYearlyForCurrentSeason(?Club $club): int;
+  public function countTotalPresencesYearlyForPreviousSeason(?Club $club): int;
   public function countTotalPresences(?Club $club): int;
-  public function countNumberOfPresenceDaysYearlyUntilToday(?Club $club): int;
-  public function countNumberOfPresenceDaysYearlyForPreviousYear(?Club $club): int;
-  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTime $maxDate);
-  public function countPresencesPerActivitiesYearlyUntilToday(?Club $club);
-  public function countPresencesPerActivitiesYearlyForPreviousYear(?Club $club);
+  public function countNumberOfPresenceDaysForCurrentSeason(?Club $club): int;
+  public function countNumberOfPresenceDaysForPreviousSeason(?Club $club): int;
+  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate);
+  public function countPresencesPerActivitiesForCurrentSeason(?Club $club);
+  public function countPresencesPerActivitiesForPreviousSeason(?Club $club);
 
 }
