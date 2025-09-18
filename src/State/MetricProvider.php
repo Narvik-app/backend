@@ -108,12 +108,12 @@ class MetricProvider implements ProviderInterface {
   private function generatePresenceMetrics(string $identifier, PresenceRepositoryInterface $repository): Metric {
     $total = $repository->countTotalPresences($this->club);
 
-    $currentYear = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
-    $currentYearOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
+    $currentSeason = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
+    $currentSeasonOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
 
 
-    $lastYear = $repository->countTotalPresencesYearlyForPreviousSeason($this->club);
-    $lastYearOpenedDays = $repository->countNumberOfPresenceDaysForPreviousSeason($this->club);
+    $lastSeason = $repository->countTotalPresencesYearlyForPreviousSeason($this->club);
+    $lastYearSeasonDays = $repository->countNumberOfPresenceDaysForPreviousSeason($this->club);
 
     $metric = new Metric();
     $metric->setClub($this->club);
@@ -123,20 +123,20 @@ class MetricProvider implements ProviderInterface {
       (new Metric())
         ->setClub($this->club)
         ->setName("previous-season")
-        ->setValue($lastYear)
+        ->setValue($lastSeason)
         ->setChildMetrics([
           (new Metric())
             ->setClub($this->club)
             ->setName("opened-days")
-            ->setValue($lastYearOpenedDays),
+            ->setValue($lastYearSeasonDays),
         ]),
       (new Metric())
         ->setName("current-season")
-        ->setValue($currentYear)
+        ->setValue($currentSeason)
         ->setChildMetrics([
           (new Metric())
             ->setName("opened-days")
-            ->setValue($currentYearOpenedDays),
+            ->setValue($currentSeasonOpenedDays),
         ]),
     ]);
     return $metric;
