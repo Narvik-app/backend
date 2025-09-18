@@ -115,12 +115,10 @@ trait PresenceRepositoryTrait {
   }
 
   public function countTotalPresencesYearlyForCurrentSeason(?Club $club): int {
-    dump('current season');
     return $this->countTotalPresencesYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
   }
 
   public function countTotalPresencesYearlyForPreviousSeason(?Club $club): int {
-    dump('previous season');
     $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
     return $this->countTotalPresencesYearlyUntilDate($club, $lastYear);
   }
