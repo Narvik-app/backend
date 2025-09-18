@@ -108,12 +108,12 @@ class MetricProvider implements ProviderInterface {
   private function generatePresenceMetrics(string $identifier, PresenceRepositoryInterface $repository): Metric {
     $total = $repository->countTotalPresences($this->club);
 
-    $currentYear = $repository->countTotalPresencesYearlyUntilToday($this->club);
-    $currentYearOpenedDays = $repository->countNumberOfPresenceDaysYearlyUntilToday($this->club);
+    $currentSeason = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
+    $currentSeasonOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
 
 
-    $lastYear = $repository->countTotalPresencesYearlyForPreviousYear($this->club);
-    $lastYearOpenedDays = $repository->countNumberOfPresenceDaysYearlyForPreviousYear($this->club);
+    $lastSeason = $repository->countTotalPresencesYearlyForPreviousSeason($this->club);
+    $lastYearSeasonDays = $repository->countNumberOfPresenceDaysForPreviousSeason($this->club);
 
     $metric = new Metric();
     $metric->setClub($this->club);
@@ -122,21 +122,21 @@ class MetricProvider implements ProviderInterface {
     $metric->setChildMetrics([
       (new Metric())
         ->setClub($this->club)
-        ->setName("previous-year")
-        ->setValue($lastYear)
+        ->setName("previous-season")
+        ->setValue($lastSeason)
         ->setChildMetrics([
           (new Metric())
             ->setClub($this->club)
             ->setName("opened-days")
-            ->setValue($lastYearOpenedDays),
+            ->setValue($lastYearSeasonDays),
         ]),
       (new Metric())
-        ->setName("current-year")
-        ->setValue($currentYear)
+        ->setName("current-season")
+        ->setValue($currentSeason)
         ->setChildMetrics([
           (new Metric())
             ->setName("opened-days")
-            ->setValue($currentYearOpenedDays),
+            ->setValue($currentSeasonOpenedDays),
         ]),
     ]);
     return $metric;
@@ -156,7 +156,7 @@ class MetricProvider implements ProviderInterface {
   protected function getActivities(string $identifier): Metric {
     $currentYearTotal = $lastYearTotal = 0;
     $currentYearMetrics = $lastYearMetrics = [];
-    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesYearlyUntilToday($this->club) as $datas) {
+    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesForCurrentSeason($this->club) as $datas) {
       $m = new Metric();
       $m
         ->setClub($this->club)
@@ -166,7 +166,7 @@ class MetricProvider implements ProviderInterface {
       $currentYearMetrics[] = $m;
     }
 
-    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesYearlyForPreviousYear($this->club) as $datas) {
+    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesForPreviousSeason($this->club) as $datas) {
       $m = new Metric();
       $m
         ->setClub($this->club)
@@ -183,12 +183,12 @@ class MetricProvider implements ProviderInterface {
            ->setChildMetrics([
              (new Metric())
                ->setClub($this->club)
-               ->setName("previous-year")
+               ->setName("previous-season")
                ->setValue($lastYearTotal)
                ->setChildMetrics($lastYearMetrics),
              (new Metric())
                ->setClub($this->club)
-               ->setName("current-year")
+               ->setName("current-season")
                ->setValue($currentYearTotal)
                ->setChildMetrics($currentYearMetrics),
            ]);
