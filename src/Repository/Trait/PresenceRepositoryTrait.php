@@ -2,6 +2,7 @@
 
 namespace App\Repository\Trait;
 
+use App\DQL\CustomExpr;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Service\SeasonService;
@@ -66,6 +67,93 @@ trait PresenceRepositoryTrait {
    *                        METRICS
    *********************************************************/
 
+  public function getCountPerDayOfWeek(?Club $club, \DateTimeImmutable $maxDate) {
+    $dateRange = $this->calculateStartEndDate($club, $maxDate);
+
+    //TODO: For the average or median to work
+    // Transform it instead to have a subselect query that get all based on day of week\
+    // Find a way to get the average and percentile per day of week
+
+
+    /** GET Total per day
+      SELECT
+      a0_.name AS name_0,
+      COUNT(a0_.name) AS total,
+      m1_.date
+      FROM member_presence m1_
+      INNER JOIN member_presence_activity m2_ ON m1_.id = m2_.member_presence_id
+      INNER JOIN activity a0_ ON a0_.id = m2_.activity_id
+      WHERE
+      m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
+      GROUP BY m1_.date, name_0
+      ORDER BY name_0 asc, m1_.date ASC;
+     */
+
+    /** GET Total groupe by day of week
+      SELECT
+      a0_.name AS name_0,
+      COUNT(a0_.name) AS total,
+      extract(dow from m1_.date) AS dayofweek
+      FROM member_presence m1_
+      INNER JOIN member_presence_activity m2_ ON m1_.id = m2_.member_presence_id
+      INNER JOIN activity a0_ ON a0_.id = m2_.activity_id
+      WHERE
+      m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
+      GROUP BY dayofweek, name_0
+      ORDER BY name_0 asc, dayofweek ASC;
+     */
+
+    /** GET All per weekday and with the stats, now have to convert it into a more DQL friendly query
+      WITH daily_counts AS (
+      SELECT
+      a0_.name AS activity_name,
+      DATE(m1_.date) AS day,
+      EXTRACT(DOW FROM m1_.date) AS dayofweek,
+      COUNT(*) AS daily_total
+      FROM member_presence m1_
+      INNER JOIN member_presence_activity m2_
+      ON m1_.id = m2_.member_presence_id
+      INNER JOIN activity a0_
+      ON a0_.id = m2_.activity_id
+      WHERE m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
+      GROUP BY a0_.name, DATE(m1_.date), EXTRACT(DOW FROM m1_.date)
+      )
+      SELECT
+      activity_name,
+      dayofweek,
+      SUM(daily_total) AS total_presences,            -- total for this weekday across period
+      AVG(daily_total)::numeric(10,2) AS avg_per_day, -- average presences per weekday
+      PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
+      PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
+      PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
+      FROM daily_counts
+      GROUP BY activity_name, dayofweek
+      ORDER BY activity_name, dayofweek;
+     */
+
+    // Take inspiration on: https://gist.github.com/froozeify/41bf63b49a98d53be6205b702b1dbf0b
+
+    $qb = $this->createQueryBuilder("m");
+    $a = $qb
+      ->select("a.name")
+      ->addSelect($qb->expr()->count("a.name") . ' AS total')
+//      ->addSelect($qb->expr()->avg("a.name") . ' AS avg')
+      ->addSelect(CustomExpr::dayOfWeek("m.date") . ' AS dayofweek')
+      ->innerJoin("m.activities", "a")
+      ->addgroupBy("dayofweek", "a.name")
+      ->orderBy("a.name")
+      ->addOrderBy("dayofweek")
+
+      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
+      ->setParameter("from", $dateRange['start'])
+      ->setParameter("to", $dateRange['end'])
+      ->getQuery()->getResult();
+
+    dump($a);
+
+    return $a;
+  }
+
   /**
    * @param Club|null $club
    * @param \DateTimeImmutable $maxDate
@@ -86,6 +174,8 @@ trait PresenceRepositoryTrait {
   }
 
   public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
+    dump($this->getCountPerDayOfWeek($club, $maxDate));
+
     $dateRange = $this->calculateStartEndDate($club, $maxDate);
 
     $qb = $this->createQueryBuilder("m");
