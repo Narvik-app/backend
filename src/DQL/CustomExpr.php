@@ -27,4 +27,8 @@ class CustomExpr {
   public static function unaccentInsensitive(string $x): string {
     return self::unaccent(new Expr\Func('LOWER', [$x]));
   }
+
+  public static function dayOfWeek(string $x) {
+    return new Expr\Func('dayofweek', [$x]);
+  }
 }

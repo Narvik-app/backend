@@ -26,6 +26,7 @@ doctrine:
         dql:
             string_functions:
                 unaccent: App\DQL\UnaccentString
+                dayofweek: App\DQL\DayOfWeek
 
 when@test:
     doctrine:
