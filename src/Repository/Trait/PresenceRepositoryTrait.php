@@ -133,26 +133,66 @@ trait PresenceRepositoryTrait {
 
     // Take inspiration on: https://gist.github.com/froozeify/41bf63b49a98d53be6205b702b1dbf0b
 
-    $qb = $this->createQueryBuilder("m");
-    $a = $qb
-      ->select("a.name")
-      ->addSelect($qb->expr()->count("a.name") . ' AS total')
-//      ->addSelect($qb->expr()->avg("a.name") . ' AS avg')
-      ->addSelect(CustomExpr::dayOfWeek("m.date") . ' AS dayofweek')
-      ->innerJoin("m.activities", "a")
-      ->addgroupBy("dayofweek", "a.name")
-      ->orderBy("a.name")
-      ->addOrderBy("dayofweek")
+//    $qb = $this->createQueryBuilder("m");
+//    $a = $qb
+//      ->select("a.name")
+//      ->addSelect($qb->expr()->count("a.name") . ' AS total')
+////      ->addSelect($qb->expr()->avg("a.name") . ' AS avg')
+//      ->addSelect(CustomExpr::dayOfWeek("m.date") . ' AS dayofweek')
+//      ->innerJoin("m.activities", "a")
+//      ->addgroupBy("dayofweek", "a.name")
+//      ->orderBy("a.name")
+//      ->addOrderBy("dayofweek")
+//
+//      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
+//      ->setParameter("from", $dateRange['start'])
+//      ->setParameter("to", $dateRange['end'])
+//      ->getQuery()->getResult();
+//
+//    dump($a);
+//
+//    return $a;
+//
+//    $dailyCount = $this->createQueryBuilder("pa")
+//      ->select("a.name as activity_name")
+//      ->addSelect("DATE(p.date) as day)")
 
-      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $dateRange['start'])
-      ->setParameter("to", $dateRange['end'])
-      ->getQuery()->getResult();
+    $conn = $this->getEntityManager()->getConnection();
 
-    dump($a);
+    dump($this->getClassMetadata()->getTableName());
 
-    return $a;
-  }
+    // --- Inner query: daily counts ---
+    // --- Inner query: daily counts ---
+    $dailyCounts = $conn->createQueryBuilder();
+    $dailyCounts
+      ->select("a0_.name AS activity_name")
+      ->addSelect("DATE(m1_.date) AS day")
+      ->addSelect("EXTRACT(DOW FROM m1_.date) AS dayofweek")
+      ->addSelect("COUNT(*) AS daily_total")
+      ->from("member_presence", "m1_")
+      ->innerJoin("m1_", "member_presence_activity", "m2_", "m1_.id = m2_.member_presence_id")
+      ->innerJoin("m2_", "activity", "a0_", "a0_.id = m2_.activity_id")
+      ->where("m1_.date BETWEEN :from AND :to")
+      ->groupBy("a0_.name, DATE(m1_.date), EXTRACT(DOW FROM m1_.date)");
+
+    // --- Outer query: aggregate per activity + weekday ---
+    $qb = $conn->createQueryBuilder();
+    $qb
+      ->select("activity_name")
+      ->addSelect("dayofweek")
+      ->addSelect("SUM(daily_total) AS total_presences")
+      ->addSelect("AVG(daily_total)::numeric(10,2) AS avg_per_day")
+      ->addSelect("PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25")
+      ->addSelect("PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median")
+      ->addSelect("PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75")
+      ->from("(" . $dailyCounts->getSQL() . ")", "dc")
+      ->setParameter("from", $dateRange['start']->format('Y-m-d H:i:s'))
+      ->setParameter("to", $dateRange['end']->format('Y-m-d H:i:s'))
+      ->groupBy("activity_name, dayofweek")
+      ->orderBy("activity_name")
+      ->addOrderBy("dayofweek");
+
+    return $conn->executeQuery($qb->getSQL(), $qb->getParameters())->fetchAllAssociative();  }
 
   /**
    * @param Club|null $club
