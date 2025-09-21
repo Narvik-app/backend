@@ -31,4 +31,8 @@ class CustomExpr {
   public static function dayOfWeek(string $x) {
     return new Expr\Func('dayofweek', [$x]);
   }
+
+  public static function percentile(int $x, string $expr) {
+    return new Expr\Func('percentile', [$x, $expr]);
+  }
 }

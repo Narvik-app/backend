@@ -27,6 +27,7 @@ doctrine:
             string_functions:
                 unaccent: App\DQL\UnaccentString
                 dayofweek: App\DQL\DayOfWeek
+                percentile: App\DQL\Percentile
 
 when@test:
     doctrine:
