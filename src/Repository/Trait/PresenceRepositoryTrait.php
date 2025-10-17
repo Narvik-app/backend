@@ -69,67 +69,14 @@ trait PresenceRepositoryTrait {
    *                        METRICS
    *********************************************************/
 
-  public function getStatsPerDayOfWeek(?Club $club, \DateTimeImmutable $maxDate)
+  public function getStatsPerDayOfWeek(?Club $club, \DateTimeImmutable $maxDate): array
   {
-    $dateRange = $this->calculateStartEndDate($club, $maxDate);
-    $conn = $this->getEntityManager()->getConnection();
+    return $this->executeStatsPerDayOfWeekQuery($club, $maxDate);
+  }
 
-    $presenceTable = $this->getClassMetadata()->getTableName();
-    // Guess for join table name based on Doctrine's default naming strategy.
-    $presenceActivityTable = $presenceTable . '_activity';
-    $presenceJoinColumn = $presenceTable . '_id';
-    $activityTable = 'activity';
-
-    $params = [
-      'from' => $dateRange['start']->format('Y-m-d H:i:s'),
-      'to' => $dateRange['end']->format('Y-m-d H:i:s'),
-    ];
-    $paramTypes = [];
-
-    $whereClauses = ['p.date BETWEEN :from AND :to'];
-
-    if ($club) {
-      $whereClauses[] = 'p.club_id = :clubId';
-      $params['clubId'] = $club->getId();
-
-      $ignoredActivities = $club->getSettings()?->getExcludedActivitiesFromOpeningDays();
-      if ($ignoredActivities && !$ignoredActivities->isEmpty()) {
-        $ignoredActivityIds = array_map(fn($activity) => $activity->getId(), $ignoredActivities->toArray());
-        $whereClauses[] = 'a.id NOT IN (:ignoredActivities)';
-        $params['ignoredActivities'] = $ignoredActivityIds;
-        $paramTypes['ignoredActivities'] = ArrayParameterType::INTEGER;
-      }
-    }
-
-    $whereSql = implode(' AND ', $whereClauses);
-
-    $sql = <<<SQL
-      WITH daily_counts AS (
-        SELECT
-          a.name AS activity_name,
-          DATE(p.date) AS day,
-          EXTRACT(DOW FROM p.date) AS dayofweek,
-          COUNT(*) AS daily_total
-        FROM {$presenceTable} p
-        INNER JOIN {$presenceActivityTable} pa ON p.id = pa.{$presenceJoinColumn}
-        INNER JOIN {$activityTable} a ON a.id = pa.activity_id
-        WHERE {$whereSql}
-        GROUP BY a.name, DATE(p.date), EXTRACT(DOW FROM p.date)
-      )
-      SELECT
-        activity_name,
-        dayofweek,
-        SUM(daily_total) AS total_presences,
-        CAST(AVG(daily_total) AS NUMERIC(10,2)) AS avg_per_day,
-        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
-        PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
-      FROM daily_counts
-      GROUP BY activity_name, dayofweek
-      ORDER BY activity_name, dayofweek
-    SQL;
-
-    return $conn->executeQuery($sql, $params, $paramTypes)->fetchAllAssociative();
+  public function getStatsPerDayOfWeekForActivity(?Club $club, \DateTimeImmutable $maxDate, Activity $activity): array
+  {
+    return $this->executeStatsPerDayOfWeekQuery($club, $maxDate, $activity);
   }
 
   public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
@@ -222,7 +169,6 @@ trait PresenceRepositoryTrait {
    * @param Club|null $club
    * @param \DateTimeImmutable $maxDate
    * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
-   * @throws \DateMalformedStringException
    */
   private function calculateStartEndDate(?Club $club, \DateTimeImmutable $maxDate): array {
     $currentDate = new \DateTimeImmutable();
@@ -236,5 +182,72 @@ trait PresenceRepositoryTrait {
       "start" => $startDate,
       "end" => $maxDate,
     ];
+  }
+
+  private function executeStatsPerDayOfWeekQuery(?Club $club, \DateTimeImmutable $maxDate, ?Activity $activity = null): array {
+    $dateRange = $this->calculateStartEndDate($club, $maxDate);
+    $conn = $this->getEntityManager()->getConnection();
+
+    $presenceTable = $this->getClassMetadata()->getTableName();
+    // Guess for join table name based on Doctrine's default naming strategy.
+    $presenceActivityTable = $presenceTable . '_activity';
+    $presenceJoinColumn = $presenceTable . '_id';
+    $activityTable = 'activity';
+
+    $params = [
+      'from' => $dateRange['start']->format('Y-m-d H:i:s'),
+      'to' => $dateRange['end']->format('Y-m-d H:i:s'),
+    ];
+    $paramTypes = [];
+
+    $whereClauses = ['p.date BETWEEN :from AND :to'];
+
+    if ($club) {
+      $whereClauses[] = 'p.club_id = :clubId';
+      $params['clubId'] = $club->getId();
+
+      if ($activity?->getId() === null) {
+        $ignoredActivities = $club->getSettings()?->getExcludedActivitiesFromOpeningDays();
+        if ($ignoredActivities && !$ignoredActivities->isEmpty()) {
+          $ignoredActivityIds = array_map(fn($actvt) => $actvt->getId(), $ignoredActivities->toArray());
+          $whereClauses[] = 'a.id NOT IN (:ignoredActivities)';
+          $params['ignoredActivities'] = $ignoredActivityIds;
+          $paramTypes['ignoredActivities'] = ArrayParameterType::INTEGER;
+        }
+      }
+    } else {
+      $whereClauses[] = 'a.id = :activityId';
+      $params['activityId'] = $activity->getId();
+    }
+
+    $whereSql = implode(' AND ', $whereClauses);
+
+    $sql = <<<SQL
+      WITH daily_counts AS (
+        SELECT
+          a.name AS activity_name,
+          DATE(p.date) AS day,
+          EXTRACT(DOW FROM p.date) AS dayofweek,
+          COUNT(*) AS daily_total
+        FROM {$presenceTable} p
+        INNER JOIN {$presenceActivityTable} pa ON p.id = pa.{$presenceJoinColumn}
+        INNER JOIN {$activityTable} a ON a.id = pa.activity_id
+        WHERE {$whereSql}
+        GROUP BY a.name, DATE(p.date), EXTRACT(DOW FROM p.date)
+      )
+      SELECT
+        activity_name,
+        dayofweek,
+        SUM(daily_total) AS total_presences,
+        CAST(AVG(daily_total) AS NUMERIC(10,2)) AS avg_per_day,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
+        PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
+      FROM daily_counts
+      GROUP BY activity_name, dayofweek
+      ORDER BY activity_name, dayofweek
+    SQL;
+
+    return $conn->executeQuery($sql, $params, $paramTypes)->fetchAllAssociative();
   }
 }
