@@ -6,6 +6,8 @@ use App\DQL\CustomExpr;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Service\SeasonService;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
@@ -67,155 +69,70 @@ trait PresenceRepositoryTrait {
    *                        METRICS
    *********************************************************/
 
-  public function getCountPerDayOfWeek(?Club $club, \DateTimeImmutable $maxDate) {
+  public function getStatsPerDayOfWeek(?Club $club, \DateTimeImmutable $maxDate)
+  {
     $dateRange = $this->calculateStartEndDate($club, $maxDate);
-
-    //TODO: For the average or median to work
-    // Transform it instead to have a subselect query that get all based on day of week\
-    // Find a way to get the average and percentile per day of week
-
-
-    /** GET Total per day
-      SELECT
-      a0_.name AS name_0,
-      COUNT(a0_.name) AS total,
-      m1_.date
-      FROM member_presence m1_
-      INNER JOIN member_presence_activity m2_ ON m1_.id = m2_.member_presence_id
-      INNER JOIN activity a0_ ON a0_.id = m2_.activity_id
-      WHERE
-      m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
-      GROUP BY m1_.date, name_0
-      ORDER BY name_0 asc, m1_.date ASC;
-     */
-
-    /** GET Total groupe by day of week
-      SELECT
-      a0_.name AS name_0,
-      COUNT(a0_.name) AS total,
-      extract(dow from m1_.date) AS dayofweek
-      FROM member_presence m1_
-      INNER JOIN member_presence_activity m2_ ON m1_.id = m2_.member_presence_id
-      INNER JOIN activity a0_ ON a0_.id = m2_.activity_id
-      WHERE
-      m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
-      GROUP BY dayofweek, name_0
-      ORDER BY name_0 asc, dayofweek ASC;
-     */
-
-    /** GET All per weekday and with the stats, now have to convert it into a more DQL friendly query
-      WITH daily_counts AS (
-      SELECT
-      a0_.name AS activity_name,
-      DATE(m1_.date) AS day,
-      EXTRACT(DOW FROM m1_.date) AS dayofweek,
-      COUNT(*) AS daily_total
-      FROM member_presence m1_
-      INNER JOIN member_presence_activity m2_
-      ON m1_.id = m2_.member_presence_id
-      INNER JOIN activity a0_
-      ON a0_.id = m2_.activity_id
-      WHERE m1_.date BETWEEN '2025-01-01 00:00:00' AND '2025-09-20 14:39:41'
-      GROUP BY a0_.name, DATE(m1_.date), EXTRACT(DOW FROM m1_.date)
-      )
-      SELECT
-      activity_name,
-      dayofweek,
-      SUM(daily_total) AS total_presences,            -- total for this weekday across period
-      AVG(daily_total)::numeric(10,2) AS avg_per_day, -- average presences per weekday
-      PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
-      PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
-      PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
-      FROM daily_counts
-      GROUP BY activity_name, dayofweek
-      ORDER BY activity_name, dayofweek;
-     */
-
-    // Take inspiration on: https://gist.github.com/froozeify/41bf63b49a98d53be6205b702b1dbf0b
-
-//    $qb = $this->createQueryBuilder("m");
-//    $a = $qb
-//      ->select("a.name")
-//      ->addSelect($qb->expr()->count("a.name") . ' AS total')
-////      ->addSelect($qb->expr()->avg("a.name") . ' AS avg')
-//      ->addSelect(CustomExpr::dayOfWeek("m.date") . ' AS dayofweek')
-//      ->innerJoin("m.activities", "a")
-//      ->addgroupBy("dayofweek", "a.name")
-//      ->orderBy("a.name")
-//      ->addOrderBy("dayofweek")
-//
-//      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-//      ->setParameter("from", $dateRange['start'])
-//      ->setParameter("to", $dateRange['end'])
-//      ->getQuery()->getResult();
-//
-//    dump($a);
-//
-//    return $a;
-//
-//    $dailyCount = $this->createQueryBuilder("pa")
-//      ->select("a.name as activity_name")
-//      ->addSelect("DATE(p.date) as day)")
-
     $conn = $this->getEntityManager()->getConnection();
 
-    dump($this->getClassMetadata()->getTableName());
+    $presenceTable = $this->getClassMetadata()->getTableName();
+    // Guess for join table name based on Doctrine's default naming strategy.
+    $presenceActivityTable = $presenceTable . '_activity';
+    $presenceJoinColumn = $presenceTable . '_id';
+    $activityTable = 'activity';
 
-    // --- Inner query: daily counts ---
-    // --- Inner query: daily counts ---
-    $dailyCounts = $conn->createQueryBuilder();
-    $dailyCounts
-      ->select("a0_.name AS activity_name")
-      ->addSelect("DATE(m1_.date) AS day")
-      ->addSelect("EXTRACT(DOW FROM m1_.date) AS dayofweek")
-      ->addSelect("COUNT(*) AS daily_total")
-      ->from("member_presence", "m1_")
-      ->innerJoin("m1_", "member_presence_activity", "m2_", "m1_.id = m2_.member_presence_id")
-      ->innerJoin("m2_", "activity", "a0_", "a0_.id = m2_.activity_id")
-      ->where("m1_.date BETWEEN :from AND :to")
-      ->groupBy("a0_.name, DATE(m1_.date), EXTRACT(DOW FROM m1_.date)");
-
-    // --- Outer query: aggregate per activity + weekday ---
-    $qb = $conn->createQueryBuilder();
-    $qb
-      ->select("activity_name")
-      ->addSelect("dayofweek")
-      ->addSelect("SUM(daily_total) AS total_presences")
-      ->addSelect("AVG(daily_total)::numeric(10,2) AS avg_per_day")
-      ->addSelect("PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25")
-      ->addSelect("PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median")
-      ->addSelect("PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75")
-      ->from("(" . $dailyCounts->getSQL() . ")", "dc")
-      ->setParameter("from", $dateRange['start']->format('Y-m-d H:i:s'))
-      ->setParameter("to", $dateRange['end']->format('Y-m-d H:i:s'))
-      ->groupBy("activity_name, dayofweek")
-      ->orderBy("activity_name")
-      ->addOrderBy("dayofweek");
-
-    return $conn->executeQuery($qb->getSQL(), $qb->getParameters())->fetchAllAssociative();  }
-
-  /**
-   * @param Club|null $club
-   * @param \DateTimeImmutable $maxDate
-   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
-\   */
-  private function calculateStartEndDate(?Club $club, \DateTimeImmutable $maxDate): array {
-    $currentDate = new \DateTimeImmutable();
-
-    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
-
-    $startDate = $maxDate->setDate($maxDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
-    $maxDate = $maxDate->setDate($maxDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
-
-    return [
-      "start" => $startDate,
-      "end" => $maxDate,
+    $params = [
+      'from' => $dateRange['start']->format('Y-m-d H:i:s'),
+      'to' => $dateRange['end']->format('Y-m-d H:i:s'),
     ];
+    $paramTypes = [];
+
+    $whereClauses = ['p.date BETWEEN :from AND :to'];
+
+    if ($club) {
+      $whereClauses[] = 'p.club_id = :clubId';
+      $params['clubId'] = $club->getId();
+
+      $ignoredActivities = $club->getSettings()?->getExcludedActivitiesFromOpeningDays();
+      if ($ignoredActivities && !$ignoredActivities->isEmpty()) {
+        $ignoredActivityIds = array_map(fn($activity) => $activity->getId(), $ignoredActivities->toArray());
+        $whereClauses[] = 'a.id NOT IN (:ignoredActivities)';
+        $params['ignoredActivities'] = $ignoredActivityIds;
+        $paramTypes['ignoredActivities'] = ArrayParameterType::INTEGER;
+      }
+    }
+
+    $whereSql = implode(' AND ', $whereClauses);
+
+    $sql = <<<SQL
+      WITH daily_counts AS (
+        SELECT
+          a.name AS activity_name,
+          DATE(p.date) AS day,
+          EXTRACT(DOW FROM p.date) AS dayofweek,
+          COUNT(*) AS daily_total
+        FROM {$presenceTable} p
+        INNER JOIN {$presenceActivityTable} pa ON p.id = pa.{$presenceJoinColumn}
+        INNER JOIN {$activityTable} a ON a.id = pa.activity_id
+        WHERE {$whereSql}
+        GROUP BY a.name, DATE(p.date), EXTRACT(DOW FROM p.date)
+      )
+      SELECT
+        activity_name,
+        dayofweek,
+        SUM(daily_total) AS total_presences,
+        CAST(AVG(daily_total) AS NUMERIC(10,2)) AS avg_per_day,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
+        PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
+      FROM daily_counts
+      GROUP BY activity_name, dayofweek
+      ORDER BY activity_name, dayofweek
+    SQL;
+
+    return $conn->executeQuery($sql, $params, $paramTypes)->fetchAllAssociative();
   }
 
   public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
-    dump($this->getCountPerDayOfWeek($club, $maxDate));
-
     $dateRange = $this->calculateStartEndDate($club, $maxDate);
 
     $qb = $this->createQueryBuilder("m");
@@ -299,5 +216,25 @@ trait PresenceRepositoryTrait {
   public function countPresencesPerActivitiesForPreviousSeason(?Club $club) {
     $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
     return $this->countPresencesPerActivitiesYearlyUntilDate($club, $lastYear);
+  }
+
+  /**
+   * @param Club|null $club
+   * @param \DateTimeImmutable $maxDate
+   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
+   * @throws \DateMalformedStringException
+   */
+  private function calculateStartEndDate(?Club $club, \DateTimeImmutable $maxDate): array {
+    $currentDate = new \DateTimeImmutable();
+
+    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
+
+    $startDate = $maxDate->setDate($maxDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
+    $maxDate = $maxDate->setDate($maxDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+
+    return [
+      "start" => $startDate,
+      "end" => $maxDate,
+    ];
   }
 }
