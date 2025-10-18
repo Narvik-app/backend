@@ -41,13 +41,6 @@ build-prod:
 build-cloud-prod:
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod
 
-
-push-build-prod:
-	@docker image push $(BUILD_REPO):latest
-	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o`
-	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o`
-	@docker image push $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o`
-
 up: ## Start the docker hub in detached mode (no logs)
 	@$(DOCKER_COMP) up --detach
 
