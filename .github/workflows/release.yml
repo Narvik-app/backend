@@ -39,3 +39,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  update-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    if: github.event_name == 'release'
+    needs: build-and-push
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Update composer.json
+        run: |
+          # Get version from tag, removing 'v' prefix if it exists
+          VERSION=${{ github.ref_name }}
+          VERSION_NUMBER=${VERSION#v}
+          jq --arg ver "$VERSION_NUMBER" '.version = $ver' composer.json > composer.json.tmp && mv composer.json.tmp composer.json
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "ci: Bump version to ${{ github.ref_name }}"
