@@ -25,7 +25,7 @@ jobs:
         run: |
           VERSION=${{ github.ref_name }}
           VERSION_NUMBER=${VERSION#v}
-          jq --arg ver "$VERSION_NUMBER" '.version = $ver' composer.json > composer.json.tmp && mv composer.json.tmp composer.json
+          jq --indent 4 --arg ver "$VERSION_NUMBER" '.version = $ver' composer.json > composer.json.tmp && mv composer.json.tmp composer.json
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
