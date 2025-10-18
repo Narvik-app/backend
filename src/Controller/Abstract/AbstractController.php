@@ -2,6 +2,7 @@
 
 namespace App\Controller\Abstract;
 
+use App\Service\UtilsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as SymfonyAbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +38,7 @@ abstract class AbstractController extends SymfonyAbstractController {
   }
 
   protected function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    return UtilsService::toBoolean($value);
   }
 
   public function validateFileUpload(Request $request, string $fieldName = 'file'): UploadedFile {

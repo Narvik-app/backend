@@ -3,6 +3,7 @@
 namespace App\Filter\Abstract;
 use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter as ApiPlatformAbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
+use App\Service\UtilsService;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
@@ -33,6 +34,6 @@ abstract class AbstractFilter extends ApiPlatformAbstractFilter {
   }
 
   protected function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    return UtilsService::toBoolean($value);
   }
 }

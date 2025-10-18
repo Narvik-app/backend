@@ -14,6 +14,7 @@ use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
 use App\Service\SeasonService;
+use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -131,7 +132,7 @@ class ItacMembersMessageHandler implements ResetInterface {
   }
 
   private function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    return UtilsService::toBoolean($value);
   }
 
   private function defineMemberSeason(Member $member, array $record): void {
