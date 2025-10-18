@@ -36,6 +36,10 @@ class SeasonService {
     }
   }
 
+  public static function getPreviousSeasonEndDate(?Club $club): \DateTimeImmutable {
+    return self::getCurrentSeasonEndDate($club)->modify('-1 year');
+  }
+
   public static function getCurrentSeasonName(?Club $club = null): string {
     $currentSeasonEndDate = self::getCurrentSeasonEndDate($club);
     return $currentSeasonEndDate->modify("-1 year")->format("Y") . "/" . $currentSeasonEndDate->format("Y");

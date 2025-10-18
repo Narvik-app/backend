@@ -13,7 +13,10 @@ use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
 use App\Service\RequestService;
+use App\Service\SeasonService;
+use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class MetricProvider implements ProviderInterface {
@@ -29,7 +32,16 @@ class MetricProvider implements ProviderInterface {
 
   private ?Club $club = null;
 
+  /**
+   * @var array{start: ?\DateTimeImmutable, end: ?\DateTimeImmutable}
+   */
+  private array $filterDates = [
+    'start' => null,
+    'end' => null,
+  ];
+
   public function __construct(
+    private readonly LoggerInterface $logger,
     private readonly RequestStack $requestStack,
     private readonly RequestService $requestService,
 
@@ -43,8 +55,37 @@ class MetricProvider implements ProviderInterface {
 
   public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null {
     $this->club = null;
+    $request = $this->requestStack->getCurrentRequest();
+    if (!$request) {
+      return null;
+    }
+
     if (str_starts_with($operation->getName(), 'club_metric')) {
-      $this->club = $this->requestService->getClubFromRequest($this->requestStack->getCurrentRequest());
+      $this->club = $this->requestService->getClubFromRequest($request);
+    }
+
+    $previousSeason = UtilsService::toBoolean($request->query->get('previous-season', false));
+    if ($previousSeason) {
+      $this->filterDates['end'] = SeasonService::getPreviousSeasonEndDate($this->club);
+    } else {
+      $this->filterDates['end'] = SeasonService::getCurrentSeasonEndDate($this->club);
+    }
+
+    $startFilter = $request->query->get('start');
+    $endFilter = $request->query->get('end');
+    if ($endFilter) {
+      try {
+        // We split so if a date is malformed, the default filteredDate won't be modified
+        $endDate = new \DateTimeImmutable($endFilter);
+        $this->filterDates['end'] = $endDate;
+
+        if ($startFilter) {
+          $startDate = new \DateTimeImmutable($startFilter);
+          $this->filterDates['start'] = $startDate;
+        }
+      } catch (\Exception $e) {
+        $this->logger->warning('Invalid date filter', ['start' => $startFilter, 'end' => $endFilter, 'error' => $e->getMessage()]);
+      }
     }
 
     if ($operation instanceof CollectionOperationInterface) {
@@ -107,6 +148,8 @@ class MetricProvider implements ProviderInterface {
 
   private function generatePresenceMetrics(string $identifier, PresenceRepositoryInterface $repository): Metric {
     $total = $repository->countTotalPresences($this->club);
+    $totalFilter = $repository->getStatsPerDayOfWeek($this->club, $this->filterDates['end'], $this->filterDates['start']);
+    dump($totalFilter);
 
     $currentSeason = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
     $currentSeasonOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
