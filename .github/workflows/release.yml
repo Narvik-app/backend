@@ -29,8 +29,8 @@ jobs:
           tags: |
             type=ref,event=branch,pattern=main,prefix=latest
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !github.event.release.prerelease }}
+            type=semver,pattern={{major}},enable=${{ !github.event.release.prerelease }}
       -
         name: Build and push Docker image
         uses: docker/build-push-action@v5
