@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
@@ -41,10 +42,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ),
   ],
   normalizationContext: [
-    'groups' => ['metric']
+    'groups' => ['metric'],
   ],
   provider: MetricProvider::class,
 )]
+#[QueryParameter(key: 'previous-season', schema: ['type' => 'boolean'], description: 'Filter for the previous season instead of the current one.', required: false)]
+#[QueryParameter(key: 'start', schema: ['type' => 'string', 'format' => 'date'], description: '`end` filter must also be defined to work. Otherwise fallback to the current season filtering.', required: false)]
+#[QueryParameter(key: 'end', schema: ['type' => 'string', 'format' => 'date'], description: 'Fallback to the current season filtering if not defined.', required: false)]
 #[Get]
 #[GetCollection]
 class Metric {
@@ -55,7 +59,10 @@ class Metric {
   private string $name;
 
   #[Groups(['metric'])]
-  private float $value = 0;
+  private ?float $value = null;
+
+  #[Groups(['metric'])]
+  private ?array $values = null;
 
   /**
    * @var Collection<int, Metric>
@@ -86,12 +93,21 @@ class Metric {
     return $this;
   }
 
-  public function getValue(): float {
+  public function getValue(): ?float {
     return $this->value;
   }
 
-  public function setValue(float $value): Metric {
+  public function setValue(?float $value): Metric {
     $this->value = $value;
+    return $this;
+  }
+
+  public function getValues(): ?array {
+    return $this->values;
+  }
+
+  public function setValues(?array $values): Metric {
+    $this->values = $values;
     return $this;
   }
 
@@ -101,6 +117,11 @@ class Metric {
 
   public function setChildMetrics(?array $childMetrics): Metric {
     $this->childMetrics = new ArrayCollection($childMetrics);
+    return $this;
+  }
+
+  public function addChildMetric(Metric $metric): Metric {
+    $this->childMetrics->add($metric);
     return $this;
   }
 }

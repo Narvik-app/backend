@@ -10,6 +10,7 @@ use App\Enum\GlobalSetting;
 use App\Service\FileService;
 use App\Service\GlobalSettingService;
 use App\Service\ImageService;
+use App\Service\UtilsService;
 use App\Service\UuidService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -204,6 +205,6 @@ class EmailService {
    * @return bool
    */
   private function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    return UtilsService::toBoolean($value);
   }
 }

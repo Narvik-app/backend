@@ -13,23 +13,37 @@ use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
 use App\Service\RequestService;
+use App\Service\SeasonService;
+use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class MetricProvider implements ProviderInterface {
-  public const METRICS = [
+  public const array METRICS = [
     "members",
     "presences",
     "external-presences",
+    "opened-days",
 //    "import-batches",
-    "activities"
+//    "activities"
   ];
 
   // TODO: super admin only metrics (import-batches)
 
   private ?Club $club = null;
 
+  /**
+   * @var array{start: ?\DateTimeImmutable, end: ?\DateTimeImmutable}
+   */
+  private array $filterDates = [
+    'start' => null,
+    'end' => null,
+  ];
+
   public function __construct(
+    private readonly LoggerInterface $logger,
     private readonly RequestStack $requestStack,
     private readonly RequestService $requestService,
 
@@ -43,8 +57,38 @@ class MetricProvider implements ProviderInterface {
 
   public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null {
     $this->club = null;
+    $request = $this->requestStack->getCurrentRequest();
+    if (!$request) {
+      return null;
+    }
+
     if (str_starts_with($operation->getName(), 'club_metric')) {
-      $this->club = $this->requestService->getClubFromRequest($this->requestStack->getCurrentRequest());
+      $this->club = $this->requestService->getClubFromRequest($request);
+    }
+
+    $previousSeason = UtilsService::toBoolean($request->query->get('previous-season', false));
+    if ($previousSeason) {
+      $this->filterDates['end'] = SeasonService::getPreviousSeasonEndDate($this->club);
+    } else {
+      $this->filterDates['end'] = SeasonService::getCurrentSeasonEndDate($this->club);
+    }
+
+    $startFilter = $request->query->get('start');
+    $endFilter = $request->query->get('end');
+    if ($endFilter) {
+      try {
+        // We split so if a date is malformed, the default filteredDate won't be modified
+        $endDate = new \DateTimeImmutable($endFilter);
+        $this->filterDates['end'] = $endDate;
+
+        if ($startFilter) {
+          $startDate = new \DateTimeImmutable($startFilter);
+          $this->filterDates['start'] = $startDate;
+        }
+      } catch (\Exception $e) {
+        $this->logger->warning('Invalid date filter', ['start' => $startFilter, 'end' => $endFilter, 'error' => $e->getMessage()]);
+        throw new BadRequestHttpException('Invalid date filter.', $e);
+      }
     }
 
     if ($operation instanceof CollectionOperationInterface) {
@@ -106,39 +150,32 @@ class MetricProvider implements ProviderInterface {
   }
 
   private function generatePresenceMetrics(string $identifier, PresenceRepositoryInterface $repository): Metric {
-    $total = $repository->countTotalPresences($this->club);
+    $totalPresences = $repository->countTotalPresences($this->club, $this->filterDates['end'], $this->filterDates['start']);
+    $statsPerActivitiesDays = $repository->getPresencesStatsPerActivitiesPerDayOfWeek($this->club, $this->filterDates['end'], $this->filterDates['start']);
 
-    $currentSeason = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
-    $currentSeasonOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
+    $metrics = [];
+    foreach ($statsPerActivitiesDays as $activityName => $statsPerDays) {
+      $metricsForActivity = new Metric()->setName($activityName);
+      $total = 0;
 
-
-    $lastSeason = $repository->countTotalPresencesYearlyForPreviousSeason($this->club);
-    $lastYearSeasonDays = $repository->countNumberOfPresenceDaysForPreviousSeason($this->club);
+      foreach ($statsPerDays as $dayOfWeek => $stats) {
+        $total += $stats['total'];
+        $metricsForActivity
+          ->addChildMetric(
+            new Metric()
+              ->setName($dayOfWeek)
+              ->setValues($stats)
+        );
+      }
+      $metricsForActivity->setValue($total);
+      $metrics[] = $metricsForActivity;
+    }
 
     $metric = new Metric();
     $metric->setClub($this->club);
     $metric->setName($identifier);
-    $metric->setValue($total);
-    $metric->setChildMetrics([
-      (new Metric())
-        ->setClub($this->club)
-        ->setName("previous-season")
-        ->setValue($lastSeason)
-        ->setChildMetrics([
-          (new Metric())
-            ->setClub($this->club)
-            ->setName("opened-days")
-            ->setValue($lastYearSeasonDays),
-        ]),
-      (new Metric())
-        ->setName("current-season")
-        ->setValue($currentSeason)
-        ->setChildMetrics([
-          (new Metric())
-            ->setName("opened-days")
-            ->setValue($currentSeasonOpenedDays),
-        ]),
-    ]);
+    $metric->setValue($totalPresences);
+    $metric->setChildMetrics($metrics);
     return $metric;
   }
 
@@ -153,46 +190,15 @@ class MetricProvider implements ProviderInterface {
     return $metric;
   }
 
-  protected function getActivities(string $identifier): Metric {
-    $currentYearTotal = $lastYearTotal = 0;
-    $currentYearMetrics = $lastYearMetrics = [];
-    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesForCurrentSeason($this->club) as $datas) {
-      $m = new Metric();
-      $m
-        ->setClub($this->club)
-        ->setName($datas["name"])
-        ->setValue($datas["total"]);
-      $currentYearTotal += $datas["total"];
-      $currentYearMetrics[] = $m;
-    }
+  protected function getOpenedDays(string $identifier): Metric {
+    $repository = $this->memberPresenceRepository;
 
-    foreach ($this->memberPresenceRepository->countPresencesPerActivitiesForPreviousSeason($this->club) as $datas) {
-      $m = new Metric();
-      $m
-        ->setClub($this->club)
-        ->setName($datas["name"])
-        ->setValue($datas["total"]);
-      $lastYearTotal += $datas["total"];
-      $lastYearMetrics[] = $m;
-    }
+    $openedDays = $repository->countNumberOfPresenceDaysYearlyUntilDate($this->club, $this->filterDates['end'], $this->filterDates['start']);
 
     $metric = new Metric();
-    $metric->setName($identifier)
-           ->setClub($this->club)
-           ->setValue(0)
-           ->setChildMetrics([
-             (new Metric())
-               ->setClub($this->club)
-               ->setName("previous-season")
-               ->setValue($lastYearTotal)
-               ->setChildMetrics($lastYearMetrics),
-             (new Metric())
-               ->setClub($this->club)
-               ->setName("current-season")
-               ->setValue($currentYearTotal)
-               ->setChildMetrics($currentYearMetrics),
-           ]);
-
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValue($openedDays);
     return $metric;
   }
 }

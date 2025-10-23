@@ -6,6 +6,8 @@
          cacheDirectory=".phpunit.cache"
          backupGlobals="false"
          displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnPhpunitDeprecations="true"
          colors="true"
          bootstrap="tests/bootstrap.php"
 >
