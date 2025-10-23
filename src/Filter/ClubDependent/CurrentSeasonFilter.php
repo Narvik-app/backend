@@ -55,8 +55,8 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
 
       if ($resourceClass === Member::class) {
         $this->buildMemberFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator, $currentSeason);
-      } else {
-        throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, "Filter not implemented for $resourceClass");
+      } else { // We apply the filter on the field
+        $this->buildDateFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator);
       }
     }
   }
@@ -75,6 +75,14 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
 
     $queryBuilder->andWhere($queryBuilder->expr()->eq($clauseField, ':currentSeason'));
     $queryBuilder->setParameter(":currentSeason", $currentSeason);
+  }
+
+  private function buildDateFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator): void
+  {
+    $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
+
+//    $queryBuilder->andWhere($queryBuilder->expr()->eq($clauseField, ':currentSeason'));
+//    $queryBuilder->setParameter(":currentSeason", $currentSeason);
   }
 
   public function getDescription(string $resourceClass): array {
