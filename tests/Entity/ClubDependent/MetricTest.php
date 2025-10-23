@@ -5,7 +5,9 @@ namespace App\Tests\Entity\ClubDependent;
 use App\Entity\ClubDependent\Metric;
 use App\Tests\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
+use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Story\_InitStory;
+use App\Tests\Story\ActivityStory;
 
 class MetricTest extends AbstractEntityClubLinkedTestCase {
 
@@ -20,6 +22,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
   protected function getRootUrl(): string {
     return "/metrics";
+  }
+
+  public function initDefaultFixtures(): void {
+    ActivityStory::load();
   }
 
   public function testCreate(): void {
@@ -74,6 +80,11 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function testSuperAdminGetAllStatsMerged(): void {
+    MemberPresenceFactory::new([
+      'member' => _InitStory::MEMBER_member_club_1(),
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->many(5)->create();
+
     $iri = $this->getRootUrl();
     $iriItem = $iri . "/members";
 
@@ -88,6 +99,53 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseIsSuccessful();
     $this->makeGetRequest($iriItem);
     $this->assertResponseIsSuccessful();
+  }
+
+  public function testFilteringWithAMalformedDate(): void {
+    $iri = $this->getRootWClubUrl(_InitStory::club_1()) . "/opened-days?end=2025-14-14";
+
+    $this->loggedAsAdminClub1();
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "Invalid date filter.",
+    ]);
+  }
+
+  public function testFilteringWithDateReversed(): void {
+    $this->loggedAsAdminClub1();
+
+    $iri = $this->getRootWClubUrl(_InitStory::club_1()) . "/opened-days?end=2025-12-31&start=2026-11-11";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+  }
+
+  public function testFilteringWithDate(): void {
+    $this->loggedAsAdminClub1();
+
+    $iri = $this->getRootWClubUrl(_InitStory::club_1()) . "/opened-days?end=2025-12-31&start=2024-11-11";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+  }
+
+  public function testFilteringOnSeason(): void {
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable,
+      'member' => _InitStory::MEMBER_member_club_1(),
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->many(5)->create();
+
+    $this->loggedAsAdminClub1();
+
+    $iri = $this->getRootWClubUrl(_InitStory::club_1()) . "/presences?current-season=true";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(5, $response->toArray()['value']);
+
+    $iri = $this->getRootWClubUrl(_InitStory::club_1()) . "/presences?previous-season=true";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(0, $response->toArray()['value']);
   }
 
 }
