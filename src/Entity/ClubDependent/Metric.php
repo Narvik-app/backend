@@ -42,7 +42,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ),
   ],
   normalizationContext: [
-    'groups' => ['metric']
+    'groups' => ['metric'],
   ],
   provider: MetricProvider::class,
 )]
@@ -59,7 +59,10 @@ class Metric {
   private string $name;
 
   #[Groups(['metric'])]
-  private float $value = 0;
+  private ?float $value = null;
+
+  #[Groups(['metric'])]
+  private ?array $values = null;
 
   /**
    * @var Collection<int, Metric>
@@ -90,12 +93,21 @@ class Metric {
     return $this;
   }
 
-  public function getValue(): float {
+  public function getValue(): ?float {
     return $this->value;
   }
 
-  public function setValue(float $value): Metric {
+  public function setValue(?float $value): Metric {
     $this->value = $value;
+    return $this;
+  }
+
+  public function getValues(): ?array {
+    return $this->values;
+  }
+
+  public function setValues(?array $values): Metric {
+    $this->values = $values;
     return $this;
   }
 
@@ -105,6 +117,11 @@ class Metric {
 
   public function setChildMetrics(?array $childMetrics): Metric {
     $this->childMetrics = new ArrayCollection($childMetrics);
+    return $this;
+  }
+
+  public function addChildMetric(Metric $metric): Metric {
+    $this->childMetrics->add($metric);
     return $this;
   }
 }

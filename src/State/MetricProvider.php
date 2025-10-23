@@ -18,6 +18,7 @@ use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class MetricProvider implements ProviderInterface {
   public const METRICS = [
@@ -85,6 +86,7 @@ class MetricProvider implements ProviderInterface {
         }
       } catch (\Exception $e) {
         $this->logger->warning('Invalid date filter', ['start' => $startFilter, 'end' => $endFilter, 'error' => $e->getMessage()]);
+        throw new BadRequestHttpException('Invalid date filter.', $e);
       }
     }
 
@@ -147,41 +149,32 @@ class MetricProvider implements ProviderInterface {
   }
 
   private function generatePresenceMetrics(string $identifier, PresenceRepositoryInterface $repository): Metric {
-    $total = $repository->countTotalPresences($this->club);
-    $totalFilter = $repository->getStatsPerDayOfWeek($this->club, $this->filterDates['end'], $this->filterDates['start']);
-    dump($totalFilter);
+    $totalPresences = $repository->countTotalPresences($this->club, $this->filterDates['end'], $this->filterDates['start']);
+    $statsPerActivitiesDays = $repository->getPresencesStatsPerActivitiesPerDayOfWeek($this->club, $this->filterDates['end'], $this->filterDates['start']);
 
-    $currentSeason = $repository->countTotalPresencesYearlyForCurrentSeason($this->club);
-    $currentSeasonOpenedDays = $repository->countNumberOfPresenceDaysForCurrentSeason($this->club);
+    $metrics = [];
+    foreach ($statsPerActivitiesDays as $activityName => $statsPerDays) {
+      $metricsForActivity = new Metric()->setName($activityName);
+      $total = 0;
 
-
-    $lastSeason = $repository->countTotalPresencesYearlyForPreviousSeason($this->club);
-    $lastYearSeasonDays = $repository->countNumberOfPresenceDaysForPreviousSeason($this->club);
+      foreach ($statsPerDays as $dayOfWeek => $stats) {
+        $total += $stats['total'];
+        $metricsForActivity
+          ->addChildMetric(
+            new Metric()
+              ->setName($dayOfWeek)
+              ->setValues($stats)
+        );
+      }
+      $metricsForActivity->setValue($total);
+      $metrics[] = $metricsForActivity;
+    }
 
     $metric = new Metric();
     $metric->setClub($this->club);
     $metric->setName($identifier);
-    $metric->setValue($total);
-    $metric->setChildMetrics([
-      (new Metric())
-        ->setClub($this->club)
-        ->setName("previous-season")
-        ->setValue($lastSeason)
-        ->setChildMetrics([
-          (new Metric())
-            ->setClub($this->club)
-            ->setName("opened-days")
-            ->setValue($lastYearSeasonDays),
-        ]),
-      (new Metric())
-        ->setName("current-season")
-        ->setValue($currentSeason)
-        ->setChildMetrics([
-          (new Metric())
-            ->setName("opened-days")
-            ->setValue($currentSeasonOpenedDays),
-        ]),
-    ]);
+    $metric->setValue($totalPresences);
+    $metric->setChildMetrics($metrics);
     return $metric;
   }
 
