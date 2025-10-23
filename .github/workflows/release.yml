@@ -86,3 +86,4 @@ jobs:
           labels: |
             ${{ steps.meta.outputs.labels }}
             org.opencontainers.image.vendor=Benoit VIGNAL
+            org.opencontainers.image.url=https://about.narvik.app
