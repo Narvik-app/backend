@@ -52,4 +52,32 @@ class SeasonService {
 
     return implode("/", $seasons);
   }
+
+  /**
+   * Calculate a start and end date range.
+   *
+   * @param Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate If not defined, it will be based on the $endDate starting season date
+   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
+   */
+  public static function calculateStartEndDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array
+  {
+    $dates = [
+      "start" => $startDate,
+      "end"   => $endDate,
+    ];
+
+    if ($startDate && $startDate < $endDate) {
+      return $dates;
+    }
+
+    $currentDate = new \DateTimeImmutable();
+    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
+
+    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
+    $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+
+    return $dates;
+  }
 }

@@ -78,7 +78,7 @@ trait PresenceRepositoryTrait {
   }
 
   public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int {
-    $dateRange = $this->calculateStartEndDate($club, $endDate, $startDate);
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
     $qb = $this->createQueryBuilder("m");
     $this->applyActivityExclusionConstraint($club, $qb);
@@ -92,7 +92,7 @@ trait PresenceRepositoryTrait {
   }
 
   public function countTotalPresences(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int {
-    $dateRange = $this->calculateStartEndDate($club, $endDate, $startDate);
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
     $qb = $this->createQueryBuilder("m");
     if ($club) {
@@ -106,53 +106,8 @@ trait PresenceRepositoryTrait {
       ->getQuery()->getSingleScalarResult();
   }
 
-  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null) {
-    $dateRange = $this->calculateStartEndDate($club, $endDate, $startDate);
-
-    $qb = $this->createQueryBuilder("m");
-    if ($club) {
-      $this->applyClubRestriction($qb, $club);
-    }
-    return $qb
-      ->select("a.name")
-      ->addSelect($qb->expr()->count("a.name") . ' AS total')
-      ->innerJoin("m.activities", "a")
-      ->groupBy("a.name")
-      ->orderBy("a.name")
-
-      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $dateRange['start'])
-      ->setParameter("to", $dateRange['end'])
-      ->getQuery()->getResult();
-  }
-
-  /**
-   * @param Club|null $club
-   * @param \DateTimeImmutable $endDate
-   * @param \DateTimeImmutable|null $startDate If not defined, it will be based on the $endDate starting season date
-   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
-   */
-  private function calculateStartEndDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array {
-    $dates = [
-      "start" => $startDate,
-      "end" => $endDate,
-    ];
-
-    if ($startDate && $startDate < $endDate) {
-      return $dates;
-    }
-
-    $currentDate = new \DateTimeImmutable();
-    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
-
-    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
-    $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
-
-    return $dates;
-  }
-
   private function executePresenceStatsPerDayOfWeekQuery(?Club $club, ?Activity $activity, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array {
-    $dateRange = $this->calculateStartEndDate($club, $endDate, $startDate);
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
     $conn = $this->getEntityManager()->getConnection();
 
     $presenceTable = $this->getClassMetadata()->getTableName();
