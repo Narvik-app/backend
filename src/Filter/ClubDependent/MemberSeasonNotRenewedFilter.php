@@ -16,7 +16,7 @@ use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
-  public const PROPERTY_NAME = "seasonNotRenewed";
+  public const PROPERTY_NAME = "season-not-renewed";
 
   public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
     parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);

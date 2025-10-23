@@ -4,17 +4,20 @@ namespace App\Filter\ClubDependent;
 
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Entity\ClubDependent\Member;
+use App\Entity\Season;
 use App\Filter\Abstract\AbstractClubDependentFilter;
 use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
-use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 final class CurrentSeasonFilter extends AbstractClubDependentFilter {
-  public const PROPERTY_NAME = "currentSeason";
+  public const PROPERTY_NAME = "current-season";
 
   public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
     parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);
@@ -49,8 +52,12 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
       if (empty($passedFilterProps) || count($passedFilterProps) !== 1) return;
 
       $rootAlias = $queryBuilder->getRootAliases()[0];
-      $queryBuilder->andWhere($this->buildFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator));
-      $queryBuilder->setParameter(":currentSeason", $currentSeason);
+
+      if ($resourceClass === Member::class) {
+        $this->buildMemberFilterClause($queryBuilder, $passedFilterProps[0], $rootAlias, $queryNameGenerator, $currentSeason);
+      } else {
+        throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, "Filter not implemented for $resourceClass");
+      }
     }
   }
 
@@ -62,9 +69,12 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
     return array_unique($acceptedFilterProps);
   }
 
-  private function buildFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator) {
+  private function buildMemberFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator, Season $currentSeason): void
+  {
     $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
-    return $queryBuilder->expr()->eq($clauseField, ':currentSeason');
+
+    $queryBuilder->andWhere($queryBuilder->expr()->eq($clauseField, ':currentSeason'));
+    $queryBuilder->setParameter(":currentSeason", $currentSeason);
   }
 
   public function getDescription(string $resourceClass): array {
