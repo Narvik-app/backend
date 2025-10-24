@@ -534,15 +534,15 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $club = _InitStory::club_1();
 
     $this->loggedAsAdminClub1();
-    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['currentSeason[memberSeasons.season]' => true]);
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['current-season[memberSeasons.season]' => true]);
     $this->assertResponseIsSuccessful();
     $this->assertEquals(3, $response->toArray()['totalItems']);
 
-    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previousSeason[memberSeasons.season]' => true]);
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[memberSeasons.season]' => true]);
     $this->assertResponseIsSuccessful();
     $this->assertEquals(0, $response->toArray()['totalItems']);
 
-    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['seasonNotRenewed[memberSeasons.season]' => true]);
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['season-not-renewed[memberSeasons.season]' => true]);
     $this->assertResponseIsSuccessful();
     $this->assertEquals(0, $response->toArray()['totalItems']);
   }
