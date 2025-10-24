@@ -3,13 +3,6 @@ set -e
 
 IGNORE_MIGRATION=${IGNORE_MIGRATION:-false}
 
-echo "Current env: $APP_ENV"
-if [ "$APP_ENV" != 'prod' ]; then
-   # https://github.com/api-platform/api-platform/issues/1819
-   echo "Making phpunit executable"
-   chmod +x bin/phpunit
-fi
-
 if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	if [ -z "$(ls -A 'vendor/' 2>/dev/null)" ]; then
 		composer install --prefer-dist --no-progress --no-interaction
