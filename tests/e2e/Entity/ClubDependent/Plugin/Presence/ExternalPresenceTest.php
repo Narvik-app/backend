@@ -198,4 +198,17 @@ class ExternalPresenceTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($this->getRootWClubUrl($club));
     $this->assertCount($this->TOTAL_ADMIN_CLUB_1 + 3, $response->toArray()['member']);
   }
+
+  public function testCustomFilters(): void {
+    $club = _InitStory::club_1();
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['current-season[date]' => true]);
+    $this->assertResponseIsSuccessful();
+    $this->assertEquals(10, $response->toArray()['totalItems']);
+
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[date]' => true]);
+    $this->assertResponseIsSuccessful();
+    $this->assertEquals(0, $response->toArray()['totalItems']);
+  }
 }

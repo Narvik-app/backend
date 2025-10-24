@@ -24,6 +24,8 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
+use App\Filter\ClubDependent\CurrentSeasonFilter;
+use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Validator\Constraints\ActivityMustBeEnabled;
@@ -122,6 +124,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiFilter(OrderFilter::class, properties: ['date' => 'DESC', 'createdAt' => 'DESC'])]
 #[ApiFilter(MultipleFilter::class, properties: ['firstname', 'lastname', 'licence'])]
 #[ApiFilter(SearchFilter::class, properties: ['activities.uuid' => 'exact'])]
+#[ApiFilter(CurrentSeasonFilter::class, properties: ['date'])]
+#[ApiFilter(PreviousSeasonFilter::class, properties: ['date'])]
 class ExternalPresence extends UuidEntity implements TimestampEntityInterface, ClubLinkedEntityInterface {
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;

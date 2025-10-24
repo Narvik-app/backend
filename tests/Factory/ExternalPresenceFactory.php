@@ -4,6 +4,7 @@ namespace App\Tests\Factory;
 
 use App\Entity\ClubDependent\Plugin\Presence\ExternalPresence;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
+use App\Service\SeasonService;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use DateTimeImmutable;
@@ -62,12 +63,15 @@ final class ExternalPresenceFactory extends PersistentProxyObjectFactory {
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
    */
   protected function defaults(): array {
+    $club = _InitStory::club_1();
+    $seasonDates = SeasonService::calculateStartEndDate($club, new \DateTimeImmutable());
+
     return [
-      'date'       => DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween('-10 days', 'now')),
+      'date'       => \DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween($seasonDates['start']->format('Y-m-d'), $seasonDates['end']->format('Y-m-d'))),
       'firstname'  => self::faker()->firstName(),
       'lastname'   => self::faker()->lastName(),
       'activities' => ActivityStory::getRandomRange('activities_club1', 1, 4),
-      'club'       => _InitStory::club_1(),
+      'club'       => $club,
     ];
   }
 

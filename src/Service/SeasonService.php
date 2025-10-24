@@ -59,13 +59,15 @@ class SeasonService {
    * @param Club|null $club
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate If not defined, it will be based on the $endDate starting season date
+   * @param bool $usedForComparison true: will update the endDate to match the current month and day (only year will be keep).
+   *                                      Doing that gives the possibility to compare datas on 2 periods
    * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
    */
-  public static function calculateStartEndDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array
+  public static function calculateStartEndDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null, bool $usedForComparison = true): array
   {
     $dates = [
-      "start" => $startDate,
-      "end"   => $endDate,
+      "start" => $startDate?->setTime(0, 0, 0),
+      "end"   => $endDate->setTime(23, 59, 59),
     ];
 
     if ($startDate && $startDate < $endDate) {
@@ -76,7 +78,12 @@ class SeasonService {
     $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
 
     $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
-    $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+    if ($usedForComparison) {
+      $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+    }
+
+    $dates['start'] = $dates['start']->setTime(0, 0, 0);
+    $dates['end'] = $dates['end']->setTime(23, 59, 59);
 
     return $dates;
   }
