@@ -9,6 +9,7 @@ use App\Entity\Season;
 use App\Filter\Abstract\AbstractClubDependentFilter;
 use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
+use App\Service\SeasonService;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Response;
@@ -79,10 +80,15 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
 
   private function buildDateFilterClause(QueryBuilder $queryBuilder, string $field, string $rootAlias, QueryNameGeneratorInterface $queryNameGenerator): void
   {
-    $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
+    $club = $this->getSelfClub($queryBuilder);
 
-//    $queryBuilder->andWhere($queryBuilder->expr()->eq($clauseField, ':currentSeason'));
-//    $queryBuilder->setParameter(":currentSeason", $currentSeason);
+    $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
+    $dateRange = SeasonService::calculateStartEndDate($club, SeasonService::getCurrentSeasonEndDate($club));
+
+    $queryBuilder
+      ->andWhere($queryBuilder->expr()->between($clauseField, ":from", ":to"))
+      ->setParameter("from", $dateRange['start'])
+      ->setParameter("to", $dateRange['end']);
   }
 
   public function getDescription(string $resourceClass): array {
