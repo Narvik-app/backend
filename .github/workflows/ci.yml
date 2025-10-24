@@ -17,6 +17,10 @@ concurrency:
 
 jobs:
   tests:
+    permissions:
+      contents: read # Allows checkout action to read your repository
+      pull-requests: write # Allows the action to post comments on PRs
+      statuses: write # Used by Codecov status updates
     name: Tests
     runs-on: ubuntu-latest
     steps:
@@ -63,10 +67,13 @@ jobs:
         run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
       -
         name: Run PHPUnit
-        run: | 
+        run: |
+          # Run the test suite via composer script. The script handles output redirection.
           docker compose exec -T php sh -c 'composer ci-test'
           docker compose cp php:/app/coverage.xml ./coverage.xml
           docker compose cp php:/app/junit.xml ./junit.xml
+          docker compose cp php:/app/var/phpunit-output.log ./phpunit-output.log
+          docker compose cp php:/app/var/coverage ./coverage-html
       -
         name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -78,6 +85,60 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+      -
+        name: Format PHPUnit summary for PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          PHPUNIT_LOG="phpunit-output.log"
+          FORMATTED_OUTPUT="formatted_phpunit_summary.md"
+
+          # Extract summary lines
+          TEST_SUMMARY=$(grep -o 'Tests:.*' "$PHPUNIT_LOG" | head -n 1)
+          TIME_SUMMARY=$(grep -o 'Time:.*, Memory:.*' "$PHPUNIT_LOG" | head -n 1)
+
+          # Start building the comment body
+          {
+            echo "### :books: PHPUnit Summary"
+            echo ""
+            if [ -n "$TEST_SUMMARY" ]; then
+                echo "\`$TEST_SUMMARY\`"
+            fi
+            if [ -n "$TIME_SUMMARY" ]; then
+                echo "\`$TIME_SUMMARY\`"
+            fi
+            echo ""
+          } > "$FORMATTED_OUTPUT"
+
+
+          # Grep for actual deprecation notices, excluding the summary line.
+          # We look for lines starting with common deprecation keywords or "Unsilenced".
+          grep -E '^(User|Unsilenced|Method|Function|Class|Constant|Property|Return type|Passing|Argument|Calling|Accessing|Implementing|Extending|The ".+" option|Since symfony|The service|The parameter) .+ is deprecated' "$PHPUNIT_LOG" > deprecations.log || true
+
+          if [ -s "deprecations.log" ]; then
+              DEPRECATION_COUNT=$(wc -l < deprecations.log)
+              {
+                echo "### :warning: PHPUnit Deprecations Found"
+                echo ""
+                echo "<details>"
+                echo "<summary>Click to expand $DEPRECATION_COUNT deprecation notices</summary>"
+                echo ""
+                echo "\`\`\`"
+                cat "deprecations.log"
+                echo "\`\`\`"
+                echo "</details>"
+              } >> "$FORMATTED_OUTPUT"
+          else
+              {
+                echo "### :white_check_mark: No PHPUnit Deprecations Found"
+              } >> "$FORMATTED_OUTPUT"
+          fi
+      -
+        name: Post PHPUnit summary as PR comment
+        if: ${{ github.event_name == 'pull_request' && !cancelled() }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: phpunit-summary
+          path: formatted_phpunit_summary.md
       -
         name: Custom CSV Validator
         run: docker compose exec -T php bin/console -e test serializer:validate:csv
