@@ -5,6 +5,7 @@ namespace App\Tests\Factory;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
 use App\Repository\ClubDependent\Plugin\Sale\SaleRepository;
+use App\Service\UtilsService;
 use App\Tests\Story\_InitStory;
 use Doctrine\ORM\EntityRepository;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
@@ -61,6 +62,8 @@ final class SaleFactory extends PersistentProxyObjectFactory {
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
    */
   protected function defaults(): array|callable {
+//    $seasonDate = UtilsService::
+    
     return [
       // 'price' => self::faker()->randomFloat(2, 20, 80),
       'club' => _InitStory::club_1(),
