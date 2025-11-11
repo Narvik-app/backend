@@ -67,17 +67,23 @@ jobs:
         run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
       -
         name: Run PHPUnit
+        id: phpunit
         run: |
           # Run the test suite via composer script. The script handles output redirection.
           docker compose exec -T php sh -c 'composer ci-test'
+      -
+        name: Copy test artifacts
+        if: ${{ always() }} # This step will always run
+        run: |
           docker compose cp php:/app/coverage.xml ./coverage.xml
           docker compose cp php:/app/junit.xml ./junit.xml
           docker compose cp php:/app/var/phpunit-output.log ./phpunit-output.log
           docker compose cp php:/app/var/coverage ./coverage-html
       -
         name: Upload coverage to Codecov
+        if: ${{ steps.phpunit.outcome == 'success' }}
         uses: codecov/codecov-action@v5
-        with: 
+        with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test results to Codecov
@@ -85,9 +91,12 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./junit.xml
       -
         name: Format PHPUnit summary for PR comment
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          PHPUNIT_OUTCOME: ${{ steps.phpunit.outcome }}
         run: |
           PHPUNIT_LOG="phpunit-output.log"
           FORMATTED_OUTPUT="formatted_phpunit_summary.md"
@@ -98,7 +107,11 @@ jobs:
 
           # Start building the comment body
           {
-            echo "### :books: PHPUnit Summary"
+            if [ "$PHPUNIT_OUTCOME" = "success" ]; then
+              echo "### :white_check_mark: PHPUnit Summary"
+            else
+              echo "### :x: PHPUnit Summary"
+            fi
             echo ""
             if [ -n "$TEST_SUMMARY" ]; then
                 echo "\`$TEST_SUMMARY\`"
@@ -139,6 +152,12 @@ jobs:
         with:
           header: phpunit-summary
           path: formatted_phpunit_summary.md
+      -
+        name: Fail job on test failure
+        if: ${{ steps.phpunit.outcome == 'failure' }}
+        run: |
+          echo "PHPUnit tests failed."
+          exit 1
       -
         name: Custom CSV Validator
         run: docker compose exec -T php bin/console -e test serializer:validate:csv
