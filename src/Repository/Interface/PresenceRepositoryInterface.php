@@ -4,6 +4,7 @@ namespace App\Repository\Interface;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
+use Deprecated;
 
 interface PresenceRepositoryInterface {
   public function findAllPresentToday(Club $club): array;
@@ -13,15 +14,28 @@ interface PresenceRepositoryInterface {
    *                        METRICS
    *********************************************************/
 
-  public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int;
-  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int;
-  public function countTotalPresencesYearlyForCurrentSeason(?Club $club): int;
-  public function countTotalPresencesYearlyForPreviousSeason(?Club $club): int;
-  public function countTotalPresences(?Club $club): int;
-  public function countNumberOfPresenceDaysForCurrentSeason(?Club $club): int;
-  public function countNumberOfPresenceDaysForPreviousSeason(?Club $club): int;
-  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate);
-  public function countPresencesPerActivitiesForCurrentSeason(?Club $club);
-  public function countPresencesPerActivitiesForPreviousSeason(?Club $club);
+  /**
+   * Return all the presences' stats, sorted by activity name then weekdays
+   * 0 = sunday
+   *
+   * @param Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate
+   * @return array
+   */
+  public function getPresencesStatsPerActivitiesPerDayOfWeek(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array;
 
+  /**
+   * Return the presences stats for a specific activity, sorted by weekdays
+   * 0 = sunday
+   *
+   * @param Club|null $club
+   * @param Activity $activity
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate
+   * @return array
+   */
+  public function getPresencesStatsPerDayOfWeekForActivity(?Club $club, Activity $activity, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array;
+  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int;
+  public function countTotalPresences(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int;
 }

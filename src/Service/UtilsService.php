@@ -4,14 +4,36 @@ namespace App\Service;
 
 class UtilsService {
 
-  public static function convertStringToDbDecimal(?string $string): ?string {
+  /**
+   * Format a string boolean representation to a PHP boolean value.
+   *
+   * @param string|int|bool|null $value
+   * @param bool $default
+   * @return bool
+   */
+  public static function toBoolean(string|int|bool|null $value, bool $default = false): bool
+  {
+    if (is_bool($value)) {
+      return $value;
+    }
+
+    return match (strtolower($value)) {
+      'true', '1' => true,
+      'false', '0' => false,
+      default => $default,
+    };
+  }
+
+  public static function convertStringToDbDecimal(?string $string): ?string
+  {
     if (!is_numeric($string) && empty($string)) {
       return null;
     }
     return filter_var(str_replace(',', '.', $string), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
   }
 
-  public function generateRandomToken(int $length): string {
+  public function generateRandomToken(int $length): string
+  {
     $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-';
     $charLength = strlen($characters) - 1;
     $result = '';

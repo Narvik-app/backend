@@ -36,6 +36,10 @@ class SeasonService {
     }
   }
 
+  public static function getPreviousSeasonEndDate(?Club $club): \DateTimeImmutable {
+    return self::getCurrentSeasonEndDate($club)->modify('-1 year');
+  }
+
   public static function getCurrentSeasonName(?Club $club = null): string {
     $currentSeasonEndDate = self::getCurrentSeasonEndDate($club);
     return $currentSeasonEndDate->modify("-1 year")->format("Y") . "/" . $currentSeasonEndDate->format("Y");
@@ -47,5 +51,40 @@ class SeasonService {
     $seasons[1] = --$seasons[1];
 
     return implode("/", $seasons);
+  }
+
+  /**
+   * Calculate a start and end date range.
+   *
+   * @param Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate If not defined, it will be based on the $endDate starting season date
+   * @param bool $usedForComparison true: will update the endDate to match the current month and day (only year will be keep).
+   *                                      Doing that gives the possibility to compare datas on 2 periods
+   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
+   */
+  public static function calculateStartEndDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null, bool $usedForComparison = true): array
+  {
+    $dates = [
+      "start" => $startDate?->setTime(0, 0, 0),
+      "end"   => $endDate->setTime(23, 59, 59),
+    ];
+
+    if ($startDate && $startDate < $endDate) {
+      return $dates;
+    }
+
+    $currentDate = new \DateTimeImmutable();
+    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
+
+    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
+    if ($usedForComparison) {
+      $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+    }
+
+    $dates['start'] = $dates['start']->setTime(0, 0, 0);
+    $dates['end'] = $dates['end']->setTime(23, 59, 59);
+
+    return $dates;
   }
 }

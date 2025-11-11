@@ -23,6 +23,8 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
+use App\Filter\ClubDependent\CurrentSeasonFilter;
+use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Repository\ClubDependent\Plugin\Sale\SaleRepository;
 use App\Security\Voter\SaleVoter;
 use App\Service\UtilsService;
@@ -106,6 +108,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(OrderFilter::class, properties: ['createdAt' => 'DESC'])]
 #[ApiFilter(SearchFilter::class, properties: ['seller.uuid' => 'exact'])]
 #[ApiFilter(DateFilter::class, properties: ['createdAt' => DateFilter::EXCLUDE_NULL])]
+#[ApiFilter(CurrentSeasonFilter::class, properties: ['createdAt'])]
+#[ApiFilter(PreviousSeasonFilter::class, properties: ['createdAt'])]
 class Sale extends UuidEntity implements TimestampEntityInterface, ClubLinkedEntityInterface {
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;

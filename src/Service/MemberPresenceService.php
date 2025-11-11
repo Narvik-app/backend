@@ -69,7 +69,7 @@ class MemberPresenceService extends AbstractCsvService {
    * @throws \League\Csv\UnavailableStream
    */
   public function importFromFile(Club $club, string $filename): int {
-    $reader = Reader::createFromPath($filename);
+    $reader = Reader::from($filename);
     $reader->setHeaderOffset(0); // Header is in first line
     $records = $reader->getRecords();
     $array = iterator_to_array($records);

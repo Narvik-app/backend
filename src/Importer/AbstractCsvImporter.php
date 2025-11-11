@@ -6,6 +6,7 @@ use App\Enum\ImportException;
 use App\Importer\Model\AbstractImportedItemResult;
 use App\Importer\Model\SuccessImportedItem;
 use App\Importer\Model\WarningImportedItem;
+use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -221,7 +222,7 @@ abstract class AbstractCsvImporter {
    * @return bool
    */
   protected function toBoolean($value): bool {
-    return is_bool($value) ? $value : !in_array(strtolower((string) $value), ['', '0', 'false']);
+    return UtilsService::toBoolean($value);
   }
 
   private function parseRow(int $lineNumber, array &$row, array &$result): void {

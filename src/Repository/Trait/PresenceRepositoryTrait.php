@@ -5,6 +5,7 @@ namespace App\Repository\Trait;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Service\SeasonService;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
@@ -66,42 +67,18 @@ trait PresenceRepositoryTrait {
    *                        METRICS
    *********************************************************/
 
-  /**
-   * @param Club|null $club
-   * @param \DateTimeImmutable $maxDate
-   * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
-\   */
-  private function calculateStartEndDate(?Club $club, \DateTimeImmutable $maxDate): array {
-    $currentDate = new \DateTimeImmutable();
-
-    $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
-
-    $startDate = $maxDate->setDate($maxDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
-    $maxDate = $maxDate->setDate($maxDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
-
-    return [
-      "start" => $startDate,
-      "end" => $maxDate,
-    ];
+  public function getPresencesStatsPerActivitiesPerDayOfWeek(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array
+  {
+    return $this->executePresenceStatsPerDayOfWeekQuery($club, null, $endDate, $startDate);
   }
 
-  public function countTotalPresencesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
-    $dateRange = $this->calculateStartEndDate($club, $maxDate);
-
-    $qb = $this->createQueryBuilder("m");
-    if ($club) {
-      $this->applyClubRestriction($qb, $club);
-    }
-    return $qb
-      ->select($qb->expr()->count("m.id"))
-      ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
-      ->setParameter("from", $dateRange['start'])
-      ->setParameter("to", $dateRange['end'])
-      ->getQuery()->getSingleScalarResult();
+  public function getPresencesStatsPerDayOfWeekForActivity(?Club $club, Activity $activity, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array
+  {
+    return $this->executePresenceStatsPerDayOfWeekQuery($club, $activity, $endDate, $startDate);
   }
 
-  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate): int {
-    $dateRange = $this->calculateStartEndDate($club, $maxDate);
+  public function countNumberOfPresenceDaysYearlyUntilDate(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int {
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
     $qb = $this->createQueryBuilder("m");
     $this->applyActivityExclusionConstraint($club, $qb);
@@ -114,60 +91,99 @@ trait PresenceRepositoryTrait {
       ->getQuery()->getSingleScalarResult();
   }
 
-  public function countTotalPresencesYearlyForCurrentSeason(?Club $club): int {
-    return $this->countTotalPresencesYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
-  }
+  public function countTotalPresences(?Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): int {
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
-  public function countTotalPresencesYearlyForPreviousSeason(?Club $club): int {
-    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
-    return $this->countTotalPresencesYearlyUntilDate($club, $lastYear);
-  }
-
-  public function countTotalPresences(?Club $club): int {
     $qb = $this->createQueryBuilder("m");
     if ($club) {
       $this->applyClubRestriction($qb, $club);
     }
     return $qb
       ->select($qb->expr()->count("m.id"))
-      ->getQuery()->getSingleScalarResult();
-  }
-
-  public function countNumberOfPresenceDaysForCurrentSeason(?Club $club): int {
-    return $this->countNumberOfPresenceDaysYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
-  }
-
-  public function countNumberOfPresenceDaysForPreviousSeason(?Club $club): int {
-    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
-    return $this->countNumberOfPresenceDaysYearlyUntilDate($club, $lastYear);
-  }
-
-  public function countPresencesPerActivitiesYearlyUntilDate(?Club $club, \DateTimeImmutable $maxDate) {
-    $dateRange = $this->calculateStartEndDate($club, $maxDate);
-
-    $qb = $this->createQueryBuilder("m");
-    if ($club) {
-      $this->applyClubRestriction($qb, $club);
-    }
-    return $qb
-      ->select("a.name")
-      ->addSelect($qb->expr()->count("a.name") . ' AS total')
-      ->innerJoin("m.activities", "a")
-      ->groupBy("a.name")
-      ->orderBy("a.name")
-
       ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
       ->setParameter("from", $dateRange['start'])
       ->setParameter("to", $dateRange['end'])
-      ->getQuery()->getResult();
+      ->getQuery()->getSingleScalarResult();
   }
 
-  public function countPresencesPerActivitiesForCurrentSeason(?Club $club) {
-    return $this->countPresencesPerActivitiesYearlyUntilDate($club, SeasonService::getCurrentSeasonEndDate($club));
+  private function executePresenceStatsPerDayOfWeekQuery(?Club $club, ?Activity $activity, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array {
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+    $conn = $this->getEntityManager()->getConnection();
+
+    $presenceTable = $this->getClassMetadata()->getTableName();
+    // Guess for join table name based on Doctrine's default naming strategy.
+    $presenceActivityTable = $presenceTable . '_activity';
+    $presenceJoinColumn = $presenceTable . '_id';
+    $activityTable = 'activity';
+
+    $params = [
+      'from' => $dateRange['start']->format('Y-m-d H:i:s'),
+      'to' => $dateRange['end']->format('Y-m-d H:i:s'),
+    ];
+    $paramTypes = [];
+
+    $whereClauses = ['p.date BETWEEN :from AND :to'];
+
+    if ($club) {
+      $whereClauses[] = 'p.club_id = :clubId';
+      $params['clubId'] = $club->getId();
+
+      if (!is_null($activity?->getId())) {
+        $whereClauses[] = 'a.id = :activityId';
+        $params['activityId'] = $activity->getId();
+      } else {
+        // We get all activities (excluding ignored ones)
+        $ignoredActivities = $club->getSettings()?->getExcludedActivitiesFromOpeningDays();
+        if ($ignoredActivities && !$ignoredActivities->isEmpty()) {
+          $ignoredActivityIds = array_map(fn($actvt) => $actvt->getId(), $ignoredActivities->toArray());
+          $whereClauses[] = 'a.id NOT IN (:ignoredActivities)';
+          $params['ignoredActivities'] = $ignoredActivityIds;
+          $paramTypes['ignoredActivities'] = ArrayParameterType::INTEGER;
+        }
+      }
+    }
+
+    $whereSql = implode(' AND ', $whereClauses);
+
+    $sql = <<<SQL
+      WITH daily_counts AS (
+        SELECT
+          a.name AS activity_name,
+          DATE(p.date) AS day,
+          EXTRACT(DOW FROM p.date) AS dayofweek,
+          COUNT(*) AS daily_total
+        FROM {$presenceTable} p
+        INNER JOIN {$presenceActivityTable} pa ON p.id = pa.{$presenceJoinColumn}
+        INNER JOIN {$activityTable} a ON a.id = pa.activity_id
+        WHERE {$whereSql}
+        GROUP BY a.name, DATE(p.date), EXTRACT(DOW FROM p.date)
+      )
+      SELECT
+        activity_name,
+        dayofweek,
+        SUM(daily_total) AS total,
+        CAST(AVG(daily_total) AS NUMERIC(10,2)) AS average,
+        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY daily_total) AS p25,
+        PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY daily_total) AS median,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY daily_total) AS p75
+      FROM daily_counts
+      GROUP BY activity_name, dayofweek
+      ORDER BY activity_name, dayofweek
+    SQL;
+
+    $result = $conn->executeQuery($sql, $params, $paramTypes)->fetchAllAssociative();
+    return $this->formatPresenceStatsPerActivityThenDays($result);
   }
 
-  public function countPresencesPerActivitiesForPreviousSeason(?Club $club) {
-    $lastYear = SeasonService::getCurrentSeasonEndDate($club)->modify('-1 year');
-    return $this->countPresencesPerActivitiesYearlyUntilDate($club, $lastYear);
+  private function formatPresenceStatsPerActivityThenDays(array $queryResults): array {
+    $output = [];
+    foreach ($queryResults as $queryResult) {
+      $activityName = $queryResult['activity_name'] ?? 'undefined';
+      $dayOfWeek = $queryResult['dayofweek'] ?? '-1';
+      unset($queryResult['activity_name'], $queryResult['dayofweek']);
+
+      $output[$activityName][$dayOfWeek] = $queryResult;
+    }
+    return $output;
   }
 }
