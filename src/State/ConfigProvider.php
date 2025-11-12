@@ -48,7 +48,7 @@ class ConfigProvider implements ProviderInterface {
     if ($this->authorizationChecker->isGranted(UserRole::super_admin->value) ||
         $this->params->get('app.expose_version')
     ) {
-      $config->setAppVersion(\Composer\InstalledVersions::getRootPackage()['pretty_version']);
+      $this->displayAppVersion($config);
     }
 
     $config->setLogo("/images/logo-narvik.png");
@@ -68,6 +68,11 @@ class ConfigProvider implements ProviderInterface {
       /** @var Club $club */
       $club = $profile->getClub();
 
+      // User is admin of any club. He has the right to see the version
+      if ($this->authorizationChecker->isGranted(ClubRole::admin->value, $club)) {
+        $this->displayAppVersion($config);
+      }
+
       // User is badger or supervisor
       if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club) ||
           $this->authorizationChecker->isGranted(ClubRole::badger->value, $club)) {
@@ -83,6 +88,10 @@ class ConfigProvider implements ProviderInterface {
         ]);
       }
     }
+  }
+
+  private function displayAppVersion(Config $config): void {
+    $config->setAppVersion(\Composer\InstalledVersions::getRootPackage()['pretty_version']);
   }
 
 }
