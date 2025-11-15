@@ -1,0 +1,1571 @@
+{
+	"info": {
+		"_postman_id": "927ec3af-457c-4e5c-8a45-b2e0bba0b39c",
+		"name": "API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1514961"
+	},
+	"item": [
+		{
+			"name": "0. Login",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const currentTime = Date.now();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.environment.set(\"token_expire\", currentTime + (jsonData.expires_in * 1000));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{auth}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://localhost/token",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "JWT Login Badger",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const currentTime = Date.now();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.environment.set(\"token_expire\", currentTime + (jsonData.expires_in * 1000));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"club\": \"{{club1}}\",\n    \"token\": \"club1longbadgertoken\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/bdg",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"bdg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const currentTime = Date.now();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access_token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.environment.set(\"token_expire\", currentTime + (jsonData.expires_in * 1000));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWQ5ODgxNTU0YzM4MGI1MTBmMDg0MzBhNGE5MTAwYWM6MjBhYTAyZDRhNjIyMzA1M2M3ZjQyOWRmMDdiZWYwZGI3NGUxZDQ1MTlkMTBlYjllMzBmOTYyNmUwODM1MDgwNDY0OWQ2OWJjNmQyMDE3NGU0MGE3MDg3ZmQ1YWE2MzMxMmQzMWFmMjM2MGY5MDY2ZWI0NWViNDVjMWUwOWViMjc=",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"grant_type\": \"refresh_token\",\n    \"refresh_token\": \"def5020021f48b81f85f75f2e7fcd56bdd356a6e4c2e6830256e8fe084b54b774f5584d728294ca203969ef9237a99a2bc574767abb6df876ce5d12e978e5a2806c6c79dcf76060f0ecab621085ce866b876cd96e812ae0bb4e5ca3c064b36039e1b03f37953f2c319fcb4a27e4a48cd50182d45199036bc14cccdf44ff8d1cba0ca134e91e1dd5fd973e9989b0ff754820cf1e25fe5fe3621f17a24ffd20592db1eb3cd92c2ccb6eef8383fe2f09d982182245763fa00c76f7a659c1f384c2106a3f7b3d32d5fe3a9c8c177a566e61ffcd7b66edc01eb5d3c1d59c7e4f4c297fc8312941dfbe546422783508f61b98a6bff420ba53b61949e27aa4fcfbebaabafc0139fda91149ed48b04a69763c2e7efc39992dd6d4f62d9851bffbe1a388c7de68148f7574a15201f0c1805af63174cf9431e721dd40f6c8ed0ddeb3b818b30fabb6a0b21196bbf3986bbe743dd8b\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "1. Not logged",
+			"item": [
+				{
+					"name": "Register - Initiate",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin123@admin.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/-/initiate-register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"-",
+								"initiate-register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin123@admin.com\",\n    \"password\": \"maisondu14\",\n    \"firstname\": \"Test\",\n    \"lastname\": \"TEST\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/-/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"-",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Validate account",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin123@admin.com\",\n    \"securityCode\": \"B103EF\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/-/validate-account",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"-",
+								"validate-account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset - Initiate",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@admin.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/-/initiate-reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"-",
+								"initiate-reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Password Reset",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"benoitvignal@gmail.com\",\n    \"password\": \"maisondu14\",\n    \"securityCode\": \"501D63\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/-/reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"-",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get public config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/config",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get public Legals last update",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/global-settings/LEGALS_LAST_UPDATE",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"global-settings",
+								"LEGALS_LAST_UPDATE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unsubscribe",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"club\": \"019519d5-2a92-73a2-842f-76e7b21e92d5\",\n    \"member\": \"019519f8-7a40-7332-a450-64c135d2a8c8\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/unsubscribe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"unsubscribe"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Logged",
+			"item": [
+				{
+					"name": "Plugin",
+					"item": [
+						{
+							"name": "Time and Travel Declaration",
+							"item": [
+								{
+									"name": "Member Vehicles",
+									"item": [
+										{
+											"name": "Get Member Vehicle",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/member-vehicles/{{memberVehicleUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"member-vehicles",
+														"{{memberVehicleUuid}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Create Member Vehicle",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"member\": \"/members/{{member1}}\",\n    \"brand\": \"Renault\",\n    \"model\": \"Clio\",\n    \"licensePlate\": \"AB-123-CD\",\n    \"engineType\": \"petrol\",\n    \"fiscalPower\": 5,\n    \"fiscalCoefficient\": \"0.5020\",\n    \"isEnabled\": true\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/member-vehicles",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"member-vehicles"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Update Member Vehicle",
+											"request": {
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/merge-patch+json",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"brand\": \"Peugeot\",\n    \"model\": \"308\",\n    \"licensePlate\": \"EF-456-GH\",\n    \"fiscalPower\": 6,\n    \"fiscalCoefficient\": \"0.5020\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/member-vehicles/{{memberVehicleUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"member-vehicles",
+														"{{memberVehicleUuid}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Member Vehicle",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/member-vehicles/{{memberVehicleUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"member-vehicles",
+														"{{memberVehicleUuid}}"
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "Time and Travel Declarations",
+									"item": [
+										{
+											"name": "Get All Time and Travel Declarations",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/time-and-travel-declarations",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"time-and-travel-declarations"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get Time and Travel Declaration",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/time-and-travel-declarations/{{declarationUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"time-and-travel-declarations",
+														"{{declarationUuid}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Create Time and Travel Declaration",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"member\": \"/members/{{member1}}\",\n    \"date\": \"2025-01-15\",\n    \"departureLocation\": \"Paris\",\n    \"arrivalLocation\": \"Lyon\",\n    \"kilometers\": 450,\n    \"hours\": \"6.50\",\n    \"description\": \"Formation fédérale\",\n    \"isRoundtrip\": true,\n    \"memberVehicle\": \"/clubs/{{club1}}/member-vehicles/{{memberVehicleUuid}}\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/time-and-travel-declarations",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"time-and-travel-declarations"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Update Time and Travel Declaration",
+											"request": {
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/merge-patch+json",
+														"type": "text"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"departureLocation\": \"Marseille\",\n    \"arrivalLocation\": \"Nice\",\n    \"kilometers\": 150,\n    \"hours\": \"2.50\",\n    \"description\": \"Formation régionale mise à jour\",\n    \"isRoundtrip\": false\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/time-and-travel-declarations/{{declarationUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"time-and-travel-declarations",
+														"{{declarationUuid}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Time and Travel Declaration",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/time-and-travel-declarations/{{declarationUuid}}",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"time-and-travel-declarations",
+														"{{declarationUuid}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get Member's Time and Travel Declarations",
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/clubs/{{club1}}/members/{{member1}}/time-and-travel-declarations",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"clubs",
+														"{{club1}}",
+														"members",
+														"{{member1}}",
+														"time-and-travel-declarations"
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Metrics",
+					"item": [
+						{
+							"name": "All",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/metrics",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"metrics"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Member presences",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/clubs/{{club1}}/metrics/presences",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"clubs",
+										"{{club1}}",
+										"metrics",
+										"presences"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Self",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/self",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"self"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Self Accept legals",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/merge-patch+json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/self/legals-accepted",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"self",
+								"legals-accepted"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/config",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to\": \"benoitvignal@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/global-settings/-/test-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"global-settings",
+								"-",
+								"test-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SMTP Configure",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"on\": true,\n    \"host\": \"mail\",\n    \"port\": \"1025\",\n    \"username\": null,\n    \"password\": null,\n    \"sender\": \"narvik@clubdetirstaubin.fr\",\n    \"senderName\": \"Narvik\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/global-settings/-/smtp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"global-settings",
+								"-",
+								"smtp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activity",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/activities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/activities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clubs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/members",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"members"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Members Import Itac",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/benoit/Downloads/adh-full.csv"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/members/-/from-itac",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"members",
+								"-",
+								"from-itac"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Members Import Eden",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/benoit/Downloads/adherents_data_exported_22_02_2025_09_59_49.xlsx"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/members/-/from-eden",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"members",
+								"-",
+								"from-eden"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Member",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": \"82876045-2024\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/members/-/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"members",
+								"-",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Members 1",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/members/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"members",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Members get member presences",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/members/161/presences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"members",
+								"161",
+								"presences"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member-presences",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/member-presences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"member-presences"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member-presences",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/merge-patch+json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"activities\": [\n        \"/clubs/0193b683-b858-73ee-a9c7-41c84cd27fe2/activities/01944fcd-0ba6-704b-b98f-5c53df5abfd5\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/emails/01973a26-0621-7178-ae8b-455a6f3ac277",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"emails",
+								"01973a26-0621-7178-ae8b-455a6f3ac277"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member-presences",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"member\": {\n        \"@id\": \"/members/970\",\n        \"@type\": \"Member\",\n        \"licence\": \"82876045\",\n        \"firstname\": \"Benoît\",\n        \"lastname\": \"VIGNAL\",\n        \"fullName\": \"VIGNAL Benoît\"\n    },\n    \"activities\": [\n        \"activities/1\",\n        \"activities/2\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/member-presences",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"member-presences"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member presences Import Cerbere",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1efcf3f9-1d7c-4120-a84e-3ecd2875232f"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/member-presences/-/from-cerbere",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"member-presences",
+								"-",
+								"from-cerbere"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member presences Import CSV",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1efd0433-671d-4230-b0e2-1a340db4a32d"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/member-presences/-/from-csv",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"member-presences",
+								"-",
+								"from-csv"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Member profile image",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/images/members/828760545.jpg",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"images",
+								"members",
+								"828760545.jpg"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload site logo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/global-settings/-/logo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"global-settings",
+								"-",
+								"logo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Public LOGO url",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/global-settings/LOGO",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"global-settings",
+								"LOGO"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Public LOGO Image",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/images/6c6f676f2e706e67",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"images",
+								"6c6f676f2e706e67"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Public LOGO Image Inline",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/public/images/inline/6c6f676f2e706e67",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"public",
+								"images",
+								"inline",
+								"6c6f676f2e706e67"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sale-payment-modes",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sale-payment-modes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"sale-payment-modes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"comment\": \"test\",\n    \"paymentMode\": \"/sale-payment-modes/1\",\n    \"salePurchasedItems\": [\n        {\n            \"quantity\": 2\n        },\n        {\n            \"item\": \"/inventory-items/1\"\n        },\n        {\n            \"itemName\": \"Prix custom\",\n            \"itemPrice\": \"122,11\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/sales",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"sales"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sales",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/sales",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"sales"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Legal file",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f021d62-b00d-4c40-86a7-ea26c866af69"
+								},
+								{
+									"key": "type",
+									"value": "cgu",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/global-settings/-/legals-file",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"global-settings",
+								"-",
+								"legals-file"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send an email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f021d62-b00d-4c40-86a7-ea26c866af69",
+									"disabled": true
+								},
+								{
+									"key": "title",
+									"value": "test",
+									"type": "text"
+								},
+								{
+									"key": "content",
+									"value": "plop",
+									"type": "text"
+								},
+								{
+									"key": "members",
+									"value": "019519f8-7a40-7332-a450-64c135d2a8c8",
+									"type": "text"
+								},
+								{
+									"key": "isNewsletter",
+									"value": "false",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/clubs/{{club1}}/emails/-/send",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"clubs",
+								"{{club1}}",
+								"emails",
+								"-",
+								"send"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"const currentTime = Date.now();",
+							"",
+							"",
+							"if (pm.environment.get(\"token_expire\") <= currentTime) {",
+							"    console.log(\"Retrieving new access token\")",
+							"    pm.sendRequest({",
+							"        url: `${pm.collectionVariables.get(\"baseUrl\")}/token`,",
+							"        method: 'POST',",
+							"        header: {",
+							"            'Authorization': pm.globals.get('auth'),",
+							"            'Content-Type': 'application/x-www-form-urlencoded',",
+							"            'Accept': 'application/json'",
+							"        },",
+							"        body: {",
+							"            mode: 'raw',",
+							"            raw: `grant_type=refresh_token&refresh_token=${pm.environment.get('refresh_token')}`",
+							"        }",
+							"    }, function (err, response) {",
+							"        if (err) {",
+							"            console.error(\"Fail to refresh the token\")",
+							"            throw err",
+							"        }",
+							"        console.log(response.json());",
+							"        var jsonData = response.json();",
+							"",
+							"        if (jsonData.error) {",
+							"            console.error(jsonData);",
+							"            throw Error(`FAILED TO ACQUIRE ACCESS TOKEN.  ${jsonData.error_description}`)",
+							"        }",
+							"",
+							"        pm.environment.set(\"access_token\", jsonData.access_token);",
+							"        pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
+							"        pm.environment.set(\"token_expire\", currentTime + (jsonData.expires_in * 1000));",
+							"    });",
+							"}"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost",
+			"type": "string"
+		}
+	]
+}
