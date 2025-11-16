@@ -20,8 +20,6 @@ class TimeAndTravelDeclarationVoter extends Voter {
   public const DELETE = 'TIME_TRAVEL_DECLARATION_DELETE';
 
   public function __construct(
-    private readonly Security $security,
-    private readonly RequestStack $requestStack,
     private readonly RequestService $requestService,
   ) {
   }
@@ -39,28 +37,21 @@ class TimeAndTravelDeclarationVoter extends Voter {
       return false;
     }
 
-    $selectedProfile = $this->requestService->getSelectedProfileFromRequest($this->requestStack->getCurrentRequest());
-
-
-    dump($attribute, $subject, $selectedProfile);
-
-    // Get the current user member
-    // TODO: Implement the member logic
-//    $userMember = $this->getUserMember($token);
-//    if (!$userMember) {
-//      return false;
-//    }
-//
-//    // Allow access if the user is the owner of the declaration
-//    if ($declaration->getMember() === $userMember->getMember()) {
-//      return true;
-//    }
-
-    // ClubRole::admin can do anything
-    if ($this->security->isGranted(ClubRole::admin->value, $subject)) {
-      // return true;
+    $activeProfile = $this->requestService->getActiveProfile();
+    if (!$activeProfile) {
+      return false;
     }
 
-    return false;
+    // Member edit his declaration, no issue full access
+    if ($subject->getMember() === $activeProfile->getMember()) {
+      return true;
+    }
+
+    return match ($activeProfile->getRole()) {
+      ClubRole::admin => true,
+      ClubRole::badger => in_array($attribute, [self::READ, self::CREATE]),
+      ClubRole::supervisor => $activeProfile->getClub()?->getSettings()?->getSupervisorCanEditAnyTTDeclaration() ?? false,
+      default => false,
+    };
   }
 }

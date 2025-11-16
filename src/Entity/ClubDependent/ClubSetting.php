@@ -144,6 +144,13 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\Positive]
   private ?string $smicHourlyRate = null;
 
+  /**
+   * Allow supervisor to CRUD any Time and Travel declarations
+   */
+  #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+  #[Groups(['club-setting'])]
+  private bool $supervisorCanEditAnyTTDeclaration = false;
+
   public function __construct() {
     parent::__construct();
     $this->excludedActivitiesFromOpeningDays = new ArrayCollection();
@@ -305,6 +312,17 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setSmicHourlyRate(?string $smicHourlyRate): static {
     $this->smicHourlyRate = $smicHourlyRate;
+    return $this;
+  }
+
+  public function getSupervisorCanEditAnyTTDeclaration(): bool
+  {
+    return $this->supervisorCanEditAnyTTDeclaration;
+  }
+
+  public function setSupervisorCanEditAnyTTDeclaration(bool $supervisorCanEditAnyTTDeclaration): ClubSetting
+  {
+    $this->supervisorCanEditAnyTTDeclaration = $supervisorCanEditAnyTTDeclaration;
     return $this;
   }
 }

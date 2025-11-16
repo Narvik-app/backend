@@ -69,6 +69,13 @@ final readonly class RequestService {
     return null;
   }
 
+  /**
+   * Retrieves the active profile for the current user based on the request.
+   *
+   * @param Request|null $request The HTTP request to check for a selected profile header. If not set it will get it from the request stack.
+   * @return Profile|null The active profile if found and valid.
+   * @throws HttpException If no matching profile is found or if multiple profiles exist but none is selected.
+   */
   public function getActiveProfile(?Request $request = null): ?Profile {
     $request = $request ?? $this->requestStack->getCurrentRequest();
 
