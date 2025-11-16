@@ -3,13 +3,22 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Member;
 use App\Entity\Interface\ClubLinkedEntityInterface;
+use App\Entity\Profile;
+use App\Entity\User;
 use App\Repository\ClubRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 final readonly class RequestService {
   public function __construct(
     private ClubRepository $clubRepository,
+    private TokenStorageInterface $tokenStorage,
+    private RequestStack $requestStack,
   ) {
   }
 
@@ -58,5 +67,36 @@ final readonly class RequestService {
       return $this->clubRepository->findOneByUuid($uuid);
     }
     return null;
+  }
+
+  public function getActiveProfile(?Request $request = null): ?Profile {
+    $request = $request ?? $this->requestStack->getCurrentRequest();
+
+    $user = $this->tokenStorage->getToken()?->getUser();
+    if (!$user instanceof User) {
+      return null;
+    }
+
+    $selectedProfile = $this->getSelectedProfileFromRequest($request);
+
+    $linkedProfiles = $user->getLinkedProfiles();
+
+    // Profile is selected in the header
+    if ($selectedProfile) {
+      foreach ($linkedProfiles as $linkedProfile) {
+        if (!$linkedProfile->getId() || $linkedProfile->getId() !== $selectedProfile) {
+          continue;
+        }
+        return $linkedProfile;
+      }
+      return null;
+    }
+
+    // No profile selected, and we got multiple, we throw an exception here
+    if (count($linkedProfiles) > 1) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, "Missing required 'Profile' header.");
+    }
+
+    return $linkedProfiles->first();
   }
 }
