@@ -39,9 +39,9 @@ class ClubVoter extends Voter {
   }
 
   protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool {
-    $selectedProfile = $this->requestService->getSelectedProfileFromRequest($this->requestStack->getCurrentRequest());
+    $request = null;
     if ($subject instanceof Request) {
-      $selectedProfile = $this->requestService->getSelectedProfileFromRequest($subject);
+      $request = $subject;
       $subject = $this->requestService->getClubFromRequest($subject);
     }
 
@@ -71,24 +71,14 @@ class ClubVoter extends Voter {
       return false;
     }
 
-    $linkedProfiles = $user->getLinkedProfiles();
-    // When user have multiple profiles linked, the member header must be specified
-    if (!$selectedProfile && count($linkedProfiles) > 1) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, "Missing required 'Profile' header.");
+    $activeProfile = $this->requestService->getActiveProfile($request);
+    if (!$activeProfile) {
+      return false;
     }
 
-    foreach ($linkedProfiles as $linkedProfile) {
-      if ($selectedProfile) {
-        if (!$linkedProfile->getId() || $linkedProfile->getId() !== $selectedProfile) {
-          continue;
-        }
-      }
-
-      if ($linkedProfile->getClub()->getId() === $targetedClub->getId()) {
-        /** @var ClubRole $role */
-        $role = $linkedProfile->getRole();
+    if ($activeProfile->getClub()->getId() === $targetedClub->getId()) {
+        $role = $activeProfile->getRole();
         return $role->hasRole($targetedClubRole);
-      }
     }
 
     return false;
