@@ -6,7 +6,9 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclar
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
+use App\Service\RequestService;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -18,7 +20,9 @@ class TimeAndTravelDeclarationVoter extends Voter {
   public const DELETE = 'TIME_TRAVEL_DECLARATION_DELETE';
 
   public function __construct(
-    private readonly Security $security
+    private readonly Security $security,
+    private readonly RequestStack $requestStack,
+    private readonly RequestService $requestService,
   ) {
   }
 
@@ -31,9 +35,14 @@ class TimeAndTravelDeclarationVoter extends Voter {
     $user = $token->getUser();
 
     // If the user is not logged in, deny access
-    if (!$user instanceof UserInterface) {
+    if (!$user instanceof User || !$subject instanceof TimeAndTravelDeclaration) {
       return false;
     }
+
+    $selectedProfile = $this->requestService->getSelectedProfileFromRequest($this->requestStack->getCurrentRequest());
+
+
+    dump($attribute, $subject, $selectedProfile);
 
     // Get the current user member
     // TODO: Implement the member logic
@@ -49,7 +58,7 @@ class TimeAndTravelDeclarationVoter extends Voter {
 
     // ClubRole::admin can do anything
     if ($this->security->isGranted(ClubRole::admin->value, $subject)) {
-      return true;
+      // return true;
     }
 
     return false;
