@@ -28,7 +28,6 @@ use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDe
 use App\Security\Voter\TimeAndTravelDeclarationVoter;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -103,10 +102,10 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[Assert\NotNull]
   private ?Member $member = null;
 
-  #[ORM\Column(type: Types::DATE_MUTABLE)]
+  #[ORM\Column(type: Types::DATE_IMMUTABLE)]
   #[Groups(['time-and-travel-declaration'])]
   #[Assert\NotNull]
-  private ?\DateTimeInterface $date = null;
+  private ?\DateTimeImmutable $date = null;
 
   #[ORM\Column(length: 255)]
   #[Groups(['time-and-travel-declaration'])]
@@ -170,11 +169,11 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
     return $this;
   }
 
-  public function getDate(): ?\DateTimeInterface {
+  public function getDate(): ?\DateTimeImmutable {
     return $this->date;
   }
 
-  public function setDate(\DateTimeInterface $date): static {
+  public function setDate(\DateTimeImmutable $date): static {
     $this->date = $date;
     return $this;
   }

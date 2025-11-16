@@ -4,7 +4,9 @@ namespace App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration;
 
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationRepository;
+use App\Service\SeasonService;
 use App\Tests\Factory\MemberFactory;
+use DateTimeImmutable;
 use Zenstruck\Foundry\FactoryCollection;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 use Zenstruck\Foundry\Persistence\Proxy;
@@ -43,10 +45,12 @@ final class TimeAndTravelDeclarationFactory extends PersistentProxyObjectFactory
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#model-factories
    */
   protected function defaults(): array {
+    $member = MemberFactory::random();
+    $seasonDates = SeasonService::calculateStartEndDate($member->getClub(), new DateTimeImmutable());
+
     return [
-      'member' => MemberFactory::random(),
-      'date' => \DateTimeImmutable::createFromMutable(self::faker()->dateTimeThisYear()),
-      'departureLocation' => self::faker()->city(),
+      'date'       => DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween($seasonDates['start']->format('Y-m-d'), $seasonDates['end']->format('Y-m-d'))),
+      'member'     => MemberFactory::random(),      'departureLocation' => self::faker()->city(),
       'arrivalLocation' => self::faker()->city(),
       'kilometers' => self::faker()->numberBetween(10, 500),
       'hours' => (string) self::faker()->randomFloat(2, 1.00, 8.00),
