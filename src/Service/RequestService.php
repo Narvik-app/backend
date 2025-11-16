@@ -78,7 +78,6 @@ final readonly class RequestService {
     }
 
     $selectedProfile = $this->getSelectedProfileFromRequest($request);
-
     $linkedProfiles = $user->getLinkedProfiles();
 
     // Profile is selected in the header
