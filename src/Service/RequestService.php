@@ -89,7 +89,7 @@ final readonly class RequestService {
         }
         return $linkedProfile;
       }
-      return null;
+      throw new HttpException(Response::HTTP_FORBIDDEN, "No matching profile found.");
     }
 
     // No profile selected, and we got multiple, we throw an exception here

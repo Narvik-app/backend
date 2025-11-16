@@ -94,10 +94,18 @@ class LoginApiTest extends AbstractApiTestCase {
     $adminProfile = $linkedProfiles[0];
     $this->assertEquals(ClubRole::admin->value, $adminProfile['role']);
 
+    $this->selectedProfile(null);
     $this->makeGetRequest($this->getIriFromResource($club1) . '/members');
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
     $this->assertJsonContains([
       "detail" => "Missing required 'Profile' header.",
+    ]);
+
+    $this->selectedProfile('profile-not-existing');
+    $this->makeGetRequest($this->getIriFromResource($club1) . '/members');
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+    $this->assertJsonContains([
+      "detail" => "No matching profile found.",
     ]);
 
     // We try getting as regular member, access should be denied
