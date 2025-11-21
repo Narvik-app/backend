@@ -25,7 +25,7 @@ abstract class AbstractTestCase extends ApiTestCase {
     $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
     $connection = $registry->getConnection();
-    $connection->executeQuery('CREATE EXTENSION unaccent;');
+    $connection->executeQuery('CREATE EXTENSION IF NOT EXISTS unaccent;');
   }
 
 
