@@ -198,7 +198,6 @@ make db-post-install # Install PostgreSQL extensions
 make rector         # Run rector to fix code issues
 make rector-dry-run # Run rector in dry-run mode to see what would be changed
 ```
-
 #### Production Deployment:
 ```bash
 make start-prod     # Start production environment
