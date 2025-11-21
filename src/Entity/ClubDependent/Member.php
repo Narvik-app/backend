@@ -259,7 +259,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[ORM\OneToMany(mappedBy: 'seller', targetEntity: Sale::class)]
   private Collection $sales;
 
-  #[ORM\Column(type: 'boolean' , options: ['default' => true])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN , options: ['default' => true])]
   #[Groups(['member', 'self-read', 'self-write'])]
   private bool $clubNewsletter = true;
 

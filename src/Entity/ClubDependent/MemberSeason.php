@@ -84,7 +84,7 @@ class MemberSeason extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['member-season', 'member-read', 'member-presence-read'])]
   private ?AgeCategory $ageCategory = null;
 
-  #[ORM\Column(type: 'boolean', options: ["default" => 0])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ["default" => 0])]
   #[Groups(['member-season', 'member-read', 'member-presence-read'])]
   private bool $isSecondaryClub = false;
 

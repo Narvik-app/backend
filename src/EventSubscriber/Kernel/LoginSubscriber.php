@@ -13,7 +13,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
-final class LoginSubscriber implements EventSubscriberInterface {
+final readonly class LoginSubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents(): array {
     return [
@@ -24,11 +24,11 @@ final class LoginSubscriber implements EventSubscriberInterface {
   }
 
   public function __construct(
-    private readonly RequestStack $requestStack,
-    private readonly RateLimiterFactory $userIpLoginLimiter,
+    private RequestStack $requestStack,
+    private RateLimiterFactory $userIpLoginLimiter,
     // private readonly RateLimiterFactory $ipLoginLimiter,
-    private readonly UserProviderInterface $userProvider,
-    private readonly UserPasswordHasherInterface $userPasswordHasher,
+    private UserProviderInterface $userProvider,
+    private UserPasswordHasherInterface $userPasswordHasher,
   ) {
   }
 
@@ -38,7 +38,7 @@ final class LoginSubscriber implements EventSubscriberInterface {
 
     try {
       $user = $this->userProvider->loadUserByIdentifier($event->getUsername());
-    } catch (AuthenticationException $e) {
+    } catch (AuthenticationException) {
       return;
     }
 

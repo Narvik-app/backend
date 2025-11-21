@@ -396,9 +396,7 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
       }
     }
 
-    usort($userClubs, function(Profile $a, Profile $b) {
-      return $a->getDisplayName() <=> $b->getDisplayName();
-    });
+    usort($userClubs, fn(Profile $a, Profile $b) => $a->getDisplayName() <=> $b->getDisplayName());
 
     $this->linkedProfiles = new ArrayCollection($userClubs);
 

@@ -126,7 +126,7 @@ class InventoryItem extends UuidEntity implements TimestampEntityInterface, Club
   #[Groups(['inventory-item'])]
   private ?string $purchasePrice = null;
 
-  #[ORM\Column(type: 'boolean', options: ["default" => 0])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ["default" => 0])]
   #[Groups(['inventory-item'])]
   private bool $canBeSold = false;
 

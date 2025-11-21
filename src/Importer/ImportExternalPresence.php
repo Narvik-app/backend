@@ -41,6 +41,7 @@ class ImportExternalPresence extends AbstractCsvImporter {
     parent::__construct($em, $validator);
   }
 
+  #[\Override]
   protected function getRequiredCols(): array {
     return [
       self::COL_FIRSTNAME,
@@ -84,7 +85,7 @@ class ImportExternalPresence extends AbstractCsvImporter {
         $createdAt = new \DateTimeImmutable($createdAt);
         $externalPresence->setCreatedAt($createdAt);
         $date = $date->setTime($createdAt->format('H'), $createdAt->format('i'), $createdAt->format('s'));
-      } catch (\Exception $e) {
+      } catch (\Exception) {
       }
     }
 

@@ -34,7 +34,7 @@ class ClubRepository extends ServiceEntityRepository {
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }
@@ -42,7 +42,7 @@ class ClubRepository extends ServiceEntityRepository {
   public function findOneByName(string $name): ?Club {
     $qb = $this->createQueryBuilder('c');
     $query = $qb
-      ->andWhere($qb->expr()->eq($qb->expr()->lower('c.name'), $qb->expr()->lower(':name')))
+      ->andWhere($qb->expr()->eq((string) $qb->expr()->lower('c.name'), (string) $qb->expr()->lower(':name')))
       ->setParameter('name', $name)
       ->setMaxResults(1)
       ->getQuery();
@@ -50,7 +50,7 @@ class ClubRepository extends ServiceEntityRepository {
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

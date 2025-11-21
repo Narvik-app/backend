@@ -193,6 +193,11 @@ make db-restore     # Restore from dump
 make db-post-install # Install PostgreSQL extensions
 ```
 
+#### Code Quality:
+```bash
+make rector         # Run rector to fix code issues
+make rector-dry-run # Run rector in dry-run mode to see what would be changed
+```
 #### Production Deployment:
 ```bash
 make start-prod     # Start production environment
@@ -220,6 +225,74 @@ make build-prod     # Build production images
 
 The API is automatically documented using API Platform's OpenAPI integration. Access the interactive documentation at:
 - **Development:** http://localhost:8000/api
+
+### Docker and Makefile Command Execution
+
+**CRITICAL REQUIREMENT:** All PHP commands, Composer operations, PHPUnit commands, and Rector processes **MUST** be executed exclusively through the Makefile or Docker container environment.  
+**NEVER** run PHP-related commands directly on the host system.
+
+#### Prohibited Commands (Do NOT run on host):
+```bash
+# ❌ WRONG - Never run these on host system
+php -v
+php artisan --version  # If applicable
+composer install
+composer update
+./vendor/bin/rector process
+./vendor/bin/rector process --dry-run
+phpunit
+```
+
+#### Correct Command Execution Patterns:
+
+**1. Using Makefile Targets (Recommended):**
+```bash
+# ✅ CORRECT - Use Makefile for all operations
+make sh                    # Connect to PHP container shell
+make test                  # Run tests
+make test-with-coverage    # Run tests with coverage
+make cc                    # Clear cache
+make build                 # Build Docker images
+make start                 # Start development environment
+```
+
+**2. Using Docker Compose Directly:**
+```bash
+# ✅ CORRECT - Execute via Docker container
+docker compose exec php php -v
+docker compose exec php composer install
+docker compose exec php ./vendor/bin/rector process
+docker compose exec php phpunit
+```
+
+**3. From Within PHP Container:**
+```bash
+# ✅ CORRECT - When inside container via `make sh`
+php -v                    # Works inside container
+composer install          # Works inside container
+./vendor/bin/rector process  # Works inside container
+phpunit                   # Works inside container
+```
+
+#### Why This Requirement Exists:
+
+1. **Environment Consistency:** Ensures all developers use the same PHP version, extensions, and dependencies
+2. **Dependency Management:** All PHP dependencies are installed within the containerized environment
+3. **Reproducible Builds:** Guarantees consistent behavior across different development machines
+4. **Security:** Isolates PHP execution from the host system for better security
+
+#### Quick Reference for Common Operations:
+
+| Operation            | Correct Command                   | Incorrect Command                                 |
+|----------------------|-----------------------------------|---------------------------------------------------|
+| Check PHP version    | `make sh` then `php -v`           | `php -v` (on host)                                |
+| Install dependencies | `make sh` then `composer install` | `composer install` (on host)                      |
+| Run Rector           | `make rector`                     | `./vendor/bin/rector process` (on host)           |
+| Rector dry-run       | `make rector-dry-run`             | `./vendor/bin/rector process --dry-run` (on host) |
+| Run tests            | `make test`                       | `phpunit` (on host)                               |
+| Clear cache          | `make cc`                         | `php bin/console cache:clear` (on host)           |
+
+**Always remember:** If you need to execute any PHP, Composer, or Rector command, use the Makefile targets or Docker container execution patterns shown above.
 
 ## Architecture Principles
 

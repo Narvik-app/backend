@@ -42,6 +42,7 @@ class ImportMemberPresence extends AbstractCsvImporter {
     parent::__construct($em, $validator);
   }
 
+  #[\Override]
   protected function getRequiredCols(): array {
     return [
       self::COL_LICENCE,
@@ -86,7 +87,7 @@ class ImportMemberPresence extends AbstractCsvImporter {
         $createdAt = new \DateTimeImmutable($createdAt);
         $memberPresence->setCreatedAt($createdAt);
         $date = $date->setTime($createdAt->format('H'), $createdAt->format('i'), $createdAt->format('s'));
-      } catch (\Exception $e) {
+      } catch (\Exception) {
       }
     }
 

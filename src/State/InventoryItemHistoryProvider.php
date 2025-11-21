@@ -9,11 +9,11 @@ use App\Repository\ClubDependent\Plugin\Sale\InventoryItemHistoryRepository;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryItemRepository;
 use App\Repository\ClubRepository;
 
-final class InventoryItemHistoryProvider implements ProviderInterface {
+final readonly class InventoryItemHistoryProvider implements ProviderInterface {
   public function __construct(
-    private readonly ClubRepository $clubRepository,
-    private readonly InventoryItemRepository $inventoryItemRepository,
-    private readonly InventoryItemHistoryRepository $inventoryItemHistoryRepository,
+    private ClubRepository $clubRepository,
+    private InventoryItemRepository $inventoryItemRepository,
+    private InventoryItemHistoryRepository $inventoryItemHistoryRepository,
   ) {
   }
 

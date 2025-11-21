@@ -189,7 +189,7 @@ class EmailService {
 
     $dsn = '';
     if (!empty($smtpUsername)) {
-      $dsn = urlencode($smtpUsername) . ':' . urlencode($smtpPassword) . '@';
+      $dsn = urlencode($smtpUsername) . ':' . urlencode((string) $smtpPassword) . '@';
     }
 
     $dsn .= $smtpHost . ':' . $smtpPort;

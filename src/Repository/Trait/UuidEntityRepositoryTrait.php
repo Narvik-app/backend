@@ -15,7 +15,7 @@ trait UuidEntityRepositoryTrait {
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

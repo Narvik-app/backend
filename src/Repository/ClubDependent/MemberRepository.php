@@ -90,7 +90,7 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }
@@ -107,7 +107,7 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

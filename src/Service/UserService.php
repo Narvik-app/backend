@@ -47,7 +47,7 @@ class UserService {
     $this->em->flush();
 
     $frontendPath = "/login/register?security_code={$securityCode->getCode()}&account_type={$accountType}";
-    $frontendPath .= '&email=' . urlencode($user->getEmail());
+    $frontendPath .= '&email=' . urlencode((string) $user->getEmail());
 
     // We send the security code
     $email = $this->emailService->getEmail('security-code.html.twig', 'Validation du compte', [
@@ -130,7 +130,7 @@ class UserService {
     $this->em->flush();
 
     $frontendPath = "/login/password-reset?security_code={$securityCode->getCode()}";
-    $frontendPath .= '&email=' . urlencode($user->getEmail());
+    $frontendPath .= '&email=' . urlencode((string) $user->getEmail());
 
     // We sent the security code
     $email = $this->emailService->getEmail('security-code.html.twig', 'Changement de mot de passe', [

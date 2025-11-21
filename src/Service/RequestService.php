@@ -70,7 +70,7 @@ final readonly class RequestService {
   }
 
   public function getActiveProfile(?Request $request = null): ?Profile {
-    $request = $request ?? $this->requestStack->getCurrentRequest();
+    $request ??= $this->requestStack->getCurrentRequest();
 
     $user = $this->tokenStorage->getToken()?->getUser();
     if (!$user instanceof User) {

@@ -100,11 +100,11 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\NotBlank()]
   private string $name;
 
-  #[ORM\Column(type: "string", nullable: true, enumType: ClubRole::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, nullable: true, enumType: ClubRole::class)]
   #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
   private ClubRole|null $visibility = null;
 
-  #[ORM\Column(type: 'boolean')]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN)]
   #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
   private ?bool $isEnabled = true;
 
