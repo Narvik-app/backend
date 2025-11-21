@@ -16,12 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    permissions:
-      contents: read # Allows checkout action to read your repository
-      pull-requests: write # Allows the action to post comments on PRs
-      statuses: write # Used by Codecov status updates
-    name: Tests
+  build:
+    name: Build Docker images
     runs-on: ubuntu-latest
     steps:
       -
@@ -44,6 +40,42 @@ jobs:
             *.cache-from=type=gha,scope=refs/heads/main
             *.cache-to=type=gha,scope=${{github.ref}},mode=max
       -
+        name: Upload images cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-build
+
+  tests:
+    needs: build
+    permissions:
+      contents: read # Allows checkout action to read your repository
+      pull-requests: write # Allows the action to post comments on PRs
+      statuses: write # Used by Codecov status updates
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Download images cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          fail-on-cache-miss: true
+      -
+        name: Load images from cache
+        run: |
+          docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+      -
         name: Start services
         run: docker compose up --wait --no-build
       -
@@ -65,8 +97,6 @@ jobs:
       -
         name: Check Mercure reachability
         run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
-      - name: Run Rector (dry-run)
-        run: docker compose exec -T php sh -c 'composer rector-dry-run'
       -
         name: Run PHPUnit
         id: phpunit
@@ -166,6 +196,33 @@ jobs:
       -
         name: Doctrine Schema Validator
         run: docker compose exec -T php bin/console -e test doctrine:schema:validate
+        
+  code-quality:
+    needs: build
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Download images cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          fail-on-cache-miss: true
+      -
+        name: Load images from cache
+        run: |
+          docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+
+      - name: Run Rector (dry-run)
+        run: docker compose exec -T php ./vendor/bin/rector process --dry-run
+
 #  lint:
 #    name: Docker Lint
 #    runs-on: ubuntu-latest
