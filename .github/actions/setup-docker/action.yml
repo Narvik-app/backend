@@ -1,0 +1,31 @@
+name: 'Setup Docker Environment'
+description: 'Sets up Docker Buildx and loads cached Docker images.'
+
+inputs:
+  cache-key:
+    description: 'The key for the Docker image cache'
+    required: true
+
+runs:
+    using: "composite"
+    steps:
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+
+        - name: Download images cache
+          uses: actions/cache@v4
+          with:
+              path: /tmp/.buildx-cache
+              key: ${{ inputs.cache-key }}
+
+        - name: Load or build images
+          shell: bash
+          run: |
+              # The bake command will use the GHA cache if available, so we can simplify this.
+              # The logic to check if the cache exists is redundant because docker/bake-action handles it.
+              # We just need to provide the cache-from directive.
+              echo "Loading images from cache or rebuilding if necessary..."
+              docker buildx bake \
+                --load \
+                --set "*.cache-from=type=gha,scope=${{ github.ref }}" \
+                --set "*.cache-from=type=gha,scope=refs/heads/main"

@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     name: Build Docker images
+    outputs:
+      cache-key: ${{ steps.cache-images.outputs.cache-primary-key }}
     runs-on: ubuntu-latest
     steps:
       -
@@ -41,6 +43,7 @@ jobs:
             *.cache-to=type=gha,scope=${{github.ref}},mode=max
       -
         name: Upload images cache
+        id: cache-images
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
@@ -61,26 +64,10 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      -
-        name: Download images cache
-        uses: actions/cache@v4
+      - name: Setup Docker Environment
+        uses: ./.github/actions/setup-docker
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-      -
-        name: Load or build images
-        run: |
-          # Check if cache was restored and exists
-          if [ -d "/tmp/.buildx-cache" ] && [ "$(ls -A /tmp/.buildx-cache)" ]; then
-            echo "Loading images from cache..."
-            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
-          else
-            echo "Cache not found, rebuilding images..."
-            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
-          fi
+          cache-key: ${{ needs.build.outputs.cache-key }}
       -
         name: Start services
         run: docker compose up --wait --no-build
@@ -211,26 +198,10 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      -
-        name: Download images cache
-        uses: actions/cache@v4
+      - name: Setup Docker Environment
+        uses: ./.github/actions/setup-docker
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-      -
-        name: Load or build images
-        run: |
-          # Check if cache was restored and exists
-          if [ -d "/tmp/.buildx-cache" ] && [ "$(ls -A /tmp/.buildx-cache)" ]; then
-            echo "Loading images from cache..."
-            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
-          else
-            echo "Cache not found, rebuilding images..."
-            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
-          fi
+          cache-key: ${{ needs.build.outputs.cache-key }}
 
       - name: Run Rector (dry-run)
         run: docker compose exec -T php ./vendor/bin/rector process --dry-run
