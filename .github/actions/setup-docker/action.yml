@@ -19,7 +19,6 @@ runs:
           with:
             files: |
               compose.yaml
-              compose.override.yaml
             pull: true
             load: true
             set: |
@@ -33,7 +32,6 @@ runs:
           with:
             files: |
               compose.yaml
-              compose.override.yaml
             pull: true
             load: true
             set: |
