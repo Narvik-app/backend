@@ -22,10 +22,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Docker Environment and Save Cache
+      - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
         with:
-          save-to-cache: true
+          build-only: true
 
   tests:
     needs: build
@@ -41,9 +41,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
-      -
-        name: Start services
-        run: docker compose up --wait --no-build
       -
         name: Create test database
         run: docker compose exec -T php bin/console -e test doctrine:database:create
