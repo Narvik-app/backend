@@ -70,11 +70,17 @@ jobs:
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          fail-on-cache-miss: true
       -
-        name: Load images from cache
+        name: Load or build images
         run: |
-          docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          # Check if cache was restored and exists
+          if [ -d "/tmp/.buildx-cache" ] && [ "$(ls -A /tmp/.buildx-cache)" ]; then
+            echo "Loading images from cache..."
+            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          else
+            echo "Cache not found, rebuilding images..."
+            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          fi
       -
         name: Start services
         run: docker compose up --wait --no-build
@@ -214,11 +220,17 @@ jobs:
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          fail-on-cache-miss: true
       -
-        name: Load images from cache
+        name: Load or build images
         run: |
-          docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          # Check if cache was restored and exists
+          if [ -d "/tmp/.buildx-cache" ] && [ "$(ls -A /tmp/.buildx-cache)" ]; then
+            echo "Loading images from cache..."
+            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          else
+            echo "Cache not found, rebuilding images..."
+            docker buildx bake --load --set *.cache-from=type=gha,scope=${{github.ref}}
+          fi
 
       - name: Run Rector (dry-run)
         run: docker compose exec -T php ./vendor/bin/rector process --dry-run
