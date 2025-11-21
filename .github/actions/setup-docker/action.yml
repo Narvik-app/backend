@@ -19,6 +19,7 @@ runs:
           with:
             files: |
               compose.yaml
+              .github/compose.ci.yaml
             pull: true
             load: true
             set: |
@@ -32,6 +33,7 @@ runs:
           with:
             files: |
               compose.yaml
+              .github/compose.ci.yaml
             pull: true
             load: true
             set: |
@@ -41,4 +43,4 @@ runs:
         - name: Start services
           if: inputs.build-only == 'false'
           shell: bash
-          run: docker compose up --wait --no-build
+          run: docker compose -f compose.yaml -f .github/compose.ci.yaml up --wait --no-build
