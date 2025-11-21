@@ -1,10 +1,11 @@
 name: 'Setup Docker Environment'
-description: 'Sets up Docker Buildx and loads cached Docker images.'
+description: 'Sets up Docker Buildx, loads/builds images, and optionally saves to cache.'
 
 inputs:
-  cache-key:
-    description: 'The key for the Docker image cache'
-    required: true
+  save-to-cache:
+    description: 'Whether to save the built images to the GHA cache'
+    required: false
+    default: 'false'
 
 runs:
     using: "composite"
@@ -12,20 +13,29 @@ runs:
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@v3
 
-        - name: Download images cache
-          uses: actions/cache@v4
+        - name: Build, load, and save to cache
+          if: inputs.save-to-cache == 'true'
+          uses: docker/bake-action@v6
           with:
-              path: /tmp/.buildx-cache
-              key: ${{ inputs.cache-key }}
+            files: |
+              compose.yaml
+              compose.override.yaml
+            pull: true
+            load: true
+            set: |
+              *.cache-from=type=gha,scope=${{ github.ref }}
+              *.cache-from=type=gha,scope=refs/heads/main
+              *.cache-to=type=gha,scope=${{ github.ref }},mode=max
 
-        - name: Load or build images
-          shell: bash
-          run: |
-              # The bake command will use the GHA cache if available, so we can simplify this.
-              # The logic to check if the cache exists is redundant because docker/bake-action handles it.
-              # We just need to provide the cache-from directive.
-              echo "Loading images from cache or rebuilding if necessary..."
-              docker buildx bake \
-                --load \
-                --set "*.cache-from=type=gha,scope=${{ github.ref }}" \
-                --set "*.cache-from=type=gha,scope=refs/heads/main"
+        - name: Build and load from cache
+          if: inputs.save-to-cache == 'false'
+          uses: docker/bake-action@v6
+          with:
+            files: |
+              compose.yaml
+              compose.override.yaml
+            pull: true
+            load: true
+            set: |
+              *.cache-from=type=gha,scope=${{ github.ref }}
+              *.cache-from=type=gha,scope=refs/heads/main
