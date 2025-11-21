@@ -40,5 +40,5 @@ return RectorConfig::configure()
         // Skip rector on migrations as they should remain as-is
         '*/migrations/*',
         ClosureToArrowFunctionRector::class,
-//        InvokableCommandInputAttributeRector::class,
+        InvokableCommandInputAttributeRector::class,
     ]);
