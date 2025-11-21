@@ -62,7 +62,7 @@ class MetricProvider implements ProviderInterface {
       return null;
     }
 
-    if (str_starts_with($operation->getName(), 'club_metric')) {
+    if (str_starts_with((string) $operation->getName(), 'club_metric')) {
       $this->club = $this->requestService->getClubFromRequest($request);
     }
 
@@ -129,11 +129,11 @@ class MetricProvider implements ProviderInterface {
     $metric->setName($identifier);
     $metric->setValue($total);
     $metric->setChildMetrics([
-      (new Metric())
+      new Metric()
         ->setClub($this->club)
         ->setName("previous-season")
         ->setValue($previousSeason),
-      (new Metric())
+      new Metric()
         ->setClub($this->club)
         ->setName("current-season")
         ->setValue($currentSeason),

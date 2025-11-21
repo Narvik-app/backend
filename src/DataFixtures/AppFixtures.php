@@ -24,16 +24,16 @@ class AppFixtures extends Fixture {
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
 
-    MemberFactory::new()->many(250, 350)->create();
+    MemberFactory::new()->many(250)->create();
 
     // We create the default global settings
     GlobalSettingStory::load();
 
     // We record some presence
-    MemberPresenceFactory::new()->many(20, 40)->create();
-    ExternalPresenceFactory::new()->many(20, 40)->create();
+    MemberPresenceFactory::new()->many(20)->create();
+    ExternalPresenceFactory::new()->many(25)->create();
 
-    EmailFactory::new()->many(5, 10)->create();
+    EmailFactory::new()->many(12)->create();
 
     /*******************************************************
      *                    INVENTORY                        *
@@ -54,12 +54,12 @@ class AppFixtures extends Fixture {
       if (array_key_exists($catName, $itemsMapping)) {
         foreach ($itemsMapping[$catName] as $name) {
           $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category]);
-          InventoryItemHistoryFactory::new()->many(2, 6)->create(['item' => $item]);
+          InventoryItemHistoryFactory::new()->many(6)->create(['item' => $item]);
         }
       } else {
-        $items = InventoryItemFactory::new()->many(1, 5)->create(['category' => $category]);
+        $items = InventoryItemFactory::new()->many(5)->create(['category' => $category]);
         foreach ($items as $item) {
-          InventoryItemHistoryFactory::new()->many(2, 6)->create(['item' => $item]);
+          InventoryItemHistoryFactory::new()->many(6)->create(['item' => $item]);
         }
       }
     }

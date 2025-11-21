@@ -17,7 +17,7 @@ class SortableEntitySubscriber extends AbstractEventSubscriber {
       return;
     }
 
-    $repository = $args->getObjectManager()->getRepository(get_class($entity));
+    $repository = $args->getObjectManager()->getRepository($entity::class);
     if (!$repository instanceof SortableRepositoryInterface) {
       return;
     }

@@ -28,7 +28,7 @@ class UserMember {
   #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
   private ?Club $badgerClub = null;
 
-  #[ORM\Column(type: "string", enumType: ClubRole::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: ClubRole::class)]
   private ClubRole $role = ClubRole::member;
 
   public function getId(): ?int {

@@ -38,7 +38,7 @@ final class UserClubExtension implements QueryCollectionExtensionInterface, Quer
     $this->addWhere($resourceClass);
   }
 
-  private function throwAccessDenied(): void {
+  private function throwAccessDenied(): never {
     throw new HttpException(Response::HTTP_FORBIDDEN, "Access to this resource isn't allowed");
   }
 

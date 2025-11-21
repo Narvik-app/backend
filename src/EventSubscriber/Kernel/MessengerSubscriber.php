@@ -9,7 +9,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
 
-final class MessengerSubscriber implements EventSubscriberInterface {
+final readonly class MessengerSubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents(): array {
     return [
@@ -23,7 +23,7 @@ final class MessengerSubscriber implements EventSubscriberInterface {
   }
 
   public function __construct(
-    private readonly ClubService $clubService,
+    private ClubService $clubService,
   ) {
   }
 

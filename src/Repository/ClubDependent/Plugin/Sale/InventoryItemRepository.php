@@ -31,7 +31,7 @@ class InventoryItemRepository extends ServiceEntityRepository implements ClubLin
     $qb = $this->createQueryBuilder('i');
     $this->applyClubRestriction($qb, $club);
     $query = $qb
-      ->andWhere($qb->expr()->eq($qb->expr()->lower('i.name'), $qb->expr()->lower(':name')))
+      ->andWhere($qb->expr()->eq((string) $qb->expr()->lower('i.name'), (string) $qb->expr()->lower(':name')))
       ->setParameter('name', $name)
       ->setMaxResults(1)
       ->getQuery();
@@ -39,7 +39,7 @@ class InventoryItemRepository extends ServiceEntityRepository implements ClubLin
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

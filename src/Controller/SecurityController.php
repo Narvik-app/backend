@@ -60,25 +60,25 @@ class SecurityController extends AbstractController {
     $cryptKey = new CryptKey($key, $params->get('app.oauth_passphrase'), false);
 
     $accessToken = $accessTokenRepository->getNewToken($client, [$scope], "badger@{$club->getUuid()}");
-    $accessToken->setExpiryDateTime((new \DateTimeImmutable())->add(new \DateInterval('PT1H')));
+    $accessToken->setExpiryDateTime(new \DateTimeImmutable()->add(new \DateInterval('PT1H')));
     $accessToken->setIdentifier("badger-" . UuidService::generateUuid()->toString());
     $accessToken->setPrivateKey($cryptKey);
 
     try {
       $accessTokenRepository->persistNewAccessToken($accessToken);
     }
-    catch (UniqueTokenIdentifierConstraintViolationException $e) {
+    catch (UniqueTokenIdentifierConstraintViolationException) {
       throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     $refreshToken = $refreshTokenRepository->getNewRefreshToken();
     $refreshToken->setIdentifier($accessToken->getIdentifier());
     $refreshToken->setAccessToken($accessToken);
-    $refreshToken->setExpiryDateTime((new \DateTimeImmutable())->add(new \DateInterval('P1M')));
+    $refreshToken->setExpiryDateTime(new \DateTimeImmutable()->add(new \DateInterval('P1M')));
 
     try {
       $refreshTokenRepository->persistNewRefreshToken($refreshToken);
-    } catch (UniqueTokenIdentifierConstraintViolationException $e) {
+    } catch (UniqueTokenIdentifierConstraintViolationException) {
       throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 

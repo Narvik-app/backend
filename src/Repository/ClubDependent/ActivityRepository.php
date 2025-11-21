@@ -31,7 +31,7 @@ class ActivityRepository extends ServiceEntityRepository implements ClubLinkedIn
   public function findOneByName(Club $club, string $name): ?Activity {
     $qb = $this->createQueryBuilder('a');
     $query = $qb
-      ->andWhere($qb->expr()->like($qb->expr()->lower('a.name'), $qb->expr()->lower(':name')))
+      ->andWhere($qb->expr()->like((string) $qb->expr()->lower('a.name'), (string) $qb->expr()->lower(':name')))
       ->andWhere("a.club = :club")
       ->setParameter('name', $name)
       ->setParameter('club', $club)
@@ -41,7 +41,7 @@ class ActivityRepository extends ServiceEntityRepository implements ClubLinkedIn
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

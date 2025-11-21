@@ -12,6 +12,7 @@ use App\Repository\ClubDependent\MemberRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class SelfMemberVoter extends Voter {
@@ -35,7 +36,7 @@ class SelfMemberVoter extends Voter {
     return $subject instanceof Member;
   }
 
-  protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool {
+  protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool {
     // Super admin have full right
     if ($this->security->isGranted(UserRole::super_admin->value)) {
       return true;

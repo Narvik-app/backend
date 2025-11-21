@@ -10,7 +10,7 @@ use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\PropertyInfo\Type;
 
 final class MultipleFilter extends AbstractFilter {
-  public const PROPERTY_NAME = "multiple";
+  public const string PROPERTY_NAME = "multiple";
 
   protected function filterProperty(string $property, $values, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void {
     if ($property !== static::PROPERTY_NAME) return;
@@ -22,7 +22,7 @@ final class MultipleFilter extends AbstractFilter {
     $acceptedFilterProps = $this->getAcceptedFilterProps();
     $iParam=0;
     foreach ($values as $fields => $value) {
-      $passedFilterProps = array_map("trim", explode(",", $fields));
+      $passedFilterProps = array_map(trim(...), explode(",", (string) $fields));
       if ($this->properties !== null) {
         // restrict http-passed properties to accepted filter properties only
         $passedFilterProps = array_intersect($passedFilterProps, $acceptedFilterProps);
@@ -46,7 +46,7 @@ final class MultipleFilter extends AbstractFilter {
   private function getAcceptedFilterProps(): array {
     $acceptedFilterProps = [];
     foreach (array_keys($this->properties) as $filterProps) {
-      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map("trim", explode(",", (string) $filterProps)));
+      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map(trim(...), explode(",", (string) $filterProps)));
     }
     return array_unique($acceptedFilterProps);
   }
@@ -66,7 +66,7 @@ final class MultipleFilter extends AbstractFilter {
     }
 
     $description = [];
-    foreach ($this->properties as $property => $value) {
+    foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
         'type' => Type::BUILTIN_TYPE_STRING,

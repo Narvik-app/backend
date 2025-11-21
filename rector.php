@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Php74\Rector\Closure\ClosureToArrowFunctionRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
@@ -37,4 +38,5 @@ return RectorConfig::configure()
     ->withSkip([
         // Skip rector on migrations as they should remain as-is
         '*/migrations/*',
+        ClosureToArrowFunctionRector::class
     ]);

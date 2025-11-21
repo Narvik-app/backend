@@ -61,7 +61,7 @@ abstract class AbstractCsvImporter {
     $rows = [];
     while (!$fo->eof()) {
       // Row initialisation
-      $row = $fo->fgetcsv();
+      $row = $fo->fgetcsv(escape: '\\');
       if (!$row) continue;
       $rows[] = $row;
     }
@@ -70,11 +70,11 @@ abstract class AbstractCsvImporter {
 
   public function fromBody(string $content, string $delimiter = ",") {
     $content = trim($content);
-    $rows = str_getcsv($content, "\n");
+    $rows = str_getcsv($content, "\n", escape: '\\');
 
     $realRows = [];
     foreach ($rows as $row) {
-      $realRows[] = str_getcsv((string) $row, $delimiter);
+      $realRows[] = str_getcsv((string) $row, $delimiter, escape: '\\');
     }
     return $this->parse($realRows);
   }

@@ -41,7 +41,7 @@ class FileRepository extends ServiceEntityRepository {
                 ->andWhere('f.category <= :category')
                 ->andWhere('f.createdAt <= :date')
                 ->setParameter('category', FileCategory::club_email)
-                ->setParameter('date', (new \DateTimeImmutable())->sub(new \DateInterval('P7D')))
+                ->setParameter('date', new \DateTimeImmutable()->sub(new \DateInterval('P7D')))
                 ->getQuery()
                 ->getResult();
   }
