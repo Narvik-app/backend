@@ -23,6 +23,12 @@ abstract class AbstractApiTestCase extends AbstractTestCase {
   private ?string $refreshToken = null;
   private ?string $selectedProfile = null;
 
+  public function setUp(): void {
+    // Ensure _InitStory is always loaded first for authentication
+    _InitStory::load();
+    parent::setUp();
+  }
+
   protected function createClientWithCredentials(?string $token = null): Client {
     $token = $token ?? $this->accessToken;
 
