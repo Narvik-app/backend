@@ -326,6 +326,10 @@ phpunit                   # Works inside container
 
 For detailed development guidelines, see the [Contributing Guide](CONTRIBUTING.md) and [Development Documentation](docs/0.README.md).
 
+### Code Quality
+- Conventional commit messages recommended
+
+
 ## License
 
 GNU AGPLv3 License - See [LICENSE](LICENSE) file for details.
