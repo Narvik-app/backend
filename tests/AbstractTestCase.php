@@ -20,12 +20,14 @@ abstract class AbstractTestCase extends ApiTestCase {
     $this->initDefaultFixtures();
   }
 
+  public function initDefaultFixtures(): void {}
+
   #[Before]
-  public static function _resetDatabaseBeforeEachTest(): void {
+  public static function _setupPostgreSQLExtensions(): void {
     $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
     $connection = $registry->getConnection();
-    $connection->executeQuery('CREATE EXTENSION unaccent;');
+    $connection->executeQuery('CREATE EXTENSION IF NOT EXISTS unaccent;');
   }
 
 
@@ -38,9 +40,6 @@ abstract class AbstractTestCase extends ApiTestCase {
 
     parent::tearDown();
   }
-
-
-  public function initDefaultFixtures(): void {}
 
   public function debugTestDatabase(): never {
     \DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver::commit();
