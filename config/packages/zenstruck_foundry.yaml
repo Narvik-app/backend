@@ -14,4 +14,5 @@ when@test:
     <<: *dev
     zenstruck_foundry:
         global_state:
+            - App\Tests\Story\SeasonStory
             - App\Tests\Story\_InitStory
