@@ -63,7 +63,7 @@ final class MemberSeasonFactory extends PersistentProxyObjectFactory {
   protected function defaults(): array {
 
     return [
-      'member'          => MemberFactory::random(),
+      'member'          => lazy(fn() => MemberFactory::random()),
       'ageCategory'     => AgeCategoryStory::getRandom("age_categories"),
       'isSecondaryClub' => self::faker()->boolean(25),
       //      'season'      => $season->object(), // Done in self::initialize()
