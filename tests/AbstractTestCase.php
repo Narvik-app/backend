@@ -23,7 +23,7 @@ abstract class AbstractTestCase extends ApiTestCase {
   public function initDefaultFixtures(): void {}
 
   #[Before]
-  public static function _resetDatabaseBeforeEachTest(): void {
+  public static function _setupPostgreSQLExtensions(): void {
     $registry = self::getContainer()->get('doctrine');
     /** @var Connection $connection */
     $connection = $registry->getConnection();
