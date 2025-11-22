@@ -17,8 +17,13 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   public function setUp(): void {
     parent::setUp();
+    $this->initBaseFixtures();
     $this->initDefaultFixtures();
   }
+
+  protected function initBaseFixtures(): void {}
+
+  public function initDefaultFixtures(): void {}
 
   #[Before]
   public static function _resetDatabaseBeforeEachTest(): void {
@@ -38,9 +43,6 @@ abstract class AbstractTestCase extends ApiTestCase {
 
     parent::tearDown();
   }
-
-
-  public function initDefaultFixtures(): void {}
 
   public function debugTestDatabase(): never {
     \DAMA\DoctrineTestBundle\Doctrine\DBAL\StaticDriver::commit();
