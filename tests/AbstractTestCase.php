@@ -7,8 +7,10 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Before;
 use Symfony\Component\Filesystem\Filesystem;
 use Zenstruck\Foundry\Test\Factories;
+use Zenstruck\Foundry\Test\ResetDatabase;
 
 abstract class AbstractTestCase extends ApiTestCase {
+  use ResetDatabase;
   use Factories;
 
   protected static ?bool $alwaysBootKernel = true; // We make the test ready for api-platform 5.0
