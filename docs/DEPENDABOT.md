@@ -16,22 +16,22 @@ Dependabot is configured to monitor three types of dependencies:
 
 The main configuration file that defines:
 - Which package ecosystems to monitor
-- Update schedule (weekly on Mondays at 3:00 AM UTC)
+- Update schedule (weekly on Saturdays at 3:00 AM UTC)
 - Pull request limits
-- Reviewers and labels
+- Assignees and labels
 - Dependency grouping rules
 - Ignored major version updates for critical frameworks
 
-### `.github/workflows/dependabot-auto-merge.yml`
+### `.github/workflows/dependabot.yml`
 
 An automated workflow that:
-- Waits for CI tests to pass on Dependabot PRs
-- Automatically approves and merges minor and patch updates
-- Adds a warning comment on major version updates that require manual review
+- **DISABLED** - Auto-merge functionality has been disabled
+- Now only adds informational comments to new Dependabot PRs
+- Requires manual review and merging of all dependency updates
 
 ## Update Schedule
 
-All dependency updates are checked **weekly on Mondays at 3:00 AM UTC**.
+All dependency updates are checked **weekly on Saturdays at 3:00 AM UTC**.
 
 ## Dependency Grouping
 
@@ -57,18 +57,26 @@ These must be updated manually when ready to handle potential breaking changes.
 
 ## Auto-Merge Behavior
 
-The auto-merge workflow will automatically:
+**Auto-merge has been DISABLED**. All dependency updates now require manual review and approval.
 
-1. **For Minor and Patch Updates:**
-   - Wait for all CI checks to pass
-   - Automatically approve the PR
-   - Enable auto-merge with squash strategy
-   - Merge once all checks are green
+### Current Workflow:
+1. **For All Updates:**
+   - Dependabot creates a pull request
+   - Automated workflow adds an informational comment
+   - **Manual review and testing required**
+   - **Manual merging required**
 
-2. **For Major Updates:**
-   - Add a warning comment
-   - Require manual review and approval
-   - Will not auto-merge
+### Why Auto-Merge Was Disabled:
+- Ensures proper testing of dependency updates
+- Allows for review of changelogs and potential breaking changes
+- Provides better control over update timing
+- Reduces risk of introducing unexpected issues
+
+## Pull Request Assignment
+
+Pull requests are automatically assigned to the project owner:
+- **Primary Assignee:** `froozeify` (Project Owner)
+- All dependency update PRs will be assigned for review
 
 ## Pull Request Limits
 
@@ -94,9 +102,24 @@ Dependabot PRs are automatically labeled:
 - `docker` - Docker image updates
 - `github-actions` - GitHub Actions updates
 
-## Reviewers
+## Manual Review Process
 
-PRs are automatically assigned to the `Narvik-app/maintainers` team for review.
+When a Dependabot PR is created:
+
+1. **Review the Changes**
+   - Check the dependency changelog
+   - Review version compatibility
+   - Look for potential breaking changes
+
+2. **Test the Updates**
+   - Run the test suite locally or in CI
+   - Verify all functionality still works
+   - Check for any deprecation warnings
+
+3. **Merge When Ready**
+   - Once testing is complete and approved
+   - Use the "Merge pull request" button
+   - Choose merge strategy (squash recommended)
 
 ## Troubleshooting
 
@@ -106,15 +129,33 @@ PRs are automatically assigned to the `Narvik-app/maintainers` team for review.
 2. Verify the `dependabot.yml` syntax is correct
 3. Ensure the repository has Dependabot enabled in Settings
 
-### Auto-merge is not working
+### PRs are not being assigned
 
-1. Verify the branch protection rules allow auto-merge
-2. Check that all required CI checks are passing
-3. Ensure the `GITHUB_TOKEN` has sufficient permissions
+1. Verify the assignee username in `dependabot.yml` is correct
+2. Check that the assignee has push access to the repository
+3. Ensure GitHub usernames match exactly (case-sensitive)
 
 ### Too many PRs being created
 
 Adjust the `open-pull-requests-limit` values in `dependabot.yml` or add more dependencies to the `ignore` list.
+
+### Manual merge conflicts
+
+1. Update your local branch with the latest main
+2. Resolve any conflicts
+3. Re-run tests to ensure everything still works
+4. Push the resolved changes
+
+## Re-enabling Auto-Merge (If Needed)
+
+To re-enable auto-merge functionality in the future:
+
+1. Edit `.github/workflows/dependabot.yml`
+2. Restore the auto-approve and auto-merge steps
+3. Update permissions to include `contents: write` and `pull-requests: write`
+4. Test the configuration with a small subset of dependencies
+
+**Note:** Only re-enable auto-merge after thorough testing and when confident in the stability of the update process.
 
 ## Disabling Dependabot
 
@@ -128,4 +169,4 @@ Or permanently by removing the `.github/dependabot.yml` file.
 
 - [Dependabot Documentation](https://docs.github.com/en/code-security/dependabot)
 - [Configuration Options](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file)
-- [Auto-merge Best Practices](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions)
+- [Manual Dependency Management](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates)

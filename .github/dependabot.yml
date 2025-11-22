@@ -8,11 +8,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "saturday"
       time: "03:00"
     open-pull-requests-limit: 10
-    reviewers:
-      - "Narvik-app/maintainers"
+    assignees:
+      - "froozeify"
     labels:
       - "dependencies"
       - "composer"
@@ -44,25 +44,17 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Ignore major updates for specific packages that require careful migration
-    ignore:
-      - dependency-name: "symfony/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "api-platform/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "doctrine/*"
-        update-types: ["version-update:semver-major"]
 
   # Docker dependencies
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "saturday"
       time: "03:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "Narvik-app/maintainers"
+    assignees:
+      - "froozeify"
     labels:
       - "dependencies"
       - "docker"
@@ -75,11 +67,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "saturday"
       time: "03:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "Narvik-app/maintainers"
+    assignees:
+      - "froozeify"
     labels:
       - "dependencies"
       - "github-actions"
