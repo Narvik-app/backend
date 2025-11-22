@@ -15,11 +15,8 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   public function setUp(): void {
     parent::setUp();
-    $this->initBaseFixtures();
     $this->initDefaultFixtures();
   }
-
-  protected function initBaseFixtures(): void {}
 
   public function initDefaultFixtures(): void {}
 

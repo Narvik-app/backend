@@ -23,11 +23,6 @@ abstract class AbstractApiTestCase extends AbstractTestCase {
   private ?string $refreshToken = null;
   private ?string $selectedProfile = null;
 
-  protected function initBaseFixtures(): void {
-    // Load _InitStory to provide base authentication fixtures
-    _InitStory::load();
-  }
-
   protected function createClientWithCredentials(?string $token = null): Client {
     $token = $token ?? $this->accessToken;
 
