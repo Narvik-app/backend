@@ -11,6 +11,8 @@ use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
+use function Zenstruck\Foundry\lazy;
+
 /**
  *
  * @method MemberSeason|Proxy create(array|callable $attributes = [])
