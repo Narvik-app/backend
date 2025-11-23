@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
         with:
@@ -38,7 +38,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
       -
@@ -167,7 +167,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
 
@@ -180,7 +180,7 @@ jobs:
 #    steps:
 #      -
 #        name: Checkout
-#        uses: actions/checkout@v4
+#        uses: actions/checkout@v6
 #      -
 #        name: Lint Dockerfile
 #        uses: hadolint/hadolint-action@v3.1.0
