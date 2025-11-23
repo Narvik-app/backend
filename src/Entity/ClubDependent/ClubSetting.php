@@ -75,7 +75,7 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   private ?Club $club = null;
 
-  #[ORM\Column(type: "string", enumType: ClubActivity::class, options: ['default' => ClubActivity::generic])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: ClubActivity::class, options: ['default' => ClubActivity::generic])]
   #[Groups(['club-setting'])]
   private ClubActivity $activity = ClubActivity::generic;
 
@@ -88,7 +88,7 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['club-setting'])]
   private ?string $emailReplyTo = null;
 
-  #[ORM\Column(type: 'string', length: 5, options: ["default" => '08-31'])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 5, options: ["default" => '08-31'])]
   #[Groups(['club-setting'])]
   #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
   private string $seasonEnd = "08-31";

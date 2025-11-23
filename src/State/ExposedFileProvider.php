@@ -24,11 +24,11 @@ class ExposedFileProvider implements ProviderInterface {
     $response = null;
 
     $isInline = false;
-    if (str_starts_with($operation->getName(), 'inline_')) {
+    if (str_starts_with((string) $operation->getName(), 'inline_')) {
       $isInline = true;
     }
 
-    if (str_contains($operation->getName(), 'public_image')) {
+    if (str_contains((string) $operation->getName(), 'public_image')) {
       $response = $this->fileService->loadFileFromPublicPath($uriVariables['id'], $isInline);
     } else {
       $response = $this->fileService->loadFileFromProtectedPath($uriVariables['id'], $isInline);

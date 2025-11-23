@@ -18,7 +18,7 @@ use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 final class CurrentSeasonFilter extends AbstractClubDependentFilter {
-  public const PROPERTY_NAME = "current-season";
+  public const string PROPERTY_NAME = "current-season";
 
   public function __construct(private readonly SeasonRepository $seasonRepository, ClubRepository $clubRepository, ManagerRegistry $managerRegistry, ?LoggerInterface $logger = null, ?array $properties = null, ?NameConverterInterface $nameConverter = null) {
     parent::__construct($clubRepository, $managerRegistry, $logger, $properties, $nameConverter);
@@ -43,7 +43,7 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
     foreach ($values as $fields => $value) {
       if (!$this->toBoolean($value)) return;
 
-      $passedFilterProps = array_map("trim", explode(",", $fields));
+      $passedFilterProps = array_map(trim(...), explode(",", (string) $fields));
       if ($this->properties !== null) {
         // restrict http-passed properties to accepted filter properties only
         $passedFilterProps = array_intersect($passedFilterProps, $acceptedFilterProps);
@@ -65,7 +65,7 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
   private function getAcceptedFilterProps(): array {
     $acceptedFilterProps = [];
     foreach (array_keys($this->properties) as $filterProps) {
-      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map("trim", explode(",", (string) $filterProps)));
+      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map(trim(...), explode(",", (string) $filterProps)));
     }
     return array_unique($acceptedFilterProps);
   }
@@ -97,7 +97,7 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
     }
 
     $description = [];
-    foreach ($this->properties as $property => $value) {
+    foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
         'type' => Type::BUILTIN_TYPE_BOOL,

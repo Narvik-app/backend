@@ -137,7 +137,7 @@ class GlobalSetting {
   #[ApiProperty(identifier: false)]
   private ?int $id = null;
 
-  #[ORM\Column(type: 'string', length: 255)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
   #[ApiProperty(identifier: true)]
   private string $name;
 

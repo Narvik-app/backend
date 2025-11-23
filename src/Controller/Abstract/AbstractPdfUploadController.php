@@ -8,6 +8,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 abstract class AbstractPdfUploadController extends AbstractController {
 
+  #[\Override]
   public function validateFileUpload(Request $request, string $fieldName = 'file'): UploadedFile {
     $uploadedFile = parent::validateFileUpload($request, $fieldName);
 

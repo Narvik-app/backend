@@ -101,7 +101,7 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;
 
-  #[ORM\Column(type: "string", enumType: EmailStatus::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: EmailStatus::class)]
   #[Groups(['email-read'])]
   private EmailStatus $status = EmailStatus::DRAFT;
 
@@ -143,10 +143,6 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   private ?UploadedFile $attachment = null;
 
   private array $members = [];
-
-  public function getId(): ?int {
-    return $this->id;
-  }
 
   public function getTitle(): ?string {
     return $this->title;
@@ -226,7 +222,7 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   }
 
   public function setMembers(array $members): static {
-    $this->members = array_unique(array_filter(array_map('trim', $members))); // array_filter remove empty values
+    $this->members = array_unique(array_filter(array_map(trim(...), $members))); // array_filter remove empty values
     return $this;
   }
 

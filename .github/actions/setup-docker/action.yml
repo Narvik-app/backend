@@ -1,0 +1,46 @@
+name: 'Setup Docker Environment'
+description: 'Builds/loads Docker images and optionally starts the services.'
+
+inputs:
+  build-only:
+    description: 'If true, only build images and populate the cache. If false, load images and start services.'
+    required: false
+    default: 'false'
+
+runs:
+    using: "composite"
+    steps:
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+
+        - name: Build images and populate cache
+          if: inputs.build-only == 'true'
+          uses: docker/bake-action@v6
+          with:
+            files: |
+              compose.yaml
+              .github/compose.ci.yaml
+            pull: true
+            load: true
+            set: |
+              *.cache-from=type=gha,scope=${{ github.ref }}
+              *.cache-from=type=gha,scope=refs/heads/main
+              *.cache-to=type=gha,scope=${{ github.ref }},mode=max
+
+        - name: Load images from cache
+          if: inputs.build-only == 'false'
+          uses: docker/bake-action@v6
+          with:
+            files: |
+              compose.yaml
+              .github/compose.ci.yaml
+            pull: true
+            load: true
+            set: |
+              *.cache-from=type=gha,scope=${{ github.ref }}
+              *.cache-from=type=gha,scope=refs/heads/main
+
+        - name: Start services
+          if: inputs.build-only == 'false'
+          shell: bash
+          run: docker compose -f compose.yaml -f .github/compose.ci.yaml up --wait --no-build

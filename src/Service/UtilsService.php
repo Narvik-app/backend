@@ -17,7 +17,7 @@ class UtilsService {
       return $value;
     }
 
-    return match (strtolower($value)) {
+    return match (strtolower((string) $value)) {
       'true', '1' => true,
       'false', '0' => false,
       default => $default,

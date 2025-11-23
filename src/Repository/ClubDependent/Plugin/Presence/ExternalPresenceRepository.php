@@ -40,8 +40,8 @@ class ExternalPresenceRepository extends ServiceEntityRepository implements Pres
     $this->applyClubRestriction($qb, $club);
     $query = $this
       ->applyDayConstraint($qb, $date)
-      ->andWhere($qb->expr()->eq($qb->expr()->lower("m.firstname"), $qb->expr()->lower(":firstname")))
-      ->andWhere($qb->expr()->eq($qb->expr()->lower("m.lastname"), $qb->expr()->lower(":lastname")))
+      ->andWhere($qb->expr()->eq((string) $qb->expr()->lower("m.firstname"), (string) $qb->expr()->lower(":firstname")))
+      ->andWhere($qb->expr()->eq((string) $qb->expr()->lower("m.lastname"), (string) $qb->expr()->lower(":lastname")))
       ->setParameter("firstname", $firstname)
       ->setParameter("lastname", $lastname)
       ->setMaxResults(1)
@@ -49,7 +49,7 @@ class ExternalPresenceRepository extends ServiceEntityRepository implements Pres
 
     try {
       return $query->getOneOrNullResult();
-    } catch (\Exception $e) {
+    } catch (\Exception) {
       return null;
     }
   }

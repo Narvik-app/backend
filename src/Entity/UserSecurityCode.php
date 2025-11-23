@@ -25,7 +25,7 @@ class UserSecurityCode implements TimestampEntityInterface {
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   private ?User $user = null;
 
-  #[ORM\Column(type: "string", enumType: UserSecurityCodeTrigger::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: UserSecurityCodeTrigger::class)]
   private ?UserSecurityCodeTrigger $trigger = null;
 
   #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]

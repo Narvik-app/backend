@@ -26,7 +26,7 @@ class File extends UuidEntity implements TimestampEntityInterface {
   #[Groups(['common-read'])]
   private ?string $privateUrl = null;
 
-  #[ORM\Column(type: "string", enumType: FileCategory::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: FileCategory::class)]
   private ?FileCategory $category = null;
 
   #[ORM\Column(length: 255, nullable: true)]
@@ -38,7 +38,7 @@ class File extends UuidEntity implements TimestampEntityInterface {
   #[ORM\Column(length: 255)]
   private ?string $mimeType = null;
 
-  #[ORM\Column(type: 'boolean', options: ["default" => 0])]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ["default" => 0])]
   private bool $isPublic = false;
 
   #[ORM\ManyToOne(targetEntity: Club::class)]

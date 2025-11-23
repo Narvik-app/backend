@@ -8,9 +8,9 @@ use Symfony\Component\Mailer\Transport\TransportFactoryInterface;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 
 #[AutoconfigureTag('mailer.transport_factory')]
-final class NarvikMailer implements TransportFactoryInterface {
+final readonly class NarvikMailer implements TransportFactoryInterface {
   public function __construct(
-    private readonly EmailService $emailService
+    private EmailService $emailService
   ) {
   }
 

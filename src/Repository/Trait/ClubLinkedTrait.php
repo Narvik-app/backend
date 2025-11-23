@@ -31,7 +31,7 @@ trait ClubLinkedTrait {
     $alias = $qb->getRootAliases()[0];
 
     $clubSqlPath = $this->getClassName()::getClubSqlPath();
-    if (str_contains($clubSqlPath, ".")) {
+    if (str_contains((string) $clubSqlPath, ".")) {
       $clubSqlPath = $this->addJoins($qb, $clubSqlPath);
     } else {
       $clubSqlPath = "$alias.$clubSqlPath";
@@ -61,7 +61,7 @@ trait ClubLinkedTrait {
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

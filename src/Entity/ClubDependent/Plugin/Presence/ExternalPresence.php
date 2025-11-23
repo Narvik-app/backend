@@ -130,15 +130,15 @@ class ExternalPresence extends UuidEntity implements TimestampEntityInterface, C
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;
 
-  #[ORM\Column(type: 'string', nullable: true)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, nullable: true)]
   #[Groups(['external-presence'])]
   private ?string $licence = null;
 
-  #[ORM\Column(type: 'string')]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
   #[Groups(['external-presence'])]
   private string $firstname;
 
-  #[ORM\Column(type: 'string')]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING)]
   #[Groups(['external-presence'])]
   private string $lastname;
 

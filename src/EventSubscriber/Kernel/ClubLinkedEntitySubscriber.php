@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-final class ClubLinkedEntitySubscriber implements EventSubscriberInterface {
+final readonly class ClubLinkedEntitySubscriber implements EventSubscriberInterface {
 
   public static function getSubscribedEvents(): array {
     return [
@@ -28,8 +28,8 @@ final class ClubLinkedEntitySubscriber implements EventSubscriberInterface {
   }
 
   public function __construct(
-    private readonly RequestService $requestService,
-    private readonly Security $security,
+    private RequestService $requestService,
+    private Security $security,
   ) {
   }
 
@@ -113,7 +113,7 @@ final class ClubLinkedEntitySubscriber implements EventSubscriberInterface {
 
   private function verifyAccessForPlugin(string $pluginName, array $urlPatterns, bool $pluginEnabled, string $requestedPath, RequestEvent $event): bool {
     foreach ($urlPatterns as $urlPattern) {
-      if (str_starts_with($requestedPath, $urlPattern)) {
+      if (str_starts_with($requestedPath, (string) $urlPattern)) {
         if (!$pluginEnabled) {
           $this->throwLockedException($event, "$pluginName plugin not activated.");
         }

@@ -32,6 +32,9 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
+        <exclude>
+            <file>src/DataFixtures/AppFixtures.php</file>
+        </exclude>
     </source>
 
     <coverage>

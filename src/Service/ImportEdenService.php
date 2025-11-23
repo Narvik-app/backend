@@ -71,7 +71,7 @@ class ImportEdenService {
 
     try {
       $date = new \DateTimeImmutable($medicalCert);
-    } catch (\Exception $e) {
+    } catch (\Exception) {
       return;
     }
 

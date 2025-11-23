@@ -48,6 +48,7 @@ class ImportInventoryItem extends AbstractCsvImporter {
     parent::__construct($em, $validator);
   }
 
+  #[\Override]
   protected function getRequiredCols(): array {
     return [
       self::COL_NAME,

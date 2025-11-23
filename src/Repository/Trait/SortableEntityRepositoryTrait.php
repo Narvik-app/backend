@@ -43,7 +43,7 @@ trait SortableEntityRepositoryTrait {
 
     try {
       return $query->getOneOrNullResult();
-    } catch (NonUniqueResultException $e) {
+    } catch (NonUniqueResultException) {
       return null;
     }
   }
@@ -60,7 +60,7 @@ trait SortableEntityRepositoryTrait {
 
     try {
       return $query->getOneOrNullResult();
-    } catch (NonUniqueResultException $e) {
+    } catch (NonUniqueResultException) {
       return null;
     }
   }

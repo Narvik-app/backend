@@ -42,7 +42,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
 
     try {
       return $query->getOneOrNullResult();
-    } catch (\Exception $e) {
+    } catch (\Exception) {
       return null;
     }
   }
@@ -61,7 +61,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     try {
       return $query->getOneOrNullResult();
     }
-    catch (\Exception $e) {
+    catch (\Exception) {
       return null;
     }
   }

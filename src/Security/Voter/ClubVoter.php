@@ -14,13 +14,13 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class ClubVoter extends Voter {
 
   public function __construct(
     private readonly Security $security,
-    private readonly RequestStack $requestStack,
     private readonly RequestService $requestService,
   ) {
   }
@@ -38,7 +38,7 @@ class ClubVoter extends Voter {
     return ($subject instanceof ClubLinkedEntityInterface || $subject instanceof Club) && in_array($attribute, $roles);
   }
 
-  protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool {
+  protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool {
     $request = null;
     if ($subject instanceof Request) {
       $request = $subject;
@@ -68,11 +68,13 @@ class ClubVoter extends Voter {
 
     // No matching club, we denied by default
     if (!$targetedClub) {
+      $vote->addReason('No matching club.');
       return false;
     }
 
     $activeProfile = $this->requestService->getActiveProfile($request);
     if (!$activeProfile) {
+      $vote->addReason('No active profile.');
       return false;
     }
 
