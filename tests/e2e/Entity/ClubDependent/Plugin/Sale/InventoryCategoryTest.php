@@ -8,6 +8,7 @@ use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\InventoryCategoryFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\InventoryCategoryStory;
+use App\Tests\Story\InventoryCategoryReorderStory;
 
 class InventoryCategoryTest extends AbstractEntityClubLinkedTestCase {
   protected int $TOTAL_SUPER_ADMIN = 6;
