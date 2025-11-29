@@ -22,7 +22,7 @@ return RectorConfig::configure()
     // Symfony 7.3 configuration
     ->withSymfonyContainerXml(__DIR__ . '/var/cache/dev/App_KernelDevDebugContainer.xml')
     // Composer-based detection will automatically handle Doctrine, Symfony, and API Platform upgrades
-    ->withComposerBased(doctrine: true, symfony: true)
+    ->withComposerBased(doctrine: true, phpunit: true, symfony: true)
     ->withSets([
         // PHP 8.4 level sets
         LevelSetList::UP_TO_PHP_84,

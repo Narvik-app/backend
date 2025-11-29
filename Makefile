@@ -66,8 +66,12 @@ composer: ## Run composer, pass the parameter "c=" to run a given command, examp
 	@$(COMPOSER) $(c)
 
 vendor: ## Install vendors according to the current composer.lock file
-vendor: c=install --prefer-dist --no-dev --no-progress --no-scripts --no-interaction
+vendor: c=install --prefer-dist --no-scripts --no-interaction
 vendor: composer
+
+vendor-prod: ## Install vendors according to the current composer.lock file
+vendor-prod: c=install --prefer-dist --no-dev --no-scripts --no-interaction
+vendor-prod: composer
 
 ## —— Symfony 🎵 ———————————————————————————————————————————————————————————————
 sf: ## List all Symfony commands or pass the parameter "c=" to run a given command, example: make sf c=about
@@ -79,6 +83,9 @@ cc: sf
 
 cc-test: ## Clear the test cache
 	@$(MAKE) --no-print-directory sf c='c:c --env=test'
+
+cc-prod: ## Clear the prod cache
+	@$(MAKE) --no-print-directory sf c='c:c --env=prod'
 
 reload-fixture: ## Reload the database based on the default fixtures
 	@$(COMPOSER) reload-fixture

@@ -1,7 +1,7 @@
 #syntax=docker/dockerfile:1
 
 # Versions
-FROM dunglas/frankenphp:1.9.1-php8.4 AS frankenphp_upstream
+FROM dunglas/frankenphp:1.10.1-php8.4 AS frankenphp_upstream
 
 # The different stages of this Dockerfile are meant to be built into separate images
 # https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage
@@ -16,11 +16,10 @@ WORKDIR /app
 VOLUME /app/var/
 
 # persistent / runtime deps
-# hadolint ignore=DL3018
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	acl \
+    acl \
 	file \
-	gettext \
 	git \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -107,8 +106,8 @@ RUN set -eux; \
 	composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
 # copy sources
-COPY --link . ./
-RUN rm -Rf docker/frankenphp/
+COPY --link --exclude=docker/frankenphp/ . ./
+
 
 RUN set -eux; \
 	mkdir -p var/cache var/log; \
