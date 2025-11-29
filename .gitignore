@@ -31,3 +31,6 @@ tests/coverage/
 ###> league/oauth2-server-bundle ###
 /config/jwt/*.pem
 ###< league/oauth2-server-bundle ###
+
+# composer auth config
+/auth.json
