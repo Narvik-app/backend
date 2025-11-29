@@ -18,7 +18,7 @@
         "api-platform/symfony": "^4.0",
         "ddeboer/vatin-bundle": "^4.0",
         "doctrine/annotations": "^2.0",
-        "doctrine/doctrine-bundle": "^2.13",
+        "doctrine/doctrine-bundle": "^3.1",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
         "league/csv": "^9.16",
