@@ -38,7 +38,7 @@
         "symfony/finder": "7.3.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.3.*",
-        "symfony/http-client": "7.3.*",
+        "symfony/http-client": "8.0.*",
         "symfony/lock": "7.3.*",
         "symfony/mailer": "7.3.*",
         "symfony/messenger": "7.3.*",
