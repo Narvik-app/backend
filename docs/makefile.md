@@ -20,18 +20,29 @@ this [snippet](https://www.strangebuzz.com/en/snippets/the-perfect-makefile-for-
 If you want to run make from within the `php` container, in the [Dockerfile](/Dockerfile),
 add:
 
+<!-- markdownlint-disable MD010 -->
+
 ```diff
-gettext \
-git \
-+make \
+ 	gettext \
+ 	git \
++	make \
 ```
+
+<!-- markdownlint-enable MD010 -->
 
 And rebuild the PHP image.
 
-> [!NOTE]  
-> If you are using Windows, you have to install [chocolatey.org](https://chocolatey.org/) or [Cygwin](http://cygwin.com) to use the `make` command. Check out this [StackOverflow question](https://stackoverflow.com/q/2532234/633864) for more explanations.
+> [!NOTE]
+>
+> If you are using Windows, you have to install [chocolatey.org](https://chocolatey.org/)
+> or [Cygwin](http://cygwin.com) to use the `make` command.
+>
+> Check out this [StackOverflow question](https://stackoverflow.com/q/2532234/633864)
+> for more explanations.
 
-## The template
+## The Template
+
+<!-- markdownlint-disable MD010 MD013 -->
 
 ```Makefile
 # Executables (local)
@@ -97,9 +108,16 @@ cc: c=c:c ## Clear the cache
 cc: sf
 ```
 
-## Adding and modifying jobs
+<!-- markdownlint-enable MD010 MD013 -->
 
-Make sure to add this configuration to the [.editorconfig](/.editorconfig) file, so that it forces your editor to use tabs instead of spaces (Makefiles are not compatible with spaces by default).
+## Adding and Modifying Jobs
+
+Make sure to add this configuration to the [.editorconfig](/.editorconfig) file,
+so that it forces your editor to use tabs instead of spaces.
+
+> [!NOTE]
+>
+> Makefiles are not compatible with spaces by default.
 
 ```.editorconfig
 
@@ -108,4 +126,5 @@ indent_style = tab
 
 ```
 
-If you still want to use space, you can configure the prefix in the Makefile itself. See [this answer on StackExchange](https://retrocomputing.stackexchange.com/a/20303).
+If you still want to use space, you can configure the prefix in the Makefile itself.
+See [this answer on Stack Exchange](https://retrocomputing.stackexchange.com/a/20303).
