@@ -11,8 +11,6 @@ updates:
       day: "saturday"
       time: "03:00"
     open-pull-requests-limit: 10
-    assignees:
-      - "froozeify"
     labels:
       - "dependencies"
       - "composer"
@@ -24,21 +22,12 @@ updates:
       symfony:
         patterns:
           - "symfony/*"
-        update-types:
-          - "minor"
-          - "patch"
       api-platform:
         patterns:
           - "api-platform/*"
-        update-types:
-          - "minor"
-          - "patch"
       doctrine:
         patterns:
           - "doctrine/*"
-        update-types:
-          - "minor"
-          - "patch"
       development:
         dependency-type: "development"
         update-types:
@@ -53,8 +42,6 @@ updates:
       day: "saturday"
       time: "03:00"
     open-pull-requests-limit: 5
-    assignees:
-      - "froozeify"
     labels:
       - "dependencies"
       - "docker"
@@ -69,9 +56,7 @@ updates:
       interval: "weekly"
       day: "saturday"
       time: "03:00"
-    open-pull-requests-limit: 5
-    assignees:
-      - "froozeify"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "github-actions"
