@@ -80,6 +80,9 @@ cc: sf
 cc-test: ## Clear the test cache
 	@$(MAKE) --no-print-directory sf c='c:c --env=test'
 
+cc-prod: ## Clear the prod cache
+	@$(MAKE) --no-print-directory sf c='c:c --env=prod'
+
 reload-fixture: ## Reload the database based on the default fixtures
 	@$(COMPOSER) reload-fixture
 

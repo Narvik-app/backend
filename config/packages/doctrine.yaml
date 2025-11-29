@@ -10,9 +10,6 @@ doctrine:
     orm:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-        auto_mapping: true
-        controller_resolver:
-            auto_mapping: false
         mappings:
             App:
                 type: attribute
@@ -37,7 +34,6 @@ when@test:
 when@prod:
     doctrine:
         orm:
-            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
             query_cache_driver:
                 type: pool
                 pool: doctrine.system_cache_pool

@@ -9,7 +9,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\RateLimiter\LimiterInterface;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
@@ -25,7 +25,7 @@ final readonly class LoginSubscriber implements EventSubscriberInterface {
 
   public function __construct(
     private RequestStack $requestStack,
-    private RateLimiterFactory $userIpLoginLimiter,
+    private RateLimiterFactoryInterface $userIpLoginLimiter,
     // private readonly RateLimiterFactory $ipLoginLimiter,
     private UserProviderInterface $userProvider,
     private UserPasswordHasherInterface $userPasswordHasher,
