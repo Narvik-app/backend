@@ -1,4 +1,6 @@
 ---
+name: narvik
+
 services:
   php:
     image: narvik-php:latest
