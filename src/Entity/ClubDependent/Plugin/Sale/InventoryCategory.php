@@ -51,9 +51,11 @@ use Symfony\Component\Validator\Constraints as Assert;
       security: "is_granted('".ClubRole::admin->value."', request)",
       read: false
     ),
-
     new Put(
-      uriTemplate: '/clubs/{clubUuid}/inventory-categories/reorder',
+      uriTemplate: '/clubs/{clubUuid}/inventory-categories/-/reorder',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+      ],
       controller: InventoryCategoryReorder::class,
       openapi: new Model\Operation(
         description: 'Reorder inventory categories',
@@ -74,6 +76,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         )
       ),
       security: "is_granted('".ClubRole::admin->value."', request)",
+      read: false,
     ),
 
     new Get(
@@ -105,7 +108,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         )
       ),
       security: "is_granted('".ClubRole::admin->value."', object)",
-    )
+    ),
   ],
   uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
