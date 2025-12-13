@@ -54,7 +54,7 @@ jobs:
 
       - name: Download composer.json
         if: github.event_name == 'release'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: composer-json
           path: .
