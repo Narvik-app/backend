@@ -13,5 +13,6 @@ when@dev: &dev
 when@test:
     <<: *dev
     zenstruck_foundry:
+        enable_auto_refresh_with_lazy_objects: true
         global_state:
             - App\Tests\Story\_InitStory

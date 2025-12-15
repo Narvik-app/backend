@@ -10,12 +10,14 @@ use Rector\Symfony\Symfony73\Rector\Class_\InvokableCommandInputAttributeRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
 use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
 use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
+use Zenstruck\Foundry\Utils\Rector\FoundrySetList;
 
 return RectorConfig::configure()
     ->withPaths([
         __DIR__ . '/config',
         __DIR__ . '/public',
         __DIR__ . '/src',
+        __DIR__ . '/tests',
     ])
     // PHP 8.4+ sets
     ->withPhpSets(php84: true)
@@ -28,6 +30,7 @@ return RectorConfig::configure()
         LevelSetList::UP_TO_PHP_84,
         // Doctrine 3.3 improvements
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
+        FoundrySetList::REMOVE_PROXIES
     ])
     ->withRules([
         // Type declaration improvements
