@@ -10,7 +10,6 @@ use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
 /**
- * @extends PersistentProxyObjectFactory<Club>
  *
  * @method        Club|Proxy                              create(array|callable $attributes = [])
  * @method static Club|Proxy                              createOne(array $attributes = [])
@@ -21,12 +20,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static Club|Proxy                              random(array $attributes = [])
  * @method static Club|Proxy                              randomOrCreate(array $attributes = [])
  * @method static ClubRepository|ProxyRepositoryDecorator repository()
- * @method static Club[]|Proxy[]                          all()
- * @method static Club[]|Proxy[]                          createMany(int $number, array|callable $attributes = [])
- * @method static Club[]|Proxy[]                          createSequence(iterable|callable $sequence)
- * @method static Club[]|Proxy[]                          findBy(array $attributes)
- * @method static Club[]|Proxy[]                          randomRange(int $min, int $max, array $attributes = [])
- * @method static Club[]|Proxy[]                          randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\Club[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  *
  * @phpstan-method        Club&Proxy<Club> create(array|callable $attributes = [])
  * @phpstan-method static Club&Proxy<Club> createOne(array $attributes = [])
@@ -43,8 +42,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<Club&Proxy<Club>> findBy(array $attributes)
  * @phpstan-method static list<Club&Proxy<Club>> randomRange(int $min, int $max, array $attributes = [])
  * @phpstan-method static list<Club&Proxy<Club>> randomSet(int $number, array $attributes = [])
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<Club>
  */
-final class ClubFactory extends PersistentProxyObjectFactory {
+final class ClubFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see  https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    *
@@ -70,6 +70,7 @@ final class ClubFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this->afterInstantiate(function(Club $club): void {
       $club->getSettings()?->setSeasonEnd("12-31"); // For the tests, we force the end of the year

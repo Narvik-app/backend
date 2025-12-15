@@ -93,11 +93,11 @@ class ClubTest extends AbstractEntityApiTestCase {
 
     // Activity entity is part use ClubLinkedEntityInterface with SelfClubLinkedEntityTrait
     // All entity using SelfClubLinkedEntityTrait will have the same result (cascade delete is set in the trait)
-    /** @var Proxy[] $activitiesPool */
+    /** @var \Zenstruck\Foundry\Persistence\Proxy[] $activitiesPool */
     $activitiesPool = ActivityStory::getPool("activities_club1");
     $activityIris = [];
     foreach ($activitiesPool as $activityClub) {
-      $activityIris[] = $this->getIriFromResource($activityClub->_real());
+      $activityIris[] = $this->getIriFromResource($activityClub);
     }
 
     $club1 = _InitStory::club_1();

@@ -11,7 +11,6 @@ use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
 /**
- * @extends PersistentProxyObjectFactory<User>
  *
  * @method        User|Proxy                                create(array|callable $attributes = [])
  * @method static User|Proxy                                createOne(array $attributes = [])
@@ -22,12 +21,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static User|Proxy                                random(array $attributes = [])
  * @method static User|Proxy                                randomOrCreate(array $attributes = [])
  * @method static UserRepository|ProxyRepositoryDecorator repository()
- * @method static User[]|Proxy[]                            all()
- * @method static User[]|Proxy[]                            createMany(int $number, array|callable $attributes = [])
- * @method static User[]|Proxy[]                            createSequence(iterable|callable $sequence)
- * @method static User[]|Proxy[]                            findBy(array $attributes)
- * @method static User[]|Proxy[]                            randomRange(int $min, int $max, array $attributes = [])
- * @method static User[]|Proxy[]                            randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\User[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  *
  * @phpstan-method        User&Proxy<User> create(array|callable $attributes = [])
  * @phpstan-method static User&Proxy<User> createOne(array $attributes = [])
@@ -44,8 +43,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<User&Proxy<User>> findBy(array $attributes)
  * @phpstan-method static list<User&Proxy<User>> randomRange(int $min, int $max, array $attributes = [])
  * @phpstan-method static list<User&Proxy<User>> randomSet(int $number, array $attributes = [])
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<User>
  */
-final class UserFactory extends PersistentProxyObjectFactory {
+final class UserFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -85,6 +85,7 @@ final class UserFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(User $user): void {})
       ;

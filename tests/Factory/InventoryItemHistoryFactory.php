@@ -10,7 +10,6 @@ use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
 /**
- * @extends PersistentProxyObjectFactory<InventoryItemHistory>
  *
  * @method        InventoryItemHistory|Proxy                              create(array|callable $attributes = [])
  * @method static InventoryItemHistory|Proxy                              createOne(array $attributes = [])
@@ -21,12 +20,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static InventoryItemHistory|Proxy                              random(array $attributes = [])
  * @method static InventoryItemHistory|Proxy                              randomOrCreate(array $attributes = [])
  * @method static InventoryItemHistoryRepository|ProxyRepositoryDecorator repository()
- * @method static InventoryItemHistory[]|Proxy[]                          all()
- * @method static InventoryItemHistory[]|Proxy[]                          createMany(int $number, array|callable $attributes = [])
- * @method static InventoryItemHistory[]|Proxy[]                          createSequence(iterable|callable $sequence)
- * @method static InventoryItemHistory[]|Proxy[]                          findBy(array $attributes)
- * @method static InventoryItemHistory[]|Proxy[]                          randomRange(int $min, int $max, array $attributes = [])
- * @method static InventoryItemHistory[]|Proxy[]                          randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  *
  * @phpstan-method        InventoryItemHistory&Proxy<InventoryItemHistory> create(array|callable $attributes = [])
  * @phpstan-method static InventoryItemHistory&Proxy<InventoryItemHistory> createOne(array $attributes = [])
@@ -43,8 +42,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<InventoryItemHistory&Proxy<InventoryItemHistory>> findBy(array $attributes)
  * @phpstan-method static list<InventoryItemHistory&Proxy<InventoryItemHistory>> randomRange(int $min, int $max, array $attributes = [])
  * @phpstan-method static list<InventoryItemHistory&Proxy<InventoryItemHistory>> randomSet(int $number, array $attributes = [])
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<InventoryItemHistory>
  */
-final class InventoryItemHistoryFactory extends PersistentProxyObjectFactory {
+final class InventoryItemHistoryFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -71,6 +71,7 @@ final class InventoryItemHistoryFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(InventoryItemHistory $inventoryItemHistory): void {})
       ;

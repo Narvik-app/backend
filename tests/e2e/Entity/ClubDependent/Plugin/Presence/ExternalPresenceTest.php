@@ -31,6 +31,7 @@ class ExternalPresenceTest extends AbstractEntityClubLinkedTestCase {
     return "/external-presences";
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::badger->value] = true;

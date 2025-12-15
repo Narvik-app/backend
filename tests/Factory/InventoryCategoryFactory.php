@@ -20,12 +20,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static InventoryCategory|Proxy last(string $sortedField = 'id')
  * @method static InventoryCategory|Proxy random(array $attributes = [])
  * @method static InventoryCategory|Proxy randomOrCreate(array $attributes = [])
- * @method static InventoryCategory[]|Proxy[] all()
- * @method static InventoryCategory[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static InventoryCategory[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static InventoryCategory[]|Proxy[] findBy(array $attributes)
- * @method static InventoryCategory[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static InventoryCategory[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\InventoryCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<InventoryCategory|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<InventoryCategory|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<InventoryCategory, InventoryCategoryRepository> repository()
@@ -46,9 +46,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Sale\InventoryCategory>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<InventoryCategory>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<InventoryCategory>
  */
-final class InventoryCategoryFactory extends PersistentProxyObjectFactory {
+final class InventoryCategoryFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -69,6 +69,7 @@ final class InventoryCategoryFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(InventoryCategory $inventoryCategory): void {})
       ;

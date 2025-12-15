@@ -8,9 +8,9 @@ use App\Tests\Story\_InitStory;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
- * @extends PersistentProxyObjectFactory<Email>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<Email>
  */
-final class EmailFactory extends PersistentProxyObjectFactory {
+final class EmailFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -39,6 +39,7 @@ final class EmailFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(Email $email): void {})
       ;

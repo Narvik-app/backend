@@ -28,6 +28,7 @@ class ActivityTest extends AbstractEntityClubLinkedTestCase {
     return "/activities";
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::member->value] = true;
@@ -100,8 +101,8 @@ class ActivityTest extends AbstractEntityClubLinkedTestCase {
   public function testActivityMergeWithNotExisting(): void {
     /** @var Proxy $activity */
     $activity = ActivityStory::getRandom("activities_club1");
-    $iri = $this->getIriFromResource($activity->_real());
-    $activityUUid = $activity->_real()->getUuid();
+    $iri = $this->getIriFromResource($activity);
+    $activityUUid = $activity->getUuid();
 
     $this->loggedAsSuperAdmin();
     $this->makePatchRequest("$iri/merge", ["target" => "{$activityUUid}-notexisting"]);
@@ -111,11 +112,11 @@ class ActivityTest extends AbstractEntityClubLinkedTestCase {
     ]);
   }
 
-  public function testActivityMergeToSelf() {
+  public function testActivityMergeToSelf(): void {
     /** @var Proxy $activity */
     $activity = ActivityStory::getRandom("activities_club1");
-    $iri = $this->getIriFromResource($activity->_real());
-    $activityUUid = $activity->_real()->getUuid();
+    $iri = $this->getIriFromResource($activity);
+    $activityUUid = $activity->getUuid();
 
     $this->loggedAsSuperAdmin();
     $this->makePatchRequest("$iri/merge", ["target" => $activityUUid]);
@@ -128,11 +129,11 @@ class ActivityTest extends AbstractEntityClubLinkedTestCase {
   public function testActivityMergeWithOtherClub(): void {
     /** @var Proxy $activity */
     $activity = ActivityStory::getRandom("activities_club1");
-    $iri = $this->getIriFromResource($activity->_real());
-    $activityUUid = $activity->_real()->getUuid();
+    $iri = $this->getIriFromResource($activity);
+    $activityUUid = $activity->getUuid();
     /** @var Proxy $activityOtherClub */
     $activityOtherClub = ActivityStory::getRandom("activities_club2");
-    $activityUuidOtherClub = $activityOtherClub->_real()->getUuid();
+    $activityUuidOtherClub = $activityOtherClub->getUuid();
 
     $this->loggedAsSuperAdmin();
     $this->makePatchRequest("$iri/merge", ["target" => $activityUuidOtherClub]);

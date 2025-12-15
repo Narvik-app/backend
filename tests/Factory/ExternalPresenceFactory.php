@@ -23,12 +23,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static ExternalPresence|Proxy last(string $sortedField = 'id')
  * @method static ExternalPresence|Proxy random(array $attributes = [])
  * @method static ExternalPresence|Proxy randomOrCreate(array $attributes = [])
- * @method static ExternalPresence[]|Proxy[] all()
- * @method static ExternalPresence[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static ExternalPresence[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static ExternalPresence[]|Proxy[] findBy(array $attributes)
- * @method static ExternalPresence[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static ExternalPresence[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\ExternalPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<ExternalPresence|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<ExternalPresence|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<ExternalPresence, ExternalPresenceRepository> repository()
@@ -49,9 +49,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\ExternalPresence>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<ExternalPresence>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<ExternalPresence>
  */
-final class ExternalPresenceFactory extends PersistentProxyObjectFactory {
+final class ExternalPresenceFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -78,6 +78,7 @@ final class ExternalPresenceFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(ExternalPresence $externalPresence): void {})
       ;

@@ -19,12 +19,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static Activity|Proxy last(string $sortedField = 'id')
  * @method static Activity|Proxy random(array $attributes = [])
  * @method static Activity|Proxy randomOrCreate(array $attributes = [])
- * @method static Activity[]|Proxy[] all()
- * @method static Activity[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static Activity[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static Activity[]|Proxy[] findBy(array $attributes)
- * @method static Activity[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static Activity[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Activity[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<Activity|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<Activity|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<Activity, ActivityRepository> repository()
@@ -45,10 +45,10 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\ClubDependent\Activity&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Activity>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Activity&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Activity>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Activity&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Activity>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<Activity>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<Activity>
  */
-final class ActivityFactory extends PersistentProxyObjectFactory {
-  public const ACTIVITIES = [
+final class ActivityFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
+  public const array ACTIVITIES = [
     '10M',
     '25M rameneurs',
     '25M toutes armes',
@@ -80,6 +80,7 @@ final class ActivityFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(Activity $activity): void {})
       ;

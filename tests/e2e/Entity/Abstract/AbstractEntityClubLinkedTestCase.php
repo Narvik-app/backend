@@ -15,6 +15,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
    *
    * @return array{string, bool}
    */
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::admin->value] = true;
@@ -31,12 +32,14 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->validateGetCollectionResponse($response, $role, $total);
   }
 
+  #[\Override]
   public function testGetCollectionAsSuperAdmin(): ResponseInterface {
     $this->loggedAsSuperAdmin();
     // We test with super admin only on club 1
     return $this->testGetCollectionWClubAs(UserRole::super_admin, _InitStory::club_1(), $this->TOTAL_SUPER_ADMIN);
   }
 
+  #[\Override]
   public function testGetCollectionAsAdminClub1(): ResponseInterface {
     $this->loggedAsAdminClub1();
 
@@ -47,6 +50,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->testGetCollectionWClubAs(ClubRole::admin, _InitStory::club_1(), $this->TOTAL_ADMIN_CLUB_1);
   }
 
+  #[\Override]
   public function testGetCollectionAsAdminClub2(): ResponseInterface {
     $this->loggedAsAdminClub2();
 
@@ -57,6 +61,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->testGetCollectionWClubAs(ClubRole::admin, _InitStory::club_2(), $this->TOTAL_ADMIN_CLUB_2);
   }
 
+  #[\Override]
   public function testGetCollectionAsSupervisorClub1(): ResponseInterface {
     $this->loggedAsSupervisorClub1();
 
@@ -67,6 +72,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->testGetCollectionWClubAs(ClubRole::supervisor, _InitStory::club_1(),$this->TOTAL_SUPERVISOR_CLUB_1);
   }
 
+  #[\Override]
   public function testGetCollectionAsMemberClub1(): ResponseInterface {
     $this->loggedAsMemberClub1();
 
@@ -77,6 +83,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->testGetCollectionWClubAs(ClubRole::member, _InitStory::club_1(), $this->TOTAL_MEMBER_CLUB_1);
   }
 
+  #[\Override]
   public function testGetCollectionAsBadgerClub1(): ResponseInterface {
     $this->loggedAsBadgerClub1();
 
@@ -87,6 +94,7 @@ abstract class AbstractEntityClubLinkedTestCase extends AbstractEntityApiTestCas
     return $this->testGetCollectionWClubAs(ClubRole::badger, _InitStory::club_1(), $this->TOTAL_BADGER_CLUB_1);
   }
 
+  #[\Override]
   public function testGetCollectionAsBadgerClub2(): ResponseInterface {
     $this->loggedAsBadgerClub2();
 

@@ -29,6 +29,7 @@ class InventoryItemHistoryTest extends AbstractEntityClubLinkedTestCase {
     throw new \Exception("Subresource! getRootUrl() must not be call.");
   }
 
+  #[\Override]
   protected function getRootWClubUrl(Club $club): string {
     // We fully create the url so testGetCollections can try getting with club2 as root url
     return $this->getIriFromResource($club) . "/inventory-items/{$this->inventoryItem->getUuid()}/histories";
