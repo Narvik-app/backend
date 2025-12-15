@@ -71,7 +71,7 @@
         "symfony/maker-bundle": "^1.51",
         "symfony/phpunit-bridge": "^8.0",
         "symfony/stopwatch": "7.4.*",
-        "symfony/web-profiler-bundle": "7.4.*",
+        "symfony/web-profiler-bundle": "8.0.*",
         "zenstruck/messenger-test": "^1.11"
     },
     "config": {
