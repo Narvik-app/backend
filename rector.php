@@ -30,7 +30,6 @@ return RectorConfig::configure()
         LevelSetList::UP_TO_PHP_84,
         // Doctrine 3.3 improvements
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
-        FoundrySetList::REMOVE_PROXIES
     ])
     ->withRules([
         // Type declaration improvements
