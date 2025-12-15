@@ -7,7 +7,7 @@ use App\Tests\Factory\InventoryCategoryFactory;
 use Zenstruck\Foundry\Story;
 
 final class InventoryCategoryStory extends Story {
-  public const CATEGORIES = [
+  public const array CATEGORIES = [
     "Cibles",
     "Munitions",
     "Droit de tir",

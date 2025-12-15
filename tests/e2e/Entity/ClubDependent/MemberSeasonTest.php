@@ -22,6 +22,7 @@ class MemberSeasonTest extends AbstractEntityClubLinkedTestCase {
 
   private Member $selectedMember;
 
+  #[\Override]
   public function setUp(): void {
     parent::setUp();
     $this->selectedMember = _InitStory::MEMBER_member_club_1();
@@ -37,10 +38,12 @@ class MemberSeasonTest extends AbstractEntityClubLinkedTestCase {
     throw new \Exception("Subresource! getRootUrl() must not be call.");
   }
 
+  #[\Override]
   protected function getRootWClubUrl(Club $club): string {
     return $this->getIriFromResource($club) . "/members/{$this->selectedMember->getUuid()}/seasons";
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::member->value] = true;

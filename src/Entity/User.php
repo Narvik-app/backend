@@ -305,7 +305,7 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
    * @var Collection<int, Profile>
    */
   #[Groups(['user', 'self-read'])]
-  private Collection $linkedProfiles;
+  private ?Collection $linkedProfiles = null;
 
   /**
    * @var string The hashed password

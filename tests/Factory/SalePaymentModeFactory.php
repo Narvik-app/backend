@@ -11,7 +11,6 @@ use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
 /**
- * @extends PersistentProxyObjectFactory<SalePaymentMode>
  *
  * @method        SalePaymentMode|Proxy                              create(array|callable $attributes = [])
  * @method static SalePaymentMode|Proxy                              createOne(array $attributes = [])
@@ -22,12 +21,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static SalePaymentMode|Proxy                              random(array $attributes = [])
  * @method static SalePaymentMode|Proxy                              randomOrCreate(array $attributes = [])
  * @method static SalePaymentModeRepository|ProxyRepositoryDecorator repository()
- * @method static SalePaymentMode[]|Proxy[]                          all()
- * @method static SalePaymentMode[]|Proxy[]                          createMany(int $number, array|callable $attributes = [])
- * @method static SalePaymentMode[]|Proxy[]                          createSequence(iterable|callable $sequence)
- * @method static SalePaymentMode[]|Proxy[]                          findBy(array $attributes)
- * @method static SalePaymentMode[]|Proxy[]                          randomRange(int $min, int $max, array $attributes = [])
- * @method static SalePaymentMode[]|Proxy[]                          randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  *
  * @phpstan-method        SalePaymentMode&Proxy<SalePaymentMode> create(array|callable $attributes = [])
  * @phpstan-method static SalePaymentMode&Proxy<SalePaymentMode> createOne(array $attributes = [])
@@ -44,8 +43,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<SalePaymentMode&Proxy<SalePaymentMode>> findBy(array $attributes)
  * @phpstan-method static list<SalePaymentMode&Proxy<SalePaymentMode>> randomRange(int $min, int $max, array $attributes = [])
  * @phpstan-method static list<SalePaymentMode&Proxy<SalePaymentMode>> randomSet(int $number, array $attributes = [])
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<SalePaymentMode>
  */
-final class SalePaymentModeFactory extends PersistentProxyObjectFactory {
+final class SalePaymentModeFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    *
@@ -73,6 +73,7 @@ final class SalePaymentModeFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(SalePaymentMode $salePaymentMode): void {})
       ;

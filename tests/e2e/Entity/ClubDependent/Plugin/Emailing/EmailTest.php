@@ -31,6 +31,7 @@ class EmailTest extends AbstractEntityClubLinkedTestCase {
     EmailFactory::createMany(10);
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::supervisor->value] = false;

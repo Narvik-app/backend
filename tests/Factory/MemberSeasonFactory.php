@@ -23,12 +23,12 @@ use function Zenstruck\Foundry\lazy;
  * @method static MemberSeason|Proxy last(string $sortedField = 'id')
  * @method static MemberSeason|Proxy random(array $attributes = [])
  * @method static MemberSeason|Proxy randomOrCreate(array $attributes = [])
- * @method static MemberSeason[]|Proxy[] all()
- * @method static MemberSeason[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static MemberSeason[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static MemberSeason[]|Proxy[] findBy(array $attributes)
- * @method static MemberSeason[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static MemberSeason[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\MemberSeason[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<MemberSeason|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<MemberSeason|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<MemberSeason, MemberSeasonRepository> repository()
@@ -49,9 +49,9 @@ use function Zenstruck\Foundry\lazy;
  * @phpstan-method static list<\App\Entity\ClubDependent\MemberSeason&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\MemberSeason>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\MemberSeason&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\MemberSeason>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\MemberSeason&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\MemberSeason>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<MemberSeason>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<MemberSeason>
  */
-final class MemberSeasonFactory extends PersistentProxyObjectFactory {
+final class MemberSeasonFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -75,12 +75,13 @@ final class MemberSeasonFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(MemberSeason $memberSeason): void {})
     ->afterInstantiate(function(MemberSeason $memberSeason): void {
       if (!$memberSeason->getSeason()) {
         $season = SeasonStory::season_current();
-        $memberSeason->setSeason($season->_real());
+        $memberSeason->setSeason($season);
       }
     });
   }

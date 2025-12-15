@@ -31,6 +31,7 @@ abstract class AbstractTestCase extends ApiTestCase {
   }
 
 
+  #[\Override]
   public function tearDown(): void {
     $fs = self::getContainer()->get(FileSystem::class);
     $testFolder = self::$kernel->getContainer()->getParameter('app.files');

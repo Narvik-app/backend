@@ -19,12 +19,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static AgeCategory|Proxy last(string $sortedField = 'id')
  * @method static AgeCategory|Proxy random(array $attributes = [])
  * @method static AgeCategory|Proxy randomOrCreate(array $attributes = [])
- * @method static AgeCategory[]|Proxy[] all()
- * @method static AgeCategory[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static AgeCategory[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static AgeCategory[]|Proxy[] findBy(array $attributes)
- * @method static AgeCategory[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static AgeCategory[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\AgeCategory[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<AgeCategory|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<AgeCategory|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<AgeCategory, AgeCategoryRepository> repository()
@@ -45,9 +45,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\AgeCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\AgeCategory>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\AgeCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\AgeCategory>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\AgeCategory&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\AgeCategory>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<AgeCategory>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<AgeCategory>
  */
-final class AgeCategoryFactory extends PersistentProxyObjectFactory {
+final class AgeCategoryFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -68,6 +68,7 @@ final class AgeCategoryFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(AgeCategory $ageCategory): void {})
       ;

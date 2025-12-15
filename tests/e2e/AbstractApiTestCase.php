@@ -24,7 +24,7 @@ abstract class AbstractApiTestCase extends AbstractTestCase {
   private ?string $selectedProfile = null;
 
   protected function createClientWithCredentials(?string $token = null): Client {
-    $token = $token ?? $this->accessToken;
+    $token ??= $this->accessToken;
 
     $authorization = $token ? 'Bearer ' . $token : 'Basic ' . $this->clientAuthorization; // No token pass we request as Basic api
 

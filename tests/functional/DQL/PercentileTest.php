@@ -8,7 +8,7 @@ use Doctrine\ORM\Query;
 
 class PercentileTest extends AbstractTestCase
 {
-  public function testPercentile()
+  public function testPercentile(): void
   {
     $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
     $query = $entityManager->createQuery("SELECT PERCENTILE(0.5, c.id) FROM App\Entity\Club c");

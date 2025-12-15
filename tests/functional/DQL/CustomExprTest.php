@@ -7,17 +7,17 @@ use App\Tests\AbstractTestCase;
 
 class CustomExprTest extends AbstractTestCase
 {
-  public function testUnaccent()
+  public function testUnaccent(): void
   {
     $this->assertEquals('unaccent(LOWER(c.name))', CustomExpr::unaccentInsensitive('c.name'));
   }
 
-  public function testDayOfWeek()
+  public function testDayOfWeek(): void
   {
     $this->assertEquals('dayofweek(c.createdAt)', CustomExpr::dayOfWeek('c.createdAt'));
   }
 
-  public function testPercentile()
+  public function testPercentile(): void
   {
     $this->assertEquals('percentile(95, c.createdAt)', CustomExpr::percentile(95, 'c.createdAt'));
   }

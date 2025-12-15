@@ -30,6 +30,7 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
 
   private Member $selectedMember;
 
+  #[\Override]
   public function setUp(): void {
     parent::setUp();
     $this->selectedMember = _InitStory::MEMBER_member_club_1();
@@ -43,6 +44,7 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
     return "/member-presences";
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess() : array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::badger->value] = true;

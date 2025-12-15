@@ -19,12 +19,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static Season|Proxy last(string $sortedField = 'id')
  * @method static Season|Proxy random(array $attributes = [])
  * @method static Season|Proxy randomOrCreate(array $attributes = [])
- * @method static Season[]|Proxy[] all()
- * @method static Season[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static Season[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static Season[]|Proxy[] findBy(array $attributes)
- * @method static Season[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static Season[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\Season[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<Season|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<Season|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<Season, SeasonRepository> repository()
@@ -45,9 +45,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\Season&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\Season>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\Season&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\Season>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\Season&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\Season>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<Season>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<Season>
  */
-final class SeasonFactory extends PersistentProxyObjectFactory {
+final class SeasonFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -67,6 +67,7 @@ final class SeasonFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(Season $season): void {})
       ;

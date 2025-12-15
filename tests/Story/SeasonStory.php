@@ -18,7 +18,7 @@ use Zenstruck\Foundry\Story;
  * @method static Season season_current()
  */
 final class SeasonStory extends Story {
-  public const SEASONS = [
+  public const array SEASONS = [
     "2015/2016",
     "2016/2017",
     "2017/2018",

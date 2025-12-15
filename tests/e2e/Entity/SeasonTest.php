@@ -24,6 +24,7 @@ class SeasonTest extends AbstractEntityApiTestCase {
     return '/seasons';
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess(): array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::admin->value] = true;

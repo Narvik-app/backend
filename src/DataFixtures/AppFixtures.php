@@ -50,7 +50,7 @@ class AppFixtures extends Fixture {
     ];
     $categories = $defaultCategoriesPool->getPool('default');
     foreach ($categories as $category) {
-      $catName = $category->_real()->getName();
+      $catName = $category->getName();
       if (array_key_exists($catName, $itemsMapping)) {
         foreach ($itemsMapping[$catName] as $name) {
           $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category]);

@@ -7,7 +7,7 @@ use App\Tests\AbstractTestCase;
 
 class UnaccentStringTest extends AbstractTestCase
 {
-  public function testUnaccentString()
+  public function testUnaccentString(): void
   {
     $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
 

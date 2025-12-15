@@ -24,6 +24,7 @@ class AgeCategoryTest extends AbstractEntityApiTestCase {
     return '/age-categories';
   }
 
+  #[\Override]
   protected function getCollectionGrantedAccess(): array {
     $access = parent::getCollectionGrantedAccess();
     $access[ClubRole::admin->value] = true;

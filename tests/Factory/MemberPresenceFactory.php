@@ -22,12 +22,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @method static MemberPresence|Proxy last(string $sortedField = 'id')
  * @method static MemberPresence|Proxy random(array $attributes = [])
  * @method static MemberPresence|Proxy randomOrCreate(array $attributes = [])
- * @method static MemberPresence[]|Proxy[] all()
- * @method static MemberPresence[]|Proxy[] createMany(int $number, array|callable $attributes = [])
- * @method static MemberPresence[]|Proxy[] createSequence(iterable|callable $sequence)
- * @method static MemberPresence[]|Proxy[] findBy(array $attributes)
- * @method static MemberPresence[]|Proxy[] randomRange(int $min, int $max, array $attributes = [])
- * @method static MemberPresence[]|Proxy[] randomSet(int $number, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] all()
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] createMany(int $number, array|callable $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] createSequence((iterable|callable) $sequence)
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] findBy(array $attributes)
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] randomRange(int $min, int $max, array $attributes = [])
+ * @method static \App\Entity\ClubDependent\Plugin\Presence\MemberPresence[]|\Zenstruck\Foundry\Persistence\Proxy[] randomSet(int $number, array $attributes = [])
  * @method FactoryCollection<MemberPresence|Proxy> many(int $min, int|null $max = null)
  * @method FactoryCollection<MemberPresence|Proxy> sequence(iterable|callable $sequence)
  * @method static ProxyRepositoryDecorator<MemberPresence, MemberPresenceRepository> repository()
@@ -48,9 +48,9 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  * @phpstan-method static list<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence>> randomSet(int $number, array $attributes = [])
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence>> many(int $min, int|null $max = null)
  * @phpstan-method \Zenstruck\Foundry\FactoryCollection<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence&\Zenstruck\Foundry\Persistence\Proxy<\App\Entity\ClubDependent\Plugin\Presence\MemberPresence>> sequence(iterable|callable $sequence)
- * @extends PersistentProxyObjectFactory<MemberPresence>
+ * @extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory<MemberPresence>
  */
-final class MemberPresenceFactory extends PersistentProxyObjectFactory {
+final class MemberPresenceFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#factories-as-services
    */
@@ -75,6 +75,7 @@ final class MemberPresenceFactory extends PersistentProxyObjectFactory {
   /**
    * @see https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#initialization
    */
+  #[\Override]
   protected function initialize(): static {
     return $this// ->afterInstantiate(function(MemberPresence $memberPresence): void {})
       ;

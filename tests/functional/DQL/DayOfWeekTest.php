@@ -8,7 +8,7 @@ use Doctrine\ORM\Query;
 
 class DayOfWeekTest extends AbstractTestCase
 {
-  public function testDayOfWeek()
+  public function testDayOfWeek(): void
   {
     $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
     $query = $entityManager->createQuery("SELECT DAYOFWEEK(c.createdAt) FROM App\Entity\Club c");
