@@ -9,9 +9,9 @@ This is the backend API of **Narvik**, a comprehensive application for managing 
 ## Technology Stack
 
 ### Backend Framework
-- **Symfony 7.3** - Modern PHP web framework
+- **Symfony 8.0** - Modern PHP web framework
 - **API Platform 4.0** - Powerful REST/GraphQL API platform
-- **PHP 8.4+** - Required PHP version with latest features
+- **PHP 8.5+** - Required PHP version with latest features
 
 ### Key Dependencies
 - **Doctrine ORM 3.3** - Database abstraction layer
@@ -337,5 +337,5 @@ GNU AGPLv3 License - See [LICENSE](LICENSE) file for details.
 ---
 
 **Created by:** Benoît VIGNAL  
-**Version:** 3.12.1  
-**Last Updated:** 2025-11-21
+**Version:** 3.14  
+**Last Updated:** 2025-12-16
