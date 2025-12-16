@@ -17,7 +17,7 @@
 0. [Développement](docs/0.README.md)
 
 ## Démarrage rapide
-Un [makefile](makefile) est présent afin de faciliter le développement.
+Un [Makefile](Makefile) est présent afin de faciliter le développement.
 
 - `make up` pour démarrer le projet
 
