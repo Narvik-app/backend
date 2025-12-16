@@ -126,10 +126,7 @@ abstract class AbstractCsvImporter {
   }
 
   protected function getHeaderIndex(string $key) {
-    foreach ($this->headers as $k => $v) {
-      if ($v === $key) return $k;
-    }
-    return null;
+    return array_find_key($this->headers, fn($v) => $v === $key);
   }
 
   protected function getHeaders(): ?array {

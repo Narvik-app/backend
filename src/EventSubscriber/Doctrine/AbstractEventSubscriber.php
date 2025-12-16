@@ -19,7 +19,8 @@ abstract class AbstractEventSubscriber {
 
   protected function hasChangedProperties(ObjectManager $objectManager, $entity, array $properties): bool {
     $changedProps = $this->getChangedProperties($objectManager, $entity);
-    return array_any(array_keys($changedProps), fn($changedProp) => in_array($changedProp, $properties));
+    $changedPropKeys = array_keys($changedProps);
+    return array_any($changedPropKeys, fn($changedProp) => array_any($properties, fn($property) => $property === $changedProp));
   }
 
   /**
@@ -46,6 +47,7 @@ abstract class AbstractEventSubscriber {
    */
   protected function hasOnlyWhitelistedChangedProperties(ObjectManager $objectManager, $entity, array $allowedProperties): bool {
     $changedProps = $this->getChangedProperties($objectManager, $entity);
-    return array_all(array_keys($changedProps), fn($changedProp) => in_array($changedProp, $allowedProperties));
+    $changedPropKeys = array_keys($changedProps);
+    return array_all($changedPropKeys, fn($changedProp) => array_any($allowedProperties, fn($allowedProp) => $allowedProp === $changedProp));
   }
 }
