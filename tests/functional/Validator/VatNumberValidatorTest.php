@@ -11,6 +11,7 @@ class VatNumberValidatorTest extends AbstractTestCase
 {
     private ValidatorInterface $validator;
 
+    #[\Override]
     public function setUp(): void
     {
         parent::setUp();
