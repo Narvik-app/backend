@@ -18,5 +18,4 @@ return [
     DAMA\DoctrineTestBundle\DAMADoctrineTestBundle::class => ['test' => true],
     Zenstruck\Messenger\Test\ZenstruckMessengerTestBundle::class => ['test' => true],
     League\Bundle\OAuth2ServerBundle\LeagueOAuth2ServerBundle::class => ['all' => true],
-    Ddeboer\VatinBundle\DdeboerVatinBundle::class => ['all' => true],
 ];

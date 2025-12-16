@@ -1829,7 +1829,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     },
  *     role_prefix?: scalar|null, // Set a custom prefix that replaces the default 'ROLE_OAUTH2_' role prefix // Default: "ROLE_OAUTH2_"
  * }
- * @psalm-type DdeboerVatinConfig = array<mixed>
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1844,7 +1843,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     nelmio_cors?: NelmioCorsConfig,
  *     api_platform?: ApiPlatformConfig,
  *     league_oauth2_server?: LeagueOauth2ServerConfig,
- *     ddeboer_vatin?: DdeboerVatinConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1863,7 +1861,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         nelmio_cors?: NelmioCorsConfig,
  *         api_platform?: ApiPlatformConfig,
  *         league_oauth2_server?: LeagueOauth2ServerConfig,
- *         ddeboer_vatin?: DdeboerVatinConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1879,7 +1876,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         nelmio_cors?: NelmioCorsConfig,
  *         api_platform?: ApiPlatformConfig,
  *         league_oauth2_server?: LeagueOauth2ServerConfig,
- *         ddeboer_vatin?: DdeboerVatinConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1898,7 +1894,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         api_platform?: ApiPlatformConfig,
  *         dama_doctrine_test?: DamaDoctrineTestConfig,
  *         league_oauth2_server?: LeagueOauth2ServerConfig,
- *         ddeboer_vatin?: DdeboerVatinConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

@@ -22,7 +22,7 @@ use App\Enum\ClubRole;
 use App\Enum\UserRole;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubRepository;
-use Ddeboer\VatinBundle\Validator\Constraints\Vatin;
+use App\Validator\Constraints\VatNumber;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -136,7 +136,7 @@ class Club extends UuidEntity implements TimestampEntityInterface {
 
   #[ORM\Column(length: 255, nullable: true)]
   #[Groups(['club-read', 'club-admin-write'])]
-  #[Vatin]
+  #[VatNumber]
   private ?string $vat = null;
 
   #[ORM\Column(length: 255, nullable: true)]
