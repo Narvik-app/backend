@@ -12,8 +12,6 @@ use App\Repository\SeasonRepository;
 use App\Service\SeasonService;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
@@ -100,7 +98,7 @@ final class CurrentSeasonFilter extends AbstractClubDependentFilter {
     foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
-        'type' => Type::BUILTIN_TYPE_BOOL,
+        'type' => 'bool',
         'required' => false,
         'description' => 'Force the query to be only for current season.',
       ];

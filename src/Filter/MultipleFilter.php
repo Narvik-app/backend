@@ -69,7 +69,7 @@ final class MultipleFilter extends AbstractFilter {
     foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
-        'type' => Type::BUILTIN_TYPE_STRING,
+        'type' => 'string',
         'required' => false,
         'description' => 'Filtering with a ' . self::PROPERTY_NAME . ' condition for property ' . $property . '. Multiple field can be passed, it will be an OR condition between each one',
       ];

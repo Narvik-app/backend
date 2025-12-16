@@ -88,7 +88,7 @@ final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
     foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
-        'type' => Type::BUILTIN_TYPE_BOOL,
+        'type' => 'bool',
         'required' => false,
         'description' => 'Display the members that don\'t have the current season linked.',
       ];
