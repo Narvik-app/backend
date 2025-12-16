@@ -328,7 +328,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
 
   #[ORM\Column(length: 1)]
   #[Groups(['member-read', 'club-supervisor-write'])]
-  #[Assert\Choice(['M', 'F'])]
+  #[Assert\Choice(choices: ['M', 'F'])]
   private string $gender = "M";
 
   #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
