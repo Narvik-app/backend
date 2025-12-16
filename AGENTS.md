@@ -11,7 +11,7 @@ This is the backend API of **Narvik**, a comprehensive application for managing 
 ### Backend Framework
 - **Symfony 7.3** - Modern PHP web framework
 - **API Platform 4.0** - Powerful REST/GraphQL API platform
-- **PHP 8.4+** - Required PHP version with latest features
+- **PHP 8.5+** - Required PHP version with latest features
 
 ### Key Dependencies
 - **Doctrine ORM 3.3** - Database abstraction layer
