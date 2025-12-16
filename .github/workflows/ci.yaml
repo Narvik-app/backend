@@ -120,7 +120,7 @@ jobs:
 
           # Grep for actual deprecation notices, excluding the summary line.
           # We look for lines starting with common deprecation keywords or "Unsilenced".
-          grep -E '^(User|Unsilenced|Method|Function|Class|Constant|Property|Return type|Passing|Argument|Calling|Accessing|Implementing|Extending|The ".+" option|Since symfony|The service|The parameter) .+ is deprecated' "$PHPUNIT_LOG" > deprecations.log || true
+          grep -E '^(User|Unsilenced|Method|Function|Class|Constant|Property|Return type|Passing|Argument|Calling|Accessing|Implementing|Extending|Using|The ".+" option|Since symfony|The service|The parameter) .+ is deprecated' "$PHPUNIT_LOG" > deprecations.log || true
 
           if [ -s "deprecations.log" ]; then
               DEPRECATION_COUNT=$(wc -l < deprecations.log)
