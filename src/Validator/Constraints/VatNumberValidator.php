@@ -91,7 +91,7 @@ class VatNumberValidator extends ConstraintValidator
 
         $calculatedKey = (12 + 3 * ($siren % 97)) % 97;
 
-        return (int)$key === $calculatedKey;
+        return (int) $key === $calculatedKey;
     }
 
     private function validateDE(string $vatNumber): bool
@@ -112,6 +112,6 @@ class VatNumberValidator extends ConstraintValidator
             $checksum = 0;
         }
 
-        return $checksum === (int)$number[8];
+        return $checksum === (int) $number[8];
     }
 }
