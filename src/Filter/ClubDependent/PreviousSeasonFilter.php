@@ -97,7 +97,7 @@ final class PreviousSeasonFilter extends AbstractClubDependentFilter {
     foreach (array_keys($this->properties) as $property) {
       $description[self::PROPERTY_NAME . '[' . $property . ']'] = [
         'property' => $property,
-        'type' => Type::BUILTIN_TYPE_BOOL,
+        'type' => 'bool',
         'required' => false,
         'description' => 'Force the query to be only for previous season.',
       ];
