@@ -222,7 +222,7 @@ class Email extends UuidEntity implements TimestampEntityInterface, ClubLinkedEn
   }
 
   public function setMembers(array $members): static {
-    $this->members = array_unique(array_filter(array_map(trim(...), $members))); // array_filter remove empty values
+    $this->members = array_unique(array_filter(array_map(mb_trim(...), $members))); // array_filter remove empty values
     return $this;
   }
 

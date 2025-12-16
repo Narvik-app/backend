@@ -125,7 +125,7 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
   }
 
   public function setName(string $name): static {
-    $this->name = trim($name);
+    $this->name = mb_trim($name);
     return $this;
   }
 

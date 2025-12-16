@@ -23,7 +23,7 @@ class UserSelfUpdatePassword extends AbstractController {
     $payload = $this->checkAndGetJsonValues($request, ['current', 'new']);
 
     $currentPwd = $payload['current'];
-    $newPwd = trim((string) $payload['new']);
+    $newPwd = mb_trim((string) $payload['new']);
 
     if (!$passwordHasher->isPasswordValid($user, $currentPwd)) {
       throw new HttpException(Response::HTTP_BAD_REQUEST, "Invalid password");

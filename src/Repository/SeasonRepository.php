@@ -39,7 +39,7 @@ class SeasonRepository extends ServiceEntityRepository {
   }
 
   public function findOrCreateOneByName(string $seasonName, bool $autoFlush = true): ?Season {
-    $seasonName = trim(str_replace(" ", "", $seasonName));
+    $seasonName = mb_trim(str_replace(" ", "", $seasonName));
     // Season name must be in format 20xx/20xx
     if (strlen($seasonName) !== 9) {
       return null;

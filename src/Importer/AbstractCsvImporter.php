@@ -69,7 +69,7 @@ abstract class AbstractCsvImporter {
   }
 
   public function fromBody(string $content, string $delimiter = ",") {
-    $content = trim($content);
+    $content = mb_trim($content);
     $rows = str_getcsv($content, "\n", escape: '\\');
 
     $realRows = [];
@@ -139,7 +139,7 @@ abstract class AbstractCsvImporter {
   protected function getValue(array $row, string $colName): ?string {
     if ($this->hasKey($colName) && // Col declared in the general header
         array_key_exists($this->getHeaderIndex($colName), $row)) { // Col is present in our line
-      return trim((string) $row[$this->getHeaderIndex($colName)]);
+      return mb_trim((string) $row[$this->getHeaderIndex($colName)]);
     }
     return null;
   }
@@ -290,7 +290,7 @@ abstract class AbstractCsvImporter {
       if (substr((string) $col, 0, 3) === $bom) {
         $col = substr((string) $col, 3);
       }
-      $row[$k] = trim((string) $col);
+      $row[$k] = mb_trim((string) $col);
     }
   }
 

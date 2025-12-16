@@ -43,7 +43,7 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
    * @return array
    */
   public function findByLicenceOrName(Club $club, string $string): array {
-    $string = trim($string);
+    $string = mb_trim($string);
 
     $qb = $this->createQueryBuilder("m");
     $qb
