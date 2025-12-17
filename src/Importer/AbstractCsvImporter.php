@@ -135,7 +135,7 @@ abstract class AbstractCsvImporter {
 
   protected function getValue(array $row, string $colName): ?string {
     if ($this->hasKey($colName) && // Col declared in the general header
-        array_key_exists($this->getHeaderIndex($colName), $row)) { // Col is present in our line
+        array_key_exists((string) $this->getHeaderIndex($colName), $row)) { // Col is present in our line
       return mb_trim((string) $row[$this->getHeaderIndex($colName)]);
     }
     return null;

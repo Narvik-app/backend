@@ -14,7 +14,7 @@ abstract class AbstractEventSubscriber {
   }
 
   protected function isPropertyChanged(ObjectManager $objectManager, $entity, $property): bool {
-    return array_key_exists($property, $this->getChangedProperties($objectManager, $entity));
+    return array_key_exists((string) $property, $this->getChangedProperties($objectManager, $entity));
   }
 
   protected function hasChangedProperties(ObjectManager $objectManager, $entity, array $properties): bool {

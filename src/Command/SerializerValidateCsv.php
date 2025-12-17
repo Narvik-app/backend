@@ -59,7 +59,7 @@ class SerializerValidateCsv extends Command {
     $csvCustomEntities = array_keys($this->customCsvConfigs);
 
     foreach ($csvCustomEntities as $csvCustomEntity) {
-      if (!array_key_exists($csvCustomEntity, $this->entities)) {
+      if (!array_key_exists((string) $csvCustomEntity, $this->entities)) {
         $this->io->newLine();
         $this->io->error("No matching entity found for $csvCustomEntity");
         $hasError = true;
@@ -152,14 +152,14 @@ class SerializerValidateCsv extends Command {
 
     $matchedClass = null;
     $reflectionPropName = $reflectionProperty->getType()->getName();
-    if (array_key_exists($reflectionPropName, $this->entities)) {
+    if (array_key_exists((string) $reflectionPropName, $this->entities)) {
       $matchedClass = $reflectionPropName;
     } else {
       if ($reflectionPropName === Collection::class) {
         foreach ($reflectionProperty->getAttributes() as $attribute) {
           if (array_key_exists("targetEntity", $attribute->getArguments())){
             $targetEntity = $attribute->getArguments()["targetEntity"];
-            if (array_key_exists($targetEntity, $this->entities)) {
+            if (array_key_exists((string) $targetEntity, $this->entities)) {
               $matchedClass = $targetEntity;
             }
           }

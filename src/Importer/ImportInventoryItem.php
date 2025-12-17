@@ -76,7 +76,7 @@ class ImportInventoryItem extends AbstractCsvImporter {
     $categoryName = $this->getCurrentRowValue(self::COL_CATEGORY_NAME);
     $category = $this->inventoryCategoryRepository->findOneByName($this->getClub(), $categoryName);
     if (!$category) { // We create the category
-      if (array_key_exists($categoryName, $this->createdCategories)) {
+      if (array_key_exists((string) $categoryName, $this->createdCategories)) {
         $category = $this->createdCategories[$categoryName];
       } else {
         $category = new InventoryCategory();
