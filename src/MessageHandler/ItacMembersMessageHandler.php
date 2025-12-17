@@ -57,7 +57,7 @@ class ItacMembersMessageHandler implements ResetInterface {
 
       /** @var Member|null $member */
       $member = null;
-      if (array_key_exists($record[ItacCsvHeaderMapping::LICENCE->value], $this->members)) {
+      if (array_key_exists((string) $record[ItacCsvHeaderMapping::LICENCE->value], $this->members)) {
         $member = $this->members[$record[ItacCsvHeaderMapping::LICENCE->value]];
       } else {
         /** @var Member|null $member */
@@ -143,7 +143,7 @@ class ItacMembersMessageHandler implements ResetInterface {
     // We check if already in our array
     /** @var Season|null $season */
     $season = null;
-    if (array_key_exists($seasonCsv, $this->seasons)) {
+    if (array_key_exists((string) $seasonCsv, $this->seasons)) {
       $season = $this->seasons[$seasonCsv];
     } else {
       // We get it in the db
@@ -173,7 +173,7 @@ class ItacMembersMessageHandler implements ResetInterface {
     // We check if already in our array
     /** @var AgeCategory|null $ageCategory */
     $ageCategory = null;
-    if (array_key_exists($ageCodeCsv, $this->ageCategories)) {
+    if (array_key_exists((string) $ageCodeCsv, $this->ageCategories)) {
       $ageCategory = $this->ageCategories[$ageCodeCsv];
     } else {
       // We get it in the db

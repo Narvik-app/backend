@@ -65,7 +65,7 @@ class CsvService {
 
     foreach (array_keys($item) as $name) {
       // Remove undeclared fields
-      if (!array_key_exists($name, $csvConfig)) {
+      if (!array_key_exists((string) $name, $csvConfig)) {
         unset($item[$name]);
         continue;
       }

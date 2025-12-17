@@ -24,7 +24,7 @@ abstract class AbstractController extends SymfonyAbstractController {
     $json = $this->getJsonBody($request);
 
     foreach ($requiredParams as $requiredParam) {
-      if (!array_key_exists($requiredParam, $json)) {
+      if (!array_key_exists((string) $requiredParam, $json)) {
         throw new HttpException(Response::HTTP_BAD_REQUEST, "Missing required field: '$requiredParam'");
       }
     }

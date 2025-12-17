@@ -82,11 +82,13 @@ final readonly class RequestService {
 
     // Profile is selected in the header
     if ($selectedProfile) {
-      foreach ($linkedProfiles as $linkedProfile) {
-        if (!$linkedProfile->getId() || $linkedProfile->getId() !== $selectedProfile) {
-          continue;
-        }
-        return $linkedProfile;
+      $matchingProfile = array_find(
+        $linkedProfiles->toArray(),
+        fn($linkedProfile) => $linkedProfile->getId() && $linkedProfile->getId() === $selectedProfile
+      );
+      
+      if ($matchingProfile) {
+        return $matchingProfile;
       }
       throw new HttpException(Response::HTTP_FORBIDDEN, "No matching profile found.");
     }

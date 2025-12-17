@@ -42,7 +42,7 @@ final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
     foreach ($values as $fields => $value) {
       if (!$this->toBoolean($value)) return;
 
-      $passedFilterProps = array_map(trim(...), explode(",", (string) $fields));
+      $passedFilterProps = array_map(mb_trim(...), explode(",", (string) $fields));
       if ($this->properties !== null) {
         // restrict http-passed properties to accepted filter properties only
         $passedFilterProps = array_intersect($passedFilterProps, $acceptedFilterProps);
@@ -58,7 +58,7 @@ final class MemberSeasonNotRenewedFilter extends AbstractClubDependentFilter {
   private function getAcceptedFilterProps(): array {
     $acceptedFilterProps = [];
     foreach (array_keys($this->properties) as $filterProps) {
-      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map(trim(...), explode(",", (string) $filterProps)));
+      $acceptedFilterProps = array_merge($acceptedFilterProps, array_map(mb_trim(...), explode(",", (string) $filterProps)));
     }
     return array_unique($acceptedFilterProps);
   }

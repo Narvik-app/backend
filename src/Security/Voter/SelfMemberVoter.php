@@ -61,13 +61,11 @@ class SelfMemberVoter extends Voter {
 
   private function voteForMemberEntity(Member $member, User $user): bool {
     $linkedProfiles = $user->getLinkedProfiles();
-    foreach ($linkedProfiles as $linkedProfile) {
-      if ($linkedProfile->getMember()?->getUuid()->toString() === $member->getUuid()->toString()) {
-        return true;
-      }
-    }
-
-    return false;
+    $found = array_find(
+      $linkedProfiles->toArray(),
+      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $member->getUuid()->toString()
+    );
+    return $found !== null;
   }
 
   private function voteFromRequest(Request $request, User $user): bool {
@@ -75,15 +73,18 @@ class SelfMemberVoter extends Voter {
     $clubUUid = $request->attributes->get("clubUuid");
 
     $linkedProfiles = $user->getLinkedProfiles();
-    foreach ($linkedProfiles as $linkedProfile) {
-      if ($linkedProfile->getMember()?->getUuid()->toString() === $memberUuid) {
-        if ($clubUUid) { // We match also the club
-          return $linkedProfile->getClub()->getUuid()->toString() === $clubUUid;
-        }
-        return true;
-      }
+    $found = array_find(
+      $linkedProfiles->toArray(),
+      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $memberUuid
+    );
+
+    if ($found === null) {
+      return false;
     }
 
-    return false;
+    if ($clubUUid) { // We match also the club
+      return $found->getClub()->getUuid()->toString() === $clubUUid;
+    }
+    return true;
   }
 }

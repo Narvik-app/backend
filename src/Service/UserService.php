@@ -144,7 +144,7 @@ class UserService {
 
   public function validateSecurityCode(User $user, UserSecurityCodeTrigger $trigger, string $securityCode): bool {
     $securityCodeQuery = $this->userSecurityCodeRepository->findLastOneForUser($user, $trigger);
-    if (!$securityCodeQuery || $securityCodeQuery->getCode() !== trim($securityCode)) {
+    if (!$securityCodeQuery || $securityCodeQuery->getCode() !== mb_trim($securityCode)) {
       return false;
     }
     return true;

@@ -49,7 +49,7 @@ class ImportCerbereService {
 
   private function saveCsvActivities(Club $club): void {
     foreach ($this->csvActivities as $csvActivity) {
-      $csvActivity = trim((string) $csvActivity);
+      $csvActivity = mb_trim((string) $csvActivity);
       $dbActivity = $this->activityRepository->findOneByName($club, $csvActivity);
       if ($dbActivity) {
         continue;
@@ -119,7 +119,7 @@ class ImportCerbereService {
 
         $activities = array_filter(explode(";", (string) $row[$activitiesColId]));
         foreach ($activities as &$activity) {
-          $activity = trim($activity);
+          $activity = mb_trim($activity);
           if (!in_array($activity, $this->csvActivities)) {
             $this->csvActivities[] = $activity;
           }

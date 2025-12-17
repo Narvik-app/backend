@@ -54,7 +54,7 @@ class CerberePresencesDateMessageHandler implements ResetInterface {
       $licence = $data['licence'];
       $activities = $data['activities'];
 
-      if (!array_key_exists($licence, $this->members)) {
+      if (!array_key_exists((string) $licence, $this->members)) {
         $this->registerExternalPresence($club, $licence, $data['fullName'], $activities, $date);
         continue;
       }

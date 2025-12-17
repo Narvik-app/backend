@@ -19,15 +19,15 @@ return RectorConfig::configure()
         __DIR__ . '/src',
         __DIR__ . '/tests',
     ])
-    // PHP 8.4+ sets
-    ->withPhpSets(php84: true)
+    // PHP 8.5+ sets
+    ->withPhpSets(php85: true)
     // Symfony 7.3 configuration
     ->withSymfonyContainerXml(__DIR__ . '/var/cache/dev/App_KernelDevDebugContainer.xml')
     // Composer-based detection will automatically handle Doctrine, Symfony, and API Platform upgrades
     ->withComposerBased(doctrine: true, phpunit: true, symfony: true)
     ->withSets([
-        // PHP 8.4 level sets
-        LevelSetList::UP_TO_PHP_84,
+        // PHP 8.5 level sets
+        LevelSetList::UP_TO_PHP_85,
         // Doctrine 3.3 improvements
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
     ])
