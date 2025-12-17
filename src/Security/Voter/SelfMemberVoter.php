@@ -62,7 +62,7 @@ class SelfMemberVoter extends Voter {
   private function voteForMemberEntity(Member $member, User $user): bool {
     $linkedProfiles = $user->getLinkedProfiles();
     $found = array_find(
-      $linkedProfiles,
+      $linkedProfiles->toArray(),
       fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $member->getUuid()->toString()
     );
     return $found !== null;
@@ -74,7 +74,7 @@ class SelfMemberVoter extends Voter {
 
     $linkedProfiles = $user->getLinkedProfiles();
     $found = array_find(
-      $linkedProfiles,
+      $linkedProfiles->toArray(),
       fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $memberUuid
     );
 

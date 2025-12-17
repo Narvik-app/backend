@@ -83,7 +83,7 @@ final readonly class RequestService {
     // Profile is selected in the header
     if ($selectedProfile) {
       $matchingProfile = array_find(
-        $linkedProfiles,
+        $linkedProfiles->toArray(),
         fn($linkedProfile) => $linkedProfile->getId() && $linkedProfile->getId() === $selectedProfile
       );
       
