@@ -119,11 +119,13 @@ jobs:
 
 
           # Grep for actual deprecation notices by looking for "is deprecated" pattern.
+          # Use -B 1 to capture the line before (which contains file path and line number).
           # This catches all deprecation messages regardless of how they start.
-          grep -E 'is deprecated' "$PHPUNIT_LOG" | grep -v '^\s*[0-9]' > deprecations.log || true
+          grep -B 1 -E 'is deprecated' "$PHPUNIT_LOG" | grep -v '^--$' > deprecations.log || true
 
           if [ -s "deprecations.log" ]; then
-              DEPRECATION_COUNT=$(wc -l < deprecations.log)
+              # Count actual deprecation messages (lines with "is deprecated")
+              DEPRECATION_COUNT=$(grep -c 'is deprecated' deprecations.log || echo 0)
               {
                 echo "### :warning: PHPUnit Deprecations Found"
                 echo ""
