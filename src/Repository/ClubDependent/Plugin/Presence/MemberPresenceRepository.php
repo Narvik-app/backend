@@ -85,7 +85,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->addSelect('mem.firstname')
       ->addSelect('mem.lastname')
       ->addSelect('mem.licence')
-      ->leftJoin('mp.member', 'mem')
+      ->innerJoin('mp.member', 'mem')
       ->where($qb->expr()->between('mp.date', ':from', ':to'))
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);

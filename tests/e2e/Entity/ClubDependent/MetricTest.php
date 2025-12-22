@@ -153,7 +153,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $member2 = _InitStory::MEMBER_admin_club_1();
     $club1 = _InitStory::club_1();
 
-    // Create presences for member1 (5 presences)
+    // Create presences for member1 (3 presences)
     MemberPresenceFactory::new([
       'date' => new \DateTimeImmutable('-5 days'),
       'member' => $member1,
