@@ -66,4 +66,43 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     }
   }
 
+  /**
+   * Get member presence statistics with count and last presence date
+   * 
+   * @param \App\Entity\Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate
+   * @return array Array of statistics with member info, presence count, and last presence date
+   */
+  public function getMemberPresenceStats(?\App\Entity\Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array {
+    $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+    
+    $qb = $this->createQueryBuilder('mp');
+    $qb
+      ->select('IDENTITY(mp.member) as memberId')
+      ->addSelect('COUNT(mp.id) as presenceCount')
+      ->addSelect('MAX(mp.date) as lastPresenceDate')
+      ->addSelect('mem.firstname')
+      ->addSelect('mem.lastname')
+      ->addSelect('mem.licence')
+      ->leftJoin('mp.member', 'mem')
+      ->where($qb->expr()->between('mp.date', ':from', ':to'))
+      ->setParameter('from', $dateRange['start'])
+      ->setParameter('to', $dateRange['end']);
+    
+    if ($club) {
+      $qb->andWhere('mp.club = :club')
+         ->setParameter('club', $club);
+    }
+    
+    $qb
+      ->groupBy('memberId')
+      ->addGroupBy('mem.firstname')
+      ->addGroupBy('mem.lastname')
+      ->addGroupBy('mem.licence')
+      ->orderBy('presenceCount', 'DESC');
+    
+    return $qb->getQuery()->getResult();
+  }
+
 }

@@ -26,6 +26,7 @@ class MetricProvider implements ProviderInterface {
     "presences",
     "external-presences",
     "opened-days",
+    "member-presence-stats",
 //    "import-batches",
 //    "activities"
   ];
@@ -199,6 +200,17 @@ class MetricProvider implements ProviderInterface {
     $metric->setClub($this->club);
     $metric->setName($identifier);
     $metric->setValue($openedDays);
+    return $metric;
+  }
+
+  protected function getMemberPresenceStats(string $identifier): Metric {
+    $stats = $this->memberPresenceRepository->getMemberPresenceStats($this->club, $this->filterDates['end'], $this->filterDates['start']);
+    
+    $metric = new Metric();
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValue(count($stats));
+    $metric->setValues($stats);
     return $metric;
   }
 }

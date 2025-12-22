@@ -148,4 +148,113 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals(0, $response->toArray()['value']);
   }
 
+  public function testMemberPresenceStats(): void {
+    $member1 = _InitStory::MEMBER_member_club_1();
+    $member2 = _InitStory::MEMBER_admin_club_1();
+    $club1 = _InitStory::club_1();
+
+    // Create presences for member1 (5 presences)
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-5 days'),
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-3 days'),
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-1 day'),
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+
+    // Create presences for member2 (2 presences)
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-7 days'),
+      'member' => $member2,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-2 days'),
+      'member' => $member2,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+
+    $this->loggedAsSupervisorClub1();
+
+    // Test access to the new member-presence-stats endpoint
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    $data = $response->toArray();
+    
+    // Should have value indicating number of members with presences
+    $this->assertArrayHasKey('value', $data);
+    $this->assertGreaterThanOrEqual(2, $data['value']);
+    
+    // Should have values array with member statistics
+    $this->assertArrayHasKey('values', $data);
+    $this->assertIsArray($data['values']);
+    
+    // Check that stats are ordered by presence count (DESC)
+    if (count($data['values']) >= 2) {
+      $firstMemberCount = $data['values'][0]['presenceCount'];
+      $secondMemberCount = $data['values'][1]['presenceCount'];
+      $this->assertGreaterThanOrEqual($secondMemberCount, $firstMemberCount);
+    }
+    
+    // Verify structure of each stat entry
+    foreach ($data['values'] as $stat) {
+      $this->assertArrayHasKey('memberId', $stat);
+      $this->assertArrayHasKey('presenceCount', $stat);
+      $this->assertArrayHasKey('lastPresenceDate', $stat);
+      $this->assertArrayHasKey('firstname', $stat);
+      $this->assertArrayHasKey('lastname', $stat);
+    }
+  }
+
+  public function testMemberPresenceStatsWithDateFilter(): void {
+    $member1 = _InitStory::MEMBER_member_club_1();
+    $club1 = _InitStory::club_1();
+
+    // Create presences within date range
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('2024-06-15'),
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+    
+    // Create presence outside date range
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('2024-12-31'),
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+
+    $this->loggedAsSupervisorClub1();
+
+    // Test with date range filter
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?start=2024-06-01&end=2024-06-30";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    $data = $response->toArray();
+    $this->assertArrayHasKey('values', $data);
+    
+    // Find the member in the results
+    $foundMember = false;
+    foreach ($data['values'] as $stat) {
+      if ($stat['memberId'] == $member1->getId()) {
+        $foundMember = true;
+        // Should have exactly 1 presence in the filtered range
+        $this->assertEquals(1, $stat['presenceCount']);
+        break;
+      }
+    }
+    $this->assertTrue($foundMember, 'Member should be found in stats');
+  }
+
 }
