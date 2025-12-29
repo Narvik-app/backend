@@ -67,6 +67,10 @@ class Metric {
   #[Groups(['metric'])]
   private ?array $values = null;
 
+  /**
+   * Pagination metadata for metrics that support pagination
+   * @var array{currentPage: int, itemsPerPage: int, totalItems: int, totalPages: int, order: string}|null
+   */
   #[Groups(['metric'])]
   private ?array $pagination = null;
 
