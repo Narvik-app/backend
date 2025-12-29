@@ -204,13 +204,44 @@ class MetricProvider implements ProviderInterface {
   }
 
   protected function getMemberPresenceStats(string $identifier): Metric {
-    $stats = $this->memberPresenceRepository->getMemberPresenceStats($this->club, $this->filterDates['end'], $this->filterDates['start']);
+    $request = $this->requestStack->getCurrentRequest();
+    
+    // Get query parameters
+    $order = strtoupper($request?->query->get('order', 'DESC'));
+    $page = (int) $request?->query->get('page', 1);
+    $itemsPerPage = (int) $request?->query->get('itemsPerPage', 30);
+    
+    // Get stats with pagination and ordering
+    $stats = $this->memberPresenceRepository->getMemberPresenceStats(
+      $this->club, 
+      $this->filterDates['end'], 
+      $this->filterDates['start'],
+      $order,
+      $page,
+      $itemsPerPage
+    );
+    
+    // Get total count for pagination metadata
+    $totalItems = $this->memberPresenceRepository->countMemberPresenceStats(
+      $this->club,
+      $this->filterDates['end'],
+      $this->filterDates['start']
+    );
     
     $metric = new Metric();
     $metric->setClub($this->club);
     $metric->setName($identifier);
-    $metric->setValue(count($stats));
-    $metric->setValues($stats);
+    $metric->setValue($totalItems);
+    $metric->setValues([
+      'items' => $stats,
+      'pagination' => [
+        'currentPage' => $page,
+        'itemsPerPage' => $itemsPerPage,
+        'totalItems' => $totalItems,
+        'totalPages' => (int) ceil($totalItems / $itemsPerPage),
+      ],
+      'order' => $order,
+    ]);
     return $metric;
   }
 }

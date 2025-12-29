@@ -72,10 +72,30 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
    * @param \App\Entity\Club|null $club
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
+   * @param string $order Sort order (ASC or DESC)
+   * @param int $page Page number (1-based)
+   * @param int $itemsPerPage Number of items per page
    * @return array Array of statistics with member info, presence count, and last presence date
    */
-  public function getMemberPresenceStats(?\App\Entity\Club $club, \DateTimeImmutable $endDate, ?\DateTimeImmutable $startDate = null): array {
+  public function getMemberPresenceStats(
+    ?\App\Entity\Club $club, 
+    \DateTimeImmutable $endDate, 
+    ?\DateTimeImmutable $startDate = null,
+    string $order = 'DESC',
+    int $page = 1,
+    int $itemsPerPage = 30
+  ): array {
     $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+    
+    // Validate order
+    $order = strtoupper($order);
+    if (!in_array($order, ['ASC', 'DESC'])) {
+      $order = 'DESC';
+    }
+    
+    // Validate pagination parameters
+    $page = max(1, $page);
+    $itemsPerPage = max(1, min(100, $itemsPerPage));
     
     $qb = $this->createQueryBuilder('mp');
     $qb
@@ -100,9 +120,41 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->addGroupBy('mem.firstname')
       ->addGroupBy('mem.lastname')
       ->addGroupBy('mem.licence')
-      ->orderBy('presenceCount', 'DESC');
+      ->orderBy('presenceCount', $order)
+      ->setFirstResult(($page - 1) * $itemsPerPage)
+      ->setMaxResults($itemsPerPage);
     
     return $qb->getQuery()->getResult();
+  }
+
+  /**
+   * Get total count of members with presences for pagination
+   * 
+   * @param \App\Entity\Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate
+   * @return int Total count of members
+   */
+  public function countMemberPresenceStats(
+    ?\App\Entity\Club $club, 
+    \DateTimeImmutable $endDate, 
+    ?\DateTimeImmutable $startDate = null
+  ): int {
+    $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+    
+    $qb = $this->createQueryBuilder('mp');
+    $qb
+      ->select('COUNT(DISTINCT mp.member)')
+      ->where($qb->expr()->between('mp.date', ':from', ':to'))
+      ->setParameter('from', $dateRange['start'])
+      ->setParameter('to', $dateRange['end']);
+    
+    if ($club) {
+      $qb->andWhere('mp.club = :club')
+         ->setParameter('club', $club);
+    }
+    
+    return (int) $qb->getQuery()->getSingleScalarResult();
   }
 
 }

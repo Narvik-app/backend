@@ -191,23 +191,36 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $data = $response->toArray();
     
-    // Should have value indicating number of members with presences
+    // Should have value indicating total number of members with presences
     $this->assertArrayHasKey('value', $data);
     $this->assertGreaterThanOrEqual(2, $data['value']);
     
-    // Should have values array with member statistics
+    // Should have values object with items and pagination
     $this->assertArrayHasKey('values', $data);
     $this->assertIsArray($data['values']);
+    $this->assertArrayHasKey('items', $data['values']);
+    $this->assertArrayHasKey('pagination', $data['values']);
+    $this->assertArrayHasKey('order', $data['values']);
+    
+    // Check pagination structure
+    $pagination = $data['values']['pagination'];
+    $this->assertArrayHasKey('currentPage', $pagination);
+    $this->assertArrayHasKey('itemsPerPage', $pagination);
+    $this->assertArrayHasKey('totalItems', $pagination);
+    $this->assertArrayHasKey('totalPages', $pagination);
+    $this->assertEquals(1, $pagination['currentPage']);
+    $this->assertEquals('DESC', $data['values']['order']);
     
     // Check that stats are ordered by presence count (DESC)
-    if (count($data['values']) >= 2) {
-      $firstMemberCount = $data['values'][0]['presenceCount'];
-      $secondMemberCount = $data['values'][1]['presenceCount'];
+    $items = $data['values']['items'];
+    if (count($items) >= 2) {
+      $firstMemberCount = $items[0]['presenceCount'];
+      $secondMemberCount = $items[1]['presenceCount'];
       $this->assertGreaterThanOrEqual($secondMemberCount, $firstMemberCount);
     }
     
     // Verify structure of each stat entry
-    foreach ($data['values'] as $stat) {
+    foreach ($items as $stat) {
       $this->assertArrayHasKey('memberId', $stat);
       $this->assertArrayHasKey('presenceCount', $stat);
       $this->assertArrayHasKey('lastPresenceDate', $stat);
@@ -243,10 +256,11 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $data = $response->toArray();
     $this->assertArrayHasKey('values', $data);
+    $this->assertArrayHasKey('items', $data['values']);
     
     // Find the member in the results
     $foundMember = false;
-    foreach ($data['values'] as $stat) {
+    foreach ($data['values']['items'] as $stat) {
       if ($stat['memberId'] == $member1->getId()) {
         $foundMember = true;
         // Should have exactly 1 presence in the filtered range
@@ -255,6 +269,65 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       }
     }
     $this->assertTrue($foundMember, 'Member should be found in stats');
+  }
+
+  public function testMemberPresenceStatsWithOrderAndPagination(): void {
+    $member1 = _InitStory::MEMBER_member_club_1();
+    $member2 = _InitStory::MEMBER_admin_club_1();
+    $member3 = _InitStory::MEMBER_supervisor_club_1();
+    $club1 = _InitStory::club_1();
+
+    // Create presences for member1 (5 presences - most)
+    MemberPresenceFactory::new([
+      'member' => $member1,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->many(5)->create();
+
+    // Create presences for member2 (3 presences - middle)
+    MemberPresenceFactory::new([
+      'member' => $member2,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->many(3)->create();
+
+    // Create presences for member3 (1 presence - least)
+    MemberPresenceFactory::new([
+      'member' => $member3,
+      'activities' => [ActivityStory::getRandom('activities_club1')],
+    ])->create();
+
+    $this->loggedAsSupervisorClub1();
+
+    // Test DESC ordering (default - most present first)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=DESC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    $items = $data['values']['items'];
+    
+    // First member should have most presences
+    $this->assertGreaterThanOrEqual(5, $items[0]['presenceCount']);
+
+    // Test ASC ordering (least present first)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    $items = $data['values']['items'];
+    
+    // First member should have least presences
+    if (count($items) >= 2) {
+      $this->assertLessThanOrEqual($items[1]['presenceCount'], $items[0]['presenceCount']);
+    }
+
+    // Test pagination
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=1&itemsPerPage=2";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    
+    $this->assertEquals(1, $data['values']['pagination']['currentPage']);
+    $this->assertEquals(2, $data['values']['pagination']['itemsPerPage']);
+    $this->assertLessThanOrEqual(2, count($data['values']['items']));
   }
 
 }
