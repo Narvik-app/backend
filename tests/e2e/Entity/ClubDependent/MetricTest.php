@@ -338,22 +338,22 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     // Test invalid order parameter
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=INVALID";
     $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
 
     // Test invalid page parameter (negative)
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=-1";
     $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
 
     // Test invalid itemsPerPage parameter (too large)
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?itemsPerPage=200";
     $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
 
     // Test invalid page parameter (non-numeric)
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=abc";
     $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
   }
 
 }
