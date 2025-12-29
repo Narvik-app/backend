@@ -67,6 +67,9 @@ class Metric {
   #[Groups(['metric'])]
   private ?array $values = null;
 
+  #[Groups(['metric'])]
+  private ?array $pagination = null;
+
   /**
    * @var Collection<int, Metric>
    */
@@ -111,6 +114,15 @@ class Metric {
 
   public function setValues(?array $values): Metric {
     $this->values = $values;
+    return $this;
+  }
+
+  public function getPagination(): ?array {
+    return $this->pagination;
+  }
+
+  public function setPagination(?array $pagination): Metric {
+    $this->pagination = $pagination;
     return $this;
   }
 

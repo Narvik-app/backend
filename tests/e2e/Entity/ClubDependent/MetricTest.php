@@ -195,24 +195,25 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertArrayHasKey('value', $data);
     $this->assertGreaterThanOrEqual(2, $data['value']);
     
-    // Should have values object with items and pagination
+    // Should have values array with member statistics
     $this->assertArrayHasKey('values', $data);
     $this->assertIsArray($data['values']);
-    $this->assertArrayHasKey('items', $data['values']);
-    $this->assertArrayHasKey('pagination', $data['values']);
-    $this->assertArrayHasKey('order', $data['values']);
     
-    // Check pagination structure
-    $pagination = $data['values']['pagination'];
+    // Should have pagination field with metadata
+    $this->assertArrayHasKey('pagination', $data);
+    $this->assertIsArray($data['pagination']);
+    
+    $pagination = $data['pagination'];
     $this->assertArrayHasKey('currentPage', $pagination);
     $this->assertArrayHasKey('itemsPerPage', $pagination);
     $this->assertArrayHasKey('totalItems', $pagination);
     $this->assertArrayHasKey('totalPages', $pagination);
+    $this->assertArrayHasKey('order', $pagination);
     $this->assertEquals(1, $pagination['currentPage']);
-    $this->assertEquals('DESC', $data['values']['order']);
+    $this->assertEquals('DESC', $pagination['order']);
     
     // Check that stats are ordered by presence count (DESC)
-    $items = $data['values']['items'];
+    $items = $data['values'];
     if (count($items) >= 2) {
       $firstMemberCount = $items[0]['presenceCount'];
       $secondMemberCount = $items[1]['presenceCount'];
@@ -256,11 +257,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $data = $response->toArray();
     $this->assertArrayHasKey('values', $data);
-    $this->assertArrayHasKey('items', $data['values']);
     
     // Find the member in the results
     $foundMember = false;
-    foreach ($data['values']['items'] as $stat) {
+    foreach ($data['values'] as $stat) {
       if ($stat['memberId'] == $member1->getId()) {
         $foundMember = true;
         // Should have exactly 1 presence in the filtered range
@@ -302,7 +302,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $items = $data['values']['items'];
+    $items = $data['values'];
     
     // First member should have most presences
     $this->assertGreaterThanOrEqual(5, $items[0]['presenceCount']);
@@ -312,7 +312,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $items = $data['values']['items'];
+    $items = $data['values'];
     
     // First member should have least presences
     if (count($items) >= 2) {
@@ -325,9 +325,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
     
-    $this->assertEquals(1, $data['values']['pagination']['currentPage']);
-    $this->assertEquals(2, $data['values']['pagination']['itemsPerPage']);
-    $this->assertLessThanOrEqual(2, count($data['values']['items']));
+    $pagination = $data['pagination'];
+    $this->assertEquals(1, $pagination['currentPage']);
+    $this->assertEquals(2, $pagination['itemsPerPage']);
+    $this->assertLessThanOrEqual(2, count($data['values']));
   }
 
   public function testMemberPresenceStatsWithInvalidParameters(): void {

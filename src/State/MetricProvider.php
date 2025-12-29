@@ -245,16 +245,15 @@ class MetricProvider implements ProviderInterface {
     $metric->setClub($this->club);
     $metric->setName($identifier);
     $metric->setValue($totalItems);
-    $metric->setValues([
-      'items' => $stats,
-      'pagination' => [
-        'currentPage' => $page,
-        'itemsPerPage' => $itemsPerPage,
-        'totalItems' => $totalItems,
-        'totalPages' => $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
-      ],
+    $metric->setValues($stats);
+    $metric->setPagination([
+      'currentPage' => $page,
+      'itemsPerPage' => $itemsPerPage,
+      'totalItems' => $totalItems,
+      'totalPages' => $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
       'order' => $order,
     ]);
+    
     return $metric;
   }
 }
