@@ -87,13 +87,13 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
   ): array {
     $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
     
-    // Validate order
+    // Validate and normalize order
     $order = strtoupper($order);
-    if (!in_array($order, ['ASC', 'DESC'])) {
+    if (!in_array($order, ['ASC', 'DESC'], true)) {
       $order = 'DESC';
     }
     
-    // Validate pagination parameters
+    // Validate pagination parameters with defensive bounds
     $page = max(1, $page);
     $itemsPerPage = max(1, min(100, $itemsPerPage));
     

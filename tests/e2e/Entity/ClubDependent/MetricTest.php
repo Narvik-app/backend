@@ -330,4 +330,29 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertLessThanOrEqual(2, count($data['values']['items']));
   }
 
+  public function testMemberPresenceStatsWithInvalidParameters(): void {
+    $club1 = _InitStory::club_1();
+    $this->loggedAsSupervisorClub1();
+
+    // Test invalid order parameter
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=INVALID";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+
+    // Test invalid page parameter (negative)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=-1";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+
+    // Test invalid itemsPerPage parameter (too large)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?itemsPerPage=200";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+
+    // Test invalid page parameter (non-numeric)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=abc";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+  }
+
 }
