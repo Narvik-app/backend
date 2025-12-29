@@ -251,7 +251,7 @@ class MetricProvider implements ProviderInterface {
         'currentPage' => $page,
         'itemsPerPage' => $itemsPerPage,
         'totalItems' => $totalItems,
-        'totalPages' => (int) ceil($totalItems / $itemsPerPage),
+        'totalPages' => $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
       ],
       'order' => $order,
     ]);
