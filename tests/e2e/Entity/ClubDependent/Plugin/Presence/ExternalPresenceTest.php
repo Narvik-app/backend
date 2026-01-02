@@ -203,20 +203,13 @@ class ExternalPresenceTest extends AbstractEntityClubLinkedTestCase {
   public function testCustomFilters(): void {
     $club = _InitStory::club_1();
 
-    // Create presences in current season (guaranteed to be after previous season end)
-    $currentSeasonEnd = \App\Service\SeasonService::getCurrentSeasonEndDate($club);
-    $currentSeasonStart = $currentSeasonEnd->modify('-1 year')->modify('+1 day'); // Day after previous season end
-    
     // Create 5 presences in current season (today)
     ExternalPresenceFactory::new([
       'date' => new \DateTimeImmutable(),
     ])->many(5)->create();
     
-    // Create 5 presences in previous season (guaranteed to be in previous year's season)
+    // Create 5 presences in previous season (5 days before it ended)
     $previousSeasonEnd = \App\Service\SeasonService::getPreviousSeasonEndDate($club);
-    $previousSeasonStart = $previousSeasonEnd->modify('-1 year')->modify('+1 day');
-    
-    // Create presences 5 days before previous season ended
     ExternalPresenceFactory::new([
       'date' => $previousSeasonEnd->modify('-5 days'),
     ])->many(5)->create();
