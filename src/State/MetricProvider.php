@@ -205,46 +205,45 @@ class MetricProvider implements ProviderInterface {
 
   protected function getMemberPresenceStats(string $identifier): Metric {
     $request = $this->requestStack->getCurrentRequest();
-    
+
     // Get and validate query parameters
-    $order = strtoupper($request?->query->get('order', 'DESC'));
+    $order = strtoupper($request?->query->get('order', 'ASC'));
     if (!in_array($order, ['ASC', 'DESC'])) {
       throw new BadRequestHttpException('Invalid order parameter. Must be ASC or DESC.');
     }
-    
+
     $page = $request?->query->get('page', 1);
     if (!is_numeric($page) || $page < 1) {
       throw new BadRequestHttpException('Invalid page parameter. Must be a positive integer.');
     }
     $page = (int) $page;
-    
+
     $itemsPerPage = $request?->query->get('itemsPerPage', 30);
     if (!is_numeric($itemsPerPage) || $itemsPerPage < 1 || $itemsPerPage > 100) {
       throw new BadRequestHttpException('Invalid itemsPerPage parameter. Must be between 1 and 100.');
     }
     $itemsPerPage = (int) $itemsPerPage;
-    
+
     // Get stats with pagination and ordering
     $stats = $this->memberPresenceRepository->getMemberPresenceStats(
-      $this->club, 
-      $this->filterDates['end'], 
+      $this->club,
+      $this->filterDates['end'],
       $this->filterDates['start'],
       $order,
       $page,
       $itemsPerPage
     );
-    
+
     // Get total count for pagination metadata
     $totalItems = $this->memberPresenceRepository->countMemberPresenceStats(
       $this->club,
       $this->filterDates['end'],
       $this->filterDates['start']
     );
-    
+
     $metric = new Metric();
     $metric->setClub($this->club);
     $metric->setName($identifier);
-    $metric->setValue($totalItems);
     $metric->setValues($stats);
     $metric->setPagination([
       'currentPage' => $page,
