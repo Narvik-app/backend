@@ -53,14 +53,11 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function initDefaultFixtures(): void {
+    // Create 10 presences in current season (today)
     MemberPresenceFactory::new([
       'date'       => new \DateTimeImmutable(),
       'member' => _InitStory::MEMBER_member_club_1(),
-    ])->many(5)->create();
-    MemberPresenceFactory::new([
-      'date'       => \DateTimeImmutable::createFromMutable(faker()->dateTimeBetween('-10 days', '-2 days')),
-      'member' => _InitStory::MEMBER_member_club_1(),
-    ])->many(5)->create();
+    ])->many(10)->create();
 
     MemberPresenceFactory::new([
       'member' => _InitStory::MEMBER_member_club_2(),
@@ -141,6 +138,13 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function testGetTodayPresences(): void {
+    MemberPresenceFactory::new([
+      'date'       => \DateTimeImmutable::createFromMutable(faker()->dateTimeBetween('-1 days', '-1 days')),
+    ])->many(5)->create();
+    MemberPresenceFactory::new([
+      'date'       => \DateTimeImmutable::createFromMutable(faker()->dateTimeBetween('+1 days', '+1 days')),
+    ])->many(5)->create();
+
     $this->makeAllLoggedRequests(
       adminClub2Code: ResponseCodeEnum::ok,
       badgerClub1Code: ResponseCodeEnum::ok,
@@ -154,7 +158,7 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
     $this->loggedAsBadgerClub1();
     $response = $this->makeGetRequest($this->getRootWClubUrl(_InitStory::club_1()) . "/-/today");
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
-    $this->assertCount(5, $response->toArray()['member']);
+    $this->assertCount(10, $response->toArray()['member']);
   }
 
   public function testImportPresencesFromCerbere(): void {
@@ -351,12 +355,6 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
   public function testCustomFilters(): void {
     $club = _InitStory::club_1();
 
-    // Create 5 presences in current season (today)
-    MemberPresenceFactory::new([
-      'date' => new \DateTimeImmutable(),
-      'member' => _InitStory::MEMBER_member_club_1(),
-    ])->many(5)->create();
-
     // Create 5 presences in previous season (5 days before it ended)
     $previousSeasonEnd = SeasonService::getPreviousSeasonEndDate($club);
     MemberPresenceFactory::new([
@@ -368,7 +366,7 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['current-season[date]' => true]);
     $this->assertResponseIsSuccessful();
     // Current season should include only presences from the current season
-    $this->assertEquals(5, $response->toArray()['totalItems']);
+    $this->assertEquals(10, $response->toArray()['totalItems']);
 
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[date]' => true]);
     $this->assertResponseIsSuccessful();
