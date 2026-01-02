@@ -80,7 +80,8 @@ final class PreviousSeasonFilter extends AbstractClubDependentFilter {
     $club = $this->getSelfClub($queryBuilder);
 
     $clauseField = $this->buildClauseField($rootAlias, $field, $queryBuilder, $queryNameGenerator);
-    $dateRange = SeasonService::calculateStartEndDate($club, SeasonService::getPreviousSeasonEndDate($club));
+    // For previous season, don't use comparison mode - show the entire season
+    $dateRange = SeasonService::calculateStartEndDate($club, SeasonService::getPreviousSeasonEndDate($club), null, false);
 
     $queryBuilder
       ->andWhere($queryBuilder->expr()->between($clauseField, ":from", ":to"))
