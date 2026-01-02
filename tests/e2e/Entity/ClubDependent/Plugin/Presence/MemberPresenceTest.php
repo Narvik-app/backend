@@ -350,17 +350,35 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
   public function testCustomFilters(): void {
     $club = _InitStory::club_1();
 
+    // Create presences in current season (guaranteed to be after previous season end)
+    $currentSeasonEnd = \App\Service\SeasonService::getCurrentSeasonEndDate($club);
+    $currentSeasonStart = $currentSeasonEnd->modify('-1 year')->modify('+1 day'); // Day after previous season end
+    
+    // Create 5 presences in current season (today)
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable(),
+      'member' => _InitStory::MEMBER_member_club_1(),
+    ])->many(5)->create();
+    
+    // Create 5 presences in previous season (guaranteed to be in previous year's season)
+    $previousSeasonEnd = \App\Service\SeasonService::getPreviousSeasonEndDate($club);
+    $previousSeasonStart = $previousSeasonEnd->modify('-1 year')->modify('+1 day');
+    
+    // Create presences 5 days before previous season ended
+    MemberPresenceFactory::new([
+      'date' => $previousSeasonEnd->modify('-5 days'),
+      'member' => _InitStory::MEMBER_member_club_1(),
+    ])->many(5)->create();
+
     $this->loggedAsAdminClub1();
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['current-season[date]' => true]);
     $this->assertResponseIsSuccessful();
-    // With default December 31 season end, running in early January means
-    // current season includes only presences from the current year
+    // Current season should include only presences from the current season
     $this->assertEquals(5, $response->toArray()['totalItems']);
 
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[date]' => true]);
     $this->assertResponseIsSuccessful();
-    // Previous season (Jan 1 - Dec 31 of previous year) includes presences
-    // created -10 to -2 days ago (Dec 23-31, 2025)
+    // Previous season should include presences from the previous season
     $this->assertEquals(5, $response->toArray()['totalItems']);
   }
 }
