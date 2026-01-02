@@ -103,6 +103,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     $page = max(1, $page);
     $itemsPerPage = max(1, min(100, $itemsPerPage));
 
+    $qb = $this->createQueryBuilder('mp');
     $qb
       ->select('mem.uuid as memberUuid')
       ->addSelect('COUNT(mp.id) as presenceCount')
