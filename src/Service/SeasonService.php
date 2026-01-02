@@ -77,9 +77,22 @@ class SeasonService {
     $currentDate = new \DateTimeImmutable();
     $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
 
-    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'))->modify('+1 day');
+    // Calculate the start date: previous year's season end date + 1 day
+    // This ensures the season starts the day after the previous season ends
+    $previousYear = $endDate->modify('-1 year')->format('Y');
+    $previousSeasonEnd = $endDate->setDate(
+      (int) $previousYear,
+      (int) $seasonEndDate->format('m'),
+      (int) $seasonEndDate->format('d')
+    );
+    $dates['start'] = $previousSeasonEnd->modify('+1 day');
+    
     if ($usedForComparison) {
-      $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
+      $dates['end'] = $endDate->setDate(
+        (int) $endDate->format('Y'),
+        (int) $currentDate->format('m'),
+        (int) $currentDate->format('d')
+      );
     }
 
     $dates['start'] = $dates['start']->setTime(0, 0, 0);
