@@ -5,27 +5,19 @@ namespace App\Dto;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 final class MetricPagination {
-  #[Groups(['metric'])]
-  private int $currentPage;
-
-  #[Groups(['metric'])]
-  private int $itemsPerPage;
-
-  #[Groups(['metric'])]
-  private int $totalItems;
-
-  #[Groups(['metric'])]
-  private int $totalPages;
-
-  #[Groups(['metric'])]
-  private string $order;
-
-  public function __construct(int $currentPage, int $itemsPerPage, int $totalItems, int $totalPages, string $order) {
-    $this->currentPage = $currentPage;
-    $this->itemsPerPage = $itemsPerPage;
-    $this->totalItems = $totalItems;
-    $this->totalPages = $totalPages;
-    $this->order = $order;
+  public function __construct(
+      #[Groups(['metric'])]
+      private int $currentPage,
+      #[Groups(['metric'])]
+      private int $itemsPerPage,
+      #[Groups(['metric'])]
+      private int $totalItems,
+      #[Groups(['metric'])]
+      private int $totalPages,
+      #[Groups(['metric'])]
+      private string $order
+  )
+  {
   }
 
   public function getCurrentPage(): int

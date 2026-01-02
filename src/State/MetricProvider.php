@@ -210,7 +210,7 @@ class MetricProvider implements ProviderInterface {
     $request = $this->requestStack->getCurrentRequest();
 
     // Get and validate query parameters
-    $order = strtoupper($request?->query->get('order', 'ASC'));
+    $order = strtoupper((string) $request?->query->get('order', 'ASC'));
     if (!in_array($order, ['ASC', 'DESC'])) {
       throw new BadRequestHttpException('Invalid order parameter. Must be ASC or DESC.');
     }
