@@ -5,6 +5,7 @@ namespace App\State;
 use ApiPlatform\Metadata\CollectionOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use App\Dto\MetricPagination;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Metric;
 use App\Repository\ClubDependent\MemberRepository;
@@ -245,13 +246,13 @@ class MetricProvider implements ProviderInterface {
     $metric->setClub($this->club);
     $metric->setName($identifier);
     $metric->setValues($stats);
-    $metric->setPagination([
-      'currentPage' => $page,
-      'itemsPerPage' => $itemsPerPage,
-      'totalItems' => $totalItems,
-      'totalPages' => $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
-      'order' => $order,
-    ]);
+    $metric->setPagination(new MetricPagination(
+      $page,
+      $itemsPerPage,
+      $totalItems,
+      $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
+      $order
+    ));
 
     return $metric;
   }

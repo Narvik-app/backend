@@ -13,6 +13,7 @@ use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
 use App\Enum\UserRole;
+use App\Dto\MetricPagination;
 use App\State\MetricProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -69,10 +70,10 @@ class Metric {
 
   /**
    * Pagination metadata for metrics that support pagination
-   * @var array{currentPage: int, itemsPerPage: int, totalItems: int, totalPages: int, order: string}|null
+   * @var MetricPagination|null
    */
   #[Groups(['metric'])]
-  private ?array $pagination = null;
+  private ?MetricPagination $pagination = null;
 
   /**
    * @var Collection<int, Metric>
@@ -121,11 +122,11 @@ class Metric {
     return $this;
   }
 
-  public function getPagination(): ?array {
+  public function getPagination(): ?MetricPagination {
     return $this->pagination;
   }
 
-  public function setPagination(?array $pagination): Metric {
+  public function setPagination(?MetricPagination $pagination): Metric {
     $this->pagination = $pagination;
     return $this;
   }
