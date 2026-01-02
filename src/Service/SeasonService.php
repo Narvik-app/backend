@@ -89,7 +89,8 @@ class SeasonService {
     if ($usedForComparison) {
       // For comparison mode, use current date if we're still in this season
       // (i.e., if the season end date hasn't passed yet)
-      if ($currentDate <= $endDate->setTime(23, 59, 59)) {
+      // Note: $dates['end'] was already set with time 23:59:59 on line 70
+      if ($currentDate <= $dates['end']) {
         $dates['end'] = $currentDate;
       }
       // Otherwise, keep the season end date as is (season is already over)
