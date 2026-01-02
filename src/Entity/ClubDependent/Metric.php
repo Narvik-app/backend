@@ -66,6 +66,7 @@ class Metric {
   private ?float $value = null;
 
   #[Groups(['metric'])]
+  #[ApiProperty(schema: ['type' => 'array', 'items' => ['type' => 'object']])]
   private ?array $values = null;
 
   /**
