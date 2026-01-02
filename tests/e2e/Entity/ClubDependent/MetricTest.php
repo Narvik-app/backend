@@ -218,7 +218,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     // Verify structure of each stat entry
     foreach ($items as $stat) {
-      $this->assertArrayHasKey('memberId', $stat);
+      $this->assertArrayHasKey('memberUuid', $stat);
       $this->assertArrayHasKey('presenceCount', $stat);
       $this->assertArrayHasKey('lastPresenceDate', $stat);
       $this->assertArrayHasKey('firstname', $stat);
@@ -257,7 +257,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     // Find the member in the results
     $foundMember = false;
     foreach ($data['values'] as $stat) {
-      if ($stat['memberId'] == $member1->getId()) {
+      if ($stat['memberUuid'] == $member1->getUuid()) {
         $foundMember = true;
         // Should have exactly 1 presence in the filtered range
         $this->assertEquals(1, $stat['presenceCount']);

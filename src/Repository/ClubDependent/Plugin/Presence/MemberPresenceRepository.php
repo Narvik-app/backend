@@ -103,9 +103,8 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     $page = max(1, $page);
     $itemsPerPage = max(1, min(100, $itemsPerPage));
 
-    $qb = $this->createQueryBuilder('mp');
     $qb
-      ->select('IDENTITY(mp.member) as memberId')
+      ->select('mem.uuid as memberUuid')
       ->addSelect('COUNT(mp.id) as presenceCount')
       ->addSelect('MAX(mp.date) as lastPresenceDate')
       ->addSelect('mem.firstname')
@@ -128,7 +127,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     }
 
     $qb
-      ->groupBy('memberId')
+      ->groupBy('memberUuid')
       ->addGroupBy('mem.firstname')
       ->addGroupBy('mem.lastname')
       ->addGroupBy('mem.licence')
