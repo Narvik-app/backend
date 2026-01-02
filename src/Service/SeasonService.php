@@ -85,7 +85,7 @@ class SeasonService {
       (int) $seasonEndDate->format('d')
     );
     $dates['start'] = $previousSeasonEnd->modify('+1 day');
-    
+
     if ($usedForComparison) {
       // For comparison mode, use current date (not derived from $endDate)
       $dates['end'] = $currentDate;
