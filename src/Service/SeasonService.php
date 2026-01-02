@@ -87,8 +87,12 @@ class SeasonService {
     $dates['start'] = $previousSeasonEnd->modify('+1 day');
 
     if ($usedForComparison) {
-      // For comparison mode, use current date (not derived from $endDate)
-      $dates['end'] = $currentDate;
+      // For comparison mode, use current date if we're still in this season
+      // (i.e., if the season end date hasn't passed yet)
+      if ($currentDate <= $endDate->setTime(23, 59, 59)) {
+        $dates['end'] = $currentDate;
+      }
+      // Otherwise, keep the season end date as is (season is already over)
     }
 
     $dates['start'] = $dates['start']->setTime(0, 0, 0);
