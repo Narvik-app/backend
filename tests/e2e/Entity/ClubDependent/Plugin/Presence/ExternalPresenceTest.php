@@ -4,6 +4,7 @@ namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Presence;
 
 use App\Entity\ClubDependent\Plugin\Presence\ExternalPresence;
 use App\Enum\ClubRole;
+use App\Service\SeasonService;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ExternalPresenceFactory;
@@ -207,9 +208,9 @@ class ExternalPresenceTest extends AbstractEntityClubLinkedTestCase {
     ExternalPresenceFactory::new([
       'date' => new \DateTimeImmutable(),
     ])->many(5)->create();
-    
+
     // Create 5 presences in previous season (5 days before it ended)
-    $previousSeasonEnd = \App\Service\SeasonService::getPreviousSeasonEndDate($club);
+    $previousSeasonEnd = SeasonService::getPreviousSeasonEndDate($club);
     ExternalPresenceFactory::new([
       'date' => $previousSeasonEnd->modify('-5 days'),
     ])->many(5)->create();

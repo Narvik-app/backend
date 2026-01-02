@@ -7,6 +7,7 @@ use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Enum\ClubRole;
 use App\Message\CerberePresencesDateMessage;
 use App\Message\MemberPresencesCsvMessage;
+use App\Service\SeasonService;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ExternalPresenceFactory;
@@ -355,9 +356,9 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
       'date' => new \DateTimeImmutable(),
       'member' => _InitStory::MEMBER_member_club_1(),
     ])->many(5)->create();
-    
+
     // Create 5 presences in previous season (5 days before it ended)
-    $previousSeasonEnd = \App\Service\SeasonService::getPreviousSeasonEndDate($club);
+    $previousSeasonEnd = SeasonService::getPreviousSeasonEndDate($club);
     MemberPresenceFactory::new([
       'date' => $previousSeasonEnd->modify('-5 days'),
       'member' => _InitStory::MEMBER_member_club_1(),
