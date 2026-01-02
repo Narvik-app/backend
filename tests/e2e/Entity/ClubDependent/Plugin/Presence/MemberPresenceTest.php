@@ -353,13 +353,13 @@ class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
     $this->loggedAsAdminClub1();
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['current-season[date]' => true]);
     $this->assertResponseIsSuccessful();
-    // When running in early January, only presences from the new year are in the current season
-    // Presences from late December belong to the previous season
+    // When in early January, current season includes only presences from the new year
     $this->assertEquals(5, $response->toArray()['totalItems']);
 
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[date]' => true]);
     $this->assertResponseIsSuccessful();
-    // Presences from late December (created -10 to -2 days) are in the previous season
+    // Previous season includes presences from the entire previous season (Jan 1 - Dec 31, 2025)
+    // including those created -10 to -2 days ago (Dec 23-31, 2025)
     $this->assertEquals(5, $response->toArray()['totalItems']);
   }
 }
