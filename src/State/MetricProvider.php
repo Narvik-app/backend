@@ -53,6 +53,7 @@ class MetricProvider implements ProviderInterface {
     private readonly MemberSeasonRepository $memberSeasonRepository,
     private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly ExternalPresenceRepository $externalPresenceRepository,
+    private readonly \App\Repository\SeasonRepository $seasonRepository,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
@@ -225,6 +226,9 @@ class MetricProvider implements ProviderInterface {
     }
     $itemsPerPage = (int) $itemsPerPage;
 
+    // We always filter by the current season
+    $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
+
     // Get stats with pagination and ordering
     $stats = $this->memberPresenceRepository->getMemberPresenceStats(
       $this->club,
@@ -232,14 +236,16 @@ class MetricProvider implements ProviderInterface {
       $this->filterDates['start'],
       $order,
       $page,
-      $itemsPerPage
+      $itemsPerPage,
+      $currentSeason
     );
 
     // Get total count for pagination metadata
     $totalItems = $this->memberPresenceRepository->countMemberPresenceStats(
       $this->club,
       $this->filterDates['end'],
-      $this->filterDates['start']
+      $this->filterDates['start'],
+      $currentSeason
     );
 
     $metric = new Metric();

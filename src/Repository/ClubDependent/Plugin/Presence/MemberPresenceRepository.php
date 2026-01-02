@@ -2,12 +2,15 @@
 
 namespace App\Repository\ClubDependent\Plugin\Presence;
 
+use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
+use App\Entity\Season;
 use App\Repository\Interface\ClubLinkedInterface;
 use App\Repository\Interface\PresenceRepositoryInterface;
 use App\Repository\Trait\PresenceRepositoryTrait;
+use App\Service\SeasonService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
@@ -68,35 +71,38 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
 
   /**
    * Get member presence statistics with count and last presence date
-   * 
-   * @param \App\Entity\Club|null $club
+   * The results are restricted to members present in the current season if $currentSeason is provided.
+   *
+   * @param Club|null $club
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
    * @param string $order Sort order (ASC or DESC)
    * @param int $page Page number (1-based)
    * @param int $itemsPerPage Number of items per page
+   * @param Season|null $currentSeason
    * @return array Array of statistics with member info, presence count, and last presence date
    */
   public function getMemberPresenceStats(
-    ?\App\Entity\Club $club, 
-    \DateTimeImmutable $endDate, 
+    ?Club $club,
+    \DateTimeImmutable $endDate,
     ?\DateTimeImmutable $startDate = null,
-    string $order = 'DESC',
+    string $order = 'ASC',
     int $page = 1,
-    int $itemsPerPage = 30
+    int $itemsPerPage = 30,
+    ?Season $currentSeason = null
   ): array {
-    $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
-    
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+
     // Validate and normalize order
     $order = strtoupper($order);
     if (!in_array($order, ['ASC', 'DESC'], true)) {
-      $order = 'DESC';
+      $order = 'ASC';
     }
-    
+
     // Validate pagination parameters with defensive bounds
     $page = max(1, $page);
     $itemsPerPage = max(1, min(100, $itemsPerPage));
-    
+
     $qb = $this->createQueryBuilder('mp');
     $qb
       ->select('IDENTITY(mp.member) as memberId')
@@ -109,12 +115,18 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->where($qb->expr()->between('mp.date', ':from', ':to'))
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);
-    
+
     if ($club) {
       $qb->andWhere('mp.club = :club')
          ->setParameter('club', $club);
     }
-    
+
+    if ($currentSeason) {
+      $qb->innerJoin('mem.memberSeasons', 'ms')
+         ->andWhere('ms.season = :currentSeason')
+         ->setParameter('currentSeason', $currentSeason);
+    }
+
     $qb
       ->groupBy('memberId')
       ->addGroupBy('mem.firstname')
@@ -123,37 +135,46 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->orderBy('presenceCount', $order)
       ->setFirstResult(($page - 1) * $itemsPerPage)
       ->setMaxResults($itemsPerPage);
-    
+
     return $qb->getQuery()->getResult();
   }
 
   /**
    * Get total count of members with presences for pagination
-   * 
-   * @param \App\Entity\Club|null $club
+   *
+   * @param Club|null $club
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
+   * @param Season|null $currentSeason
    * @return int Total count of members
    */
   public function countMemberPresenceStats(
-    ?\App\Entity\Club $club, 
-    \DateTimeImmutable $endDate, 
-    ?\DateTimeImmutable $startDate = null
+    ?Club $club,
+    \DateTimeImmutable $endDate,
+    ?\DateTimeImmutable $startDate = null,
+    ?Season $currentSeason = null
   ): int {
-    $dateRange = \App\Service\SeasonService::calculateStartEndDate($club, $endDate, $startDate);
-    
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+
     $qb = $this->createQueryBuilder('mp');
     $qb
       ->select('COUNT(DISTINCT mp.member)')
       ->where($qb->expr()->between('mp.date', ':from', ':to'))
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);
-    
+
+    if ($currentSeason) {
+      $qb->innerJoin('mp.member', 'mem')
+         ->innerJoin('mem.memberSeasons', 'ms')
+         ->andWhere('ms.season = :currentSeason')
+         ->setParameter('currentSeason', $currentSeason);
+    }
+
     if ($club) {
       $qb->andWhere('mp.club = :club')
          ->setParameter('club', $club);
     }
-    
+
     return (int) $qb->getQuery()->getSingleScalarResult();
   }
 
