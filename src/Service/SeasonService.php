@@ -77,7 +77,7 @@ class SeasonService {
     $currentDate = new \DateTimeImmutable();
     $seasonEndDate = SeasonService::getCurrentSeasonEndDate($club);
 
-    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'));
+    $dates['start'] = $endDate->setDate($endDate->modify('-1 year')->format('Y'), $seasonEndDate->format('m'), $seasonEndDate->format('d'))->modify('+1 day');
     if ($usedForComparison) {
       $dates['end'] = $endDate->setDate($endDate->format('Y'), $currentDate->format('m'), $currentDate->format('d'));
     }
