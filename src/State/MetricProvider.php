@@ -13,6 +13,7 @@ use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
+use App\Repository\SeasonRepository;
 use App\Service\RequestService;
 use App\Service\SeasonService;
 use App\Service\UtilsService;
@@ -53,7 +54,7 @@ class MetricProvider implements ProviderInterface {
     private readonly MemberSeasonRepository $memberSeasonRepository,
     private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly ExternalPresenceRepository $externalPresenceRepository,
-    private readonly \App\Repository\SeasonRepository $seasonRepository,
+    private readonly SeasonRepository $seasonRepository,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
@@ -214,23 +215,13 @@ class MetricProvider implements ProviderInterface {
       throw new BadRequestHttpException('Invalid order parameter. Must be ASC or DESC.');
     }
 
-    $page = $request?->query->get('page', 1);
-    if (!is_numeric($page) || $page < 1) {
-      throw new BadRequestHttpException('Invalid page parameter. Must be a positive integer.');
-    }
-    $page = (int) $page;
+    $page = $request->query->getInt('page', 1);
+    $itemsPerPage = $request->query->getInt('itemsPerPage', 30);
+    $order = $request->query->get('order', 'ASC');
 
-    $itemsPerPage = $request?->query->get('itemsPerPage', 30);
-    if (!is_numeric($itemsPerPage) || $itemsPerPage < 1 || $itemsPerPage > 100) {
-      throw new BadRequestHttpException('Invalid itemsPerPage parameter. Must be between 1 and 100.');
-    }
-    $itemsPerPage = (int) $itemsPerPage;
-
-    // We always filter by the current season
+    // Get current season to enforce filter
     $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
-
-    // Get stats with pagination and ordering
-    $stats = $this->memberPresenceRepository->getMemberPresenceStats(
+    $values = $this->memberPresenceRepository->getMemberPresenceStats(
       $this->club,
       $this->filterDates['end'],
       $this->filterDates['start'],
@@ -241,17 +232,13 @@ class MetricProvider implements ProviderInterface {
     );
 
     // Get total count for pagination metadata
-    $totalItems = $this->memberPresenceRepository->countMemberPresenceStats(
-      $this->club,
-      $this->filterDates['end'],
-      $this->filterDates['start'],
-      $currentSeason
-    );
+    $totalItems = $this->memberRepository->countTotalClubMembers($this->club, $currentSeason);
 
     $metric = new Metric();
     $metric->setClub($this->club);
     $metric->setName($identifier);
-    $metric->setValues($stats);
+    $metric->setValues($values);
+
     $metric->setPagination(new MetricPagination(
       $page,
       $itemsPerPage,

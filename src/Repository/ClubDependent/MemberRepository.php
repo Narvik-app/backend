@@ -6,6 +6,7 @@ use App\DQL\CustomExpr;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
+use App\Entity\Season;
 use App\Repository\Interface\ClubLinkedInterface;
 use App\Repository\Trait\ClubLinkedTrait;
 use App\Repository\Trait\UuidEntityRepositoryTrait;
@@ -148,11 +149,17 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
     return $query->getResult();
   }
 
-  public function countTotalClubMembers(?Club $club): int {
+  public function countTotalClubMembers(?Club $club, ?Season $currentSeason = null): int {
     $qb = $this->createQueryBuilder("m");
     if ($club) {
       $this->applyClubRestriction($qb, $club);
     }
+    if ($currentSeason) {
+      $qb->innerJoin('m.memberSeasons', 'ms')
+         ->andWhere('ms.season = :currentSeason')
+         ->setParameter('currentSeason', $currentSeason);
+    }
+
     return $qb
       ->select($qb->expr()->count("m.id"))
       ->andWhere($qb->expr()->isNotNull("m.licence"))
