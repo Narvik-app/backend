@@ -13,6 +13,7 @@ use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
 use App\Enum\UserRole;
+use App\Dto\MetricPagination;
 use App\State\MetricProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -49,6 +50,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[QueryParameter(key: 'previous-season', schema: ['type' => 'boolean'], description: 'Filter for the previous season instead of the current one.', required: false)]
 #[QueryParameter(key: 'start', schema: ['type' => 'string', 'format' => 'date'], description: '`end` filter must also be defined to work. Otherwise fallback to the current season filtering.', required: false)]
 #[QueryParameter(key: 'end', schema: ['type' => 'string', 'format' => 'date'], description: 'Fallback to the current season filtering if not defined.', required: false)]
+#[QueryParameter(key: 'order', schema: ['type' => 'string', 'enum' => ['ASC', 'DESC']], description: 'Sort order for member-presence-stats (ASC for least present first, DESC for most present first). Default: DESC', required: false)]
+#[QueryParameter(key: 'page', schema: ['type' => 'integer', 'minimum' => 1], description: 'Page number for member-presence-stats pagination. Default: 1', required: false)]
+#[QueryParameter(key: 'itemsPerPage', schema: ['type' => 'integer', 'minimum' => 1, 'maximum' => 100], description: 'Number of items per page for member-presence-stats. Default: 30, Max: 100', required: false)]
 #[Get]
 #[GetCollection]
 class Metric {
@@ -62,7 +66,15 @@ class Metric {
   private ?float $value = null;
 
   #[Groups(['metric'])]
+  #[ApiProperty(schema: ['type' => 'array', 'items' => ['type' => 'object']])]
   private ?array $values = null;
+
+  /**
+   * Pagination metadata for metrics that support pagination
+   * @var MetricPagination|null
+   */
+  #[Groups(['metric'])]
+  private ?MetricPagination $pagination = null;
 
   /**
    * @var Collection<int, Metric>
@@ -108,6 +120,15 @@ class Metric {
 
   public function setValues(?array $values): Metric {
     $this->values = $values;
+    return $this;
+  }
+
+  public function getPagination(): ?MetricPagination {
+    return $this->pagination;
+  }
+
+  public function setPagination(?MetricPagination $pagination): Metric {
+    $this->pagination = $pagination;
     return $this;
   }
 

@@ -5,6 +5,7 @@ namespace App\State;
 use ApiPlatform\Metadata\CollectionOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use App\Dto\MetricPagination;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Metric;
 use App\Repository\ClubDependent\MemberRepository;
@@ -12,6 +13,7 @@ use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
+use App\Repository\SeasonRepository;
 use App\Service\RequestService;
 use App\Service\SeasonService;
 use App\Service\UtilsService;
@@ -26,6 +28,7 @@ class MetricProvider implements ProviderInterface {
     "presences",
     "external-presences",
     "opened-days",
+    "member-presence-stats",
 //    "import-batches",
 //    "activities"
   ];
@@ -51,6 +54,7 @@ class MetricProvider implements ProviderInterface {
     private readonly MemberSeasonRepository $memberSeasonRepository,
     private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly ExternalPresenceRepository $externalPresenceRepository,
+    private readonly SeasonRepository $seasonRepository,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
@@ -199,6 +203,50 @@ class MetricProvider implements ProviderInterface {
     $metric->setClub($this->club);
     $metric->setName($identifier);
     $metric->setValue($openedDays);
+    return $metric;
+  }
+
+  protected function getMemberPresenceStats(string $identifier): Metric {
+    $request = $this->requestStack->getCurrentRequest();
+
+    // Get and validate query parameters
+    $order = strtoupper((string) $request?->query->get('order', 'ASC'));
+    if (!in_array($order, ['ASC', 'DESC'])) {
+      throw new BadRequestHttpException('Invalid order parameter. Must be ASC or DESC.');
+    }
+
+    $page = $request->query->getInt('page', 1);
+    $itemsPerPage = $request->query->getInt('itemsPerPage', 30);
+    $order = $request->query->get('order', 'ASC');
+
+    // Get current season to enforce filter
+    $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
+    $values = $this->memberPresenceRepository->getMemberPresenceStats(
+      $this->club,
+      $this->filterDates['end'],
+      $this->filterDates['start'],
+      $order,
+      $page,
+      $itemsPerPage,
+      $currentSeason
+    );
+
+    // Get total count for pagination metadata
+    $totalItems = $this->memberRepository->countTotalClubMembers($this->club, $currentSeason);
+
+    $metric = new Metric();
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValues($values);
+
+    $metric->setPagination(new MetricPagination(
+      $page,
+      $itemsPerPage,
+      $totalItems,
+      $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
+      $order
+    ));
+
     return $metric;
   }
 }

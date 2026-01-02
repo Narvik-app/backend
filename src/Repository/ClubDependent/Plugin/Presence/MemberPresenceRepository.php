@@ -2,12 +2,15 @@
 
 namespace App\Repository\ClubDependent\Plugin\Presence;
 
+use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
+use App\Entity\Season;
 use App\Repository\Interface\ClubLinkedInterface;
 use App\Repository\Interface\PresenceRepositoryInterface;
 use App\Repository\Trait\PresenceRepositoryTrait;
+use App\Service\SeasonService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
@@ -64,6 +67,90 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     catch (\Exception) {
       return null;
     }
+  }
+
+  /**
+   * Get member presence statistics with count and last presence date
+   * The results are restricted to members present in the current season if $currentSeason is provided.
+   *
+   * @param Club|null $club
+   * @param \DateTimeImmutable $endDate
+   * @param \DateTimeImmutable|null $startDate
+   * @param string $order Sort order (ASC or DESC)
+   * @param int $page Page number (1-based)
+   * @param int $itemsPerPage Number of items per page
+   * @param Season|null $currentSeason
+   * @return array Array of statistics with member info, presence count, and last presence date
+   */
+  public function getMemberPresenceStats(
+    ?Club $club,
+    \DateTimeImmutable $endDate,
+    ?\DateTimeImmutable $startDate = null,
+    string $order = 'ASC',
+    int $page = 1,
+    int $itemsPerPage = 30,
+    ?Season $currentSeason = null
+  ): array {
+    $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
+
+    // Validate and normalize order
+    $order = strtoupper($order);
+    if (!in_array($order, ['ASC', 'DESC'], true)) {
+      $order = 'ASC';
+    }
+
+    // Validate pagination parameters with defensive bounds
+    $page = max(1, $page);
+    // We select from Member to include those with 0 presences
+    $qb = $this->getEntityManager()->createQueryBuilder();
+    $qb->from(Member::class, 'mem');
+
+    $qb
+      ->select('mem.uuid as memberUuid')
+      ->addSelect('COUNT(mp.id) as presenceCount')
+      ->addSelect('MAX(mp.date) as lastPresenceDate')
+      ->addSelect('mem.firstname')
+      ->addSelect('mem.lastname')
+      ->addSelect('mem.licence')
+      // Left join presences filtered by date range
+      ->leftJoin('mem.memberPresences', 'mp', Join::WITH, $qb->expr()->between('mp.date', ':from', ':to'))
+      ->setParameter('from', $dateRange['start'])
+      ->setParameter('to', $dateRange['end']);
+
+    if ($club) {
+      $this->applyClubRestriction($qb, $club);
+    }
+
+    if ($currentSeason) {
+      $qb->innerJoin('mem.memberSeasons', 'ms')
+         ->andWhere('ms.season = :currentSeason')
+         ->setParameter('currentSeason', $currentSeason);
+    }
+
+    // Sorting logic
+    $qb->orderBy('presenceCount', $order);
+
+    // Secondary sort by date
+    // If we want "least present" (ASC), we want NULL dates first (which is default in MySQL ASC)
+    // If we want "most present" (DESC), we want latest dates first (DESC handles this)
+    $qb->addOrderBy('lastPresenceDate', $order);
+
+    // Tertiary sort by name for stability
+    $qb->addOrderBy('mem.lastname', 'ASC')
+       ->addOrderBy('mem.firstname', 'ASC');
+
+    $qb
+      ->groupBy('memberUuid')
+      ->addGroupBy('mem.firstname')
+      ->addGroupBy('mem.lastname')
+      ->addGroupBy('mem.licence');
+
+    if ($itemsPerPage > 0) {
+        $qb->setFirstResult(($page - 1) * $itemsPerPage)
+           ->setMaxResults($itemsPerPage);
+    }
+
+    return $qb->getQuery()->getResult();
   }
 
 }
