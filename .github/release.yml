@@ -25,6 +25,13 @@ changelog:
     - title: '✅ Tests'
       labels:
         - 'test'
+    - title: '👷 CI'
+      labels:
+          - 'ci'
+    - title: '🔧 Maintenance'
+      labels:
+        - 'build'
+        - 'chore'
     - title: '🐳 Docker'
       labels:
         - 'docker'
@@ -37,13 +44,6 @@ changelog:
     - title: '🐙 GitHub Actions'
       labels:
         - 'github-actions'
-    - title: '👷 CI'
-      labels:
-        - 'ci'
-    - title: '🔧 Maintenance'
-      labels:
-        - 'build'
-        - 'chore'
     - title: '📦 Dependencies'
       labels:
         - 'dependencies'
