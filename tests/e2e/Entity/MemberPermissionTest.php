@@ -42,12 +42,12 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     $response = $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(201);
 
     $data = $response->toArray();
-    $this->assertEquals(Permission::EMAIL_SEND->value, $data['permission']);
+    $this->assertEquals(Permission::EMAIL_EDIT->value, $data['permission']);
   }
 
   /**
@@ -64,7 +64,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     // First grant a permission
     $createResponse = $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(201);
     $permissionUuid = $createResponse->toArray()['uuid'];
@@ -92,7 +92,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(403);
   }
@@ -124,7 +124,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(403);
   }
@@ -143,7 +143,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(201);
 
@@ -158,7 +158,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     $profile = $data['linkedProfiles'][0];
     $this->assertArrayHasKey('permissions', $profile);
-    $this->assertContains(Permission::EMAIL_SEND->value, $profile['permissions']);
+    $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
   }
 
   /**
@@ -175,14 +175,14 @@ class MemberPermissionTest extends AbstractApiTestCase {
     // Create first permission
     $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(201);
 
     // Try to create duplicate
     $this->makePostRequest("/clubs/{$clubUuid}/members/{$supervisor->getUuid()}/permissions", [
       'member' => $memberIri,
-      'permission' => Permission::EMAIL_SEND->value,
+      'permission' => Permission::EMAIL_EDIT->value,
     ]);
     $this->assertResponseStatusCodeSame(422); // Unique constraint violation
   }

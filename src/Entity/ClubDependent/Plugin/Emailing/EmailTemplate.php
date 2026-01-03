@@ -32,20 +32,20 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('" . ClubRole::admin->value . "', request) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', request)",
+      security: "is_granted('" . Permission::EMAIL_TEMPLATE_ACCESS->value . "', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/email-templates.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::EMAIL_TEMPLATE->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::EMAIL_TEMPLATE_EDIT->value."', request)",
       read: false,
     ),
 
-    new Get(security: "is_granted('" . ClubRole::admin->value . "', object) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', object)",),
-    new Patch(security: "is_granted('" . ClubRole::admin->value . "', object) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', object)",),
-    new Delete(security: "is_granted('" . ClubRole::admin->value . "', request) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', request)",),
+    new Get(security: "is_granted('" . Permission::EMAIL_TEMPLATE_ACCESS->value . "', object)",),
+    new Patch(security: "is_granted('" . Permission::EMAIL_TEMPLATE_EDIT->value . "', object)",),
+    new Delete(security: "is_granted('" . Permission::EMAIL_TEMPLATE_EDIT->value . "', request)",),
 
   ], uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),

@@ -145,7 +145,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::IMPORT_MEMBERS->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -172,7 +172,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::IMPORT_MEMBERS->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -199,7 +199,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::IMPORT_MEMBERS->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -226,7 +226,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::IMPORT_PHOTOS->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_PHOTOS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     )
@@ -723,6 +723,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   /**
    * Check if this member has a specific permission
    * Admins automatically have all permissions
+   * Hierarchy: EDIT permission implies ACCESS permission
    */
   public function hasPermission(Permission $permission): bool {
     // Admins have all permissions
@@ -732,8 +733,20 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     }
 
     foreach ($this->permissions as $memberPermission) {
-      if ($memberPermission->getPermission() === $permission) {
+      $grantedPermission = $memberPermission->getPermission();
+
+      // Direct match
+      if ($grantedPermission === $permission) {
         return true;
+      }
+
+      // Hierarchy check: if user has EDIT permission, they also have ACCESS
+      // e.g., if checking for EMAIL_ACCESS and user has EMAIL_EDIT, return true
+      if ($permission->isAccessPermission() && $grantedPermission->isEditPermission()) {
+        $editImpliesAccess = $grantedPermission->getAccessPermission();
+        if ($editImpliesAccess === $permission) {
+          return true;
+        }
       }
     }
     return false;

@@ -87,14 +87,9 @@ class PermissionVoter extends Voter {
 
     // For supervisors, check if they have the specific permission
     if ($activeProfile->getRole()->hasSupervisorRole()) {
-      // Check permissions via the Member
-      foreach ($user->getMemberships() as $membership) {
-        $member = $membership->getMember();
-        if ($member && $member->getClub()?->getId() === $targetedClub->getId()) {
-          if ($member->hasPermission($permission)) {
-            return true;
-          }
-        }
+      $member = $activeProfile->getMember();
+      if ($member && $member->hasPermission($permission)) {
+        return true;
       }
     }
 
