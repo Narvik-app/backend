@@ -113,4 +113,32 @@ class InventoryCategoryTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals($first, $movedCategories[0]['@id']);
     $this->assertEquals($second, $movedCategories[1]['@id']);
   }
+
+  public function testReorder(): void {
+    $club1 = _InitStory::club_1();
+
+    $this->loggedAsAdminClub1();
+
+    // Get initial list
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1));
+    $this->assertResponseIsSuccessful();
+    $categories = $response->toArray()['member'];
+
+    // Extract list of UUIDs
+    $uuids = array_map(fn($cat) => $cat['uuid'], $categories);
+    $reorderedUuids = array_reverse($uuids);
+
+    $this->makePutRequest($this->getRootWClubUrl($club1) . '/-/reorder', [
+      'uuids' => $reorderedUuids
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1));
+    $this->assertResponseIsSuccessful();
+    $newCategories = $response->toArray()['member'];
+
+    $newUuids = array_map(fn($cat) => $cat['uuid'], $newCategories);
+
+    $this->assertEquals($reorderedUuids, $newUuids);
+  }
 }

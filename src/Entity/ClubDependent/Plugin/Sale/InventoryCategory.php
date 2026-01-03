@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\OpenApi\Model;
 use App\Controller\ClubDependent\Plugin\Sale\InventoryCategoryMove;
+use App\Controller\ClubDependent\Plugin\Sale\InventoryCategoryReorder;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
@@ -50,6 +51,33 @@ use Symfony\Component\Validator\Constraints as Assert;
       security: "is_granted('".ClubRole::admin->value."', request)",
       read: false
     ),
+    new Put(
+      uriTemplate: '/clubs/{clubUuid}/inventory-categories/-/reorder',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+      ],
+      controller: InventoryCategoryReorder::class,
+      openapi: new Model\Operation(
+        description: 'Reorder inventory categories',
+        requestBody: new Model\RequestBody(
+          content: new \ArrayObject([
+            'application/json' => [
+              'schema' => [
+                'type' => 'object',
+                'properties' => [
+                  'uuids' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string']
+                  ],
+                ]
+              ]
+            ]
+          ])
+        )
+      ),
+      security: "is_granted('".ClubRole::admin->value."', request)",
+      read: false,
+    ),
 
     new Get(
       security: "is_granted('".ClubRole::supervisor->value."', object)"
@@ -80,7 +108,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         )
       ),
       security: "is_granted('".ClubRole::admin->value."', object)",
-    )
+    ),
   ],
   uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),

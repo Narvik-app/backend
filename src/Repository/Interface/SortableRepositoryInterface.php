@@ -12,4 +12,5 @@ interface SortableRepositoryInterface {
 
   public function moveUp(Club $club, SortableEntityInterface $itemToMove): void;
   public function moveDown(Club $club, SortableEntityInterface $itemToMove): void;
+  public function reorder(Club $club, array $uuids): void;
 }

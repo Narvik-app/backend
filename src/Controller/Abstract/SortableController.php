@@ -33,4 +33,22 @@ class SortableController extends AbstractClubDependentController {
 
     return new JsonResponse();
   }
+
+  public function reorder(Request $request, SortableRepositoryInterface $repository): JsonResponse {
+    $user = $this->getUser();
+    if (!$user instanceof User) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST);
+    }
+
+    $payload = $this->checkAndGetJsonValues($request, ['uuids']);
+    $uuids = $payload['uuids'];
+
+    if (!is_array($uuids)) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, "UUIDs must be an array");
+    }
+
+    $repository->reorder($this->getClub($request), $uuids);
+
+    return new JsonResponse();
+  }
 }

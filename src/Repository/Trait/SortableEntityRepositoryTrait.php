@@ -102,4 +102,47 @@ trait SortableEntityRepositoryTrait {
     $this->getEntityManager()->persist($targetItem);
     $this->getEntityManager()->flush();
   }
+
+  public function reorder(Club $club, array $uuids): void {
+    if (empty($uuids)) {
+      return;
+    }
+
+    $qb = $this->createQueryBuilder('i');
+    $entities = $qb
+      ->where('i.club = :club')
+      ->andWhere($qb->expr()->in('i.uuid', ':uuids'))
+      ->setParameter('club', $club)
+      ->setParameter('uuids', $uuids)
+      ->getQuery()
+      ->getResult();
+
+    if (count($entities) === 0) {
+      return;
+    }
+
+    $originalWeights = [];
+    foreach ($entities as $entity) {
+      $originalWeights[] = $entity->getWeight();
+    }
+    sort($originalWeights);
+
+    $entitiesByUuid = [];
+    foreach ($entities as $entity) {
+      $entitiesByUuid[(string)$entity->getUuid()] = $entity;
+    }
+
+    $entityManager = $this->getEntityManager();
+    foreach (array_values($uuids) as $i => $uuid) {
+      if (isset($entitiesByUuid[$uuid])) {
+        $entity = $entitiesByUuid[$uuid];
+        if (isset($originalWeights[$i])) {
+            $entity->setWeight($originalWeights[$i]);
+            $entityManager->persist($entity);
+        }
+      }
+    }
+
+    $entityManager->flush();
+  }
 }
