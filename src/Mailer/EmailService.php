@@ -94,7 +94,7 @@ class EmailService {
     $context['frontend_url'] = $this->params->get('app.frontend_url');
     $context['club'] = $club;
     $context['subject'] = $email->getTitle();
-    $context['content'] = $email->getContent();
+    $context['content'] = $this->processContent($email->getContent());
     $context['isNewsletter'] = $email->getIsNewsletter();
     if ($email->getIsNewsletter()) {
       $context['unsubscribe_url'] = $context['frontend_url'] . "/unsubscribe?club=" . UuidService::encodeToReadable($club->getUuid());
@@ -206,5 +206,14 @@ class EmailService {
    */
   private function toBoolean($value): bool {
     return UtilsService::toBoolean($value);
+  }
+
+  private function processContent(?string $content): ?string {
+    if (!$content) {
+      return null;
+    }
+
+    // We replace empty paragraph by a br
+    return preg_replace('/<p[^>]*>(?:\s*|&nbsp;|\s*<br\s*\/?>\s*)<\/p>/', '<br />', $content);
   }
 }
