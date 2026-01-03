@@ -294,6 +294,44 @@ phpunit                   # Works inside container
 
 **Always remember:** If you need to execute any PHP, Composer, or Rector command, use the Makefile targets or Docker container execution patterns shown above.
 
+## Permission System
+
+### Overview
+The application implements a granular permission system with **Access/Edit** levels for supervisors. Admins automatically have all permissions.
+
+### Permission Enum (`src/Enum/Permission.php`)
+```php
+enum Permission: string {
+  case EMAIL_ACCESS = 'EMAIL_ACCESS';
+  case EMAIL_EDIT = 'EMAIL_EDIT';
+  case EMAIL_TEMPLATE_ACCESS = 'EMAIL_TEMPLATE_ACCESS';
+  case EMAIL_TEMPLATE_EDIT = 'EMAIL_TEMPLATE_EDIT';
+  case IMPORT_MEMBERS_ACCESS = 'IMPORT_MEMBERS_ACCESS';
+  case IMPORT_MEMBERS_EDIT = 'IMPORT_MEMBERS_EDIT';
+  // ... etc
+}
+```
+
+### Hierarchy Rule
+**EDIT implies ACCESS**: If a user has `*_EDIT`, they automatically have `*_ACCESS`. This is enforced in:
+- Backend: `Member.hasPermission()` and `PermissionVoter`
+- Frontend: `useSelfUser.can()`
+
+### Key Components
+- **`MemberPermission` Entity** - Stores permissions per member (API Platform resource)
+- **`PermissionVoter`** - Symfony voter for permission checks
+- **`Member.hasPermission()`** - Checks permission with hierarchy
+
+### Security Annotations
+Use permission checks in API Platform security annotations:
+```php
+// For read operations (ACCESS)
+security: "is_granted('" . Permission::EMAIL_ACCESS->value . "', request)"
+
+// For write operations (EDIT)
+security: "is_granted('" . Permission::EMAIL_EDIT->value . "', request)"
+```
+
 ## Architecture Principles
 
 ### 1. **Multi-Tenancy**
@@ -337,5 +375,5 @@ GNU AGPLv3 License - See [LICENSE](LICENSE) file for details.
 ---
 
 **Created by:** Benoît VIGNAL  
-**Version:** 3.14  
-**Last Updated:** 2025-12-16
+**Version:** 3.15  
+**Last Updated:** 2026-01-03
