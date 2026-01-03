@@ -5,7 +5,6 @@ namespace App\Tests\e2e\Entity;
 use App\Entity\ClubDependent\Member;
 use App\Enum\Permission;
 use App\Tests\e2e\AbstractApiTestCase;
-use App\Tests\Factory\MemberFactory;
 use App\Tests\Story\_InitStory;
 
 /**
@@ -32,7 +31,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
 
     $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $this->assertResponseIsSuccessful();
@@ -48,7 +47,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $response = $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
@@ -68,7 +67,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     // First grant a permission
@@ -96,7 +95,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsSupervisorClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
@@ -113,7 +112,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsMemberClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
 
     $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $this->assertResponseStatusCodeSame(403);
@@ -126,7 +125,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub2();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
@@ -144,7 +143,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     // First, grant permission as admin
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
@@ -174,7 +173,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     // Create first permission
@@ -200,7 +199,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
 
     // Grant EMAIL_EDIT permission to supervisor
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
@@ -219,7 +218,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
 
     // Get the supervisor's member entity directly and test hasPermission
-    $supervisorMember = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
 
     // EDIT permission should match directly
     $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_EDIT));
@@ -239,7 +238,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     // Grant multiple permissions
@@ -267,7 +266,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertCount(3, $data['member']);
 
     // Verify member has permissions
-    $supervisorMember = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
     $permissionValues = $supervisorMember->getPermissionValues();
     $this->assertCount(3, $permissionValues);
     $this->assertContains(Permission::EMAIL_EDIT, $permissionValues);
@@ -282,7 +281,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     _InitStory::load();
 
     $this->loggedAsAdminClub1();
-    $supervisor = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     // Grant only ACCESS permission
@@ -293,7 +292,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertResponseStatusCodeSame(201);
 
     // Verify member has ACCESS but not EDIT
-    $supervisorMember = MemberFactory::findBy(['email' => 'supervisor@club1.fr'])[0];
+    $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
     $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_ACCESS));
     $this->assertFalse($supervisorMember->hasPermission(Permission::EMAIL_EDIT));
   }
