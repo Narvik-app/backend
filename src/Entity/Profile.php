@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\ClubDependent\Member;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 class Profile {
@@ -21,6 +22,12 @@ class Profile {
 
   #[Groups(['common-read'])]
   private ClubRole $role;
+
+  /**
+   * @var Permission[]
+   */
+  #[Groups(['common-read'])]
+  private array $permissions = [];
 
   public function getId(): string {
     return $this->id;
@@ -66,4 +73,20 @@ class Profile {
     $this->role = $role;
     return $this;
   }
+
+  /**
+   * @return Permission[]
+   */
+  public function getPermissions(): array {
+    return $this->permissions;
+  }
+
+  /**
+   * @param Permission[] $permissions
+   */
+  public function setPermissions(array $permissions): Profile {
+    $this->permissions = $permissions;
+    return $this;
+  }
 }
+

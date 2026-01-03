@@ -20,6 +20,7 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
 use App\Enum\EmailStatus;
+use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Emailing\EmailRepository;
 use App\Security\Voter\EmailVoter;
 use Doctrine\DBAL\Types\Types;
@@ -36,9 +37,9 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('" . ClubRole::admin->value . "', request)",
+      security: "is_granted('" . ClubRole::admin->value . "', request) or is_granted('" . Permission::EMAIL_SEND->value . "', request)",
     ),
-    new Get(security: "is_granted('" . ClubRole::admin->value . "', object)",),
+    new Get(security: "is_granted('" . ClubRole::admin->value . "', object) or is_granted('" . Permission::EMAIL_SEND->value . "', object)",),
     new Patch(security: "is_granted('".EmailVoter::UPDATE."', object)",),
 
     new Post(
@@ -84,7 +85,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::EMAIL_SEND->value."', request)",
       read: false,
       deserialize: false
     ),

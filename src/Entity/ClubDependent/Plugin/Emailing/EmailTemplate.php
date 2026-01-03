@@ -18,6 +18,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Emailing\EmailTemplateRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,20 +32,20 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('" . ClubRole::admin->value . "', request)",
+      security: "is_granted('" . ClubRole::admin->value . "', request) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/email-templates.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request) or is_granted('".Permission::EMAIL_TEMPLATE->value."', request)",
       read: false,
     ),
 
-    new Get(security: "is_granted('" . ClubRole::admin->value . "', object)",),
-    new Patch(security: "is_granted('" . ClubRole::admin->value . "', object)",),
-    new Delete(security: "is_granted('" . ClubRole::admin->value . "', request)",),
+    new Get(security: "is_granted('" . ClubRole::admin->value . "', object) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', object)",),
+    new Patch(security: "is_granted('" . ClubRole::admin->value . "', object) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', object)",),
+    new Delete(security: "is_granted('" . ClubRole::admin->value . "', request) or is_granted('" . Permission::EMAIL_TEMPLATE->value . "', request)",),
 
   ], uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
