@@ -311,6 +311,7 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
    * @var string The hashed password
    */
   #[ORM\Column(nullable: true)]
+  #[Assert\NotBlank(allowNull: true)]
   private ?string $password = null;
 
   /**
@@ -459,11 +460,11 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
   /**
    * @see PasswordAuthenticatedUserInterface
    */
-  public function getPassword(): string {
+  public function getPassword(): ?string {
     return $this->password;
   }
 
-  public function setPassword(string $password): static {
+  public function setPassword(?string $password): static {
     $this->password = $password;
     return $this;
   }
