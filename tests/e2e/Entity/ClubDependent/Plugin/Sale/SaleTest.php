@@ -74,7 +74,7 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
 
     $this->makeAllLoggedRequests(
       $payloadCheck,
-      supervisorClub1Code: ResponseCodeEnum::created,
+      supervisorClub1Code: ResponseCodeEnum::forbidden, // Supervisors need SALE_NEW permission
       adminClub1Code: ResponseCodeEnum::created,
       adminClub2Code: ResponseCodeEnum::forbidden,
       superAdminCode: ResponseCodeEnum::created,
@@ -201,5 +201,122 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($this->getRootWClubUrl($club), ['previous-season[createdAt]' => true]);
     $this->assertResponseIsSuccessful();
     $this->assertEquals(0, $response->toArray()['totalItems']);
+  }
+
+  /**
+   * Test that a supervisor WITH the SALE_HISTORY_ACCESS permission can access the sales collection
+   */
+  public function testSupervisorWithPermissionCanAccessSales(): void {
+    $club = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // First, verify supervisor cannot access without permission
+    $this->loggedAsSupervisorClub1();
+    $this->makeGetRequest($this->getRootWClubUrl($club));
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    // Admin grants the permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_HISTORY_ACCESS->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Now supervisor should be able to access
+    $this->loggedAsSupervisorClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club));
+    $this->assertResponseIsSuccessful();
+    $this->assertGreaterThan(0, $response->toArray()['totalItems']);
+  }
+
+  /**
+   * Test SALE_NEW permission auto-grants SALE_HISTORY_ACCESS and SALE_INVENTORY_ACCESS
+   */
+  public function testSaleNewAutoGrantsImpliedPermissions(): void {
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // Admin grants SALE_NEW permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Verify implied permissions were auto-granted
+    $response = $this->makeGetRequest($memberIri . '/permissions');
+    $this->assertResponseIsSuccessful();
+
+    $permissions = array_column($response->toArray()['member'], 'permission');
+    $this->assertContains(\App\Enum\Permission::SALE_NEW->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_HISTORY_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
+  }
+
+  /**
+   * Test supervisor with SALE_NEW can create sales
+   */
+  public function testSupervisorWithSaleNewCanCreateSales(): void {
+    $club = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    $inventoryItem = InventoryItemFactory::createOne(['canBeSold' => true]);
+    $paymentMode = SalePaymentModeFactory::createOne(['available' => true]);
+    $inventoryItemIri = $this->getIriFromResource($inventoryItem);
+    $paymentModeIri = $this->getIriFromResource($paymentMode);
+
+    // Verify supervisor cannot create without permission
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      "salePurchasedItems" => [["quantity" => 1, "item" => $inventoryItemIri]],
+      "paymentMode" => $paymentModeIri,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    // Admin grants SALE_NEW permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Now supervisor can create sales
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      "salePurchasedItems" => [["quantity" => 1, "item" => $inventoryItemIri]],
+      "paymentMode" => $paymentModeIri,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+  }
+
+  /**
+   * Test cannot remove implied permissions while SALE_NEW is active
+   */
+  public function testCannotRemoveImpliedPermissionsWhileSaleNewActive(): void {
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // Admin grants SALE_NEW permission (which auto-grants implied permissions)
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Get the SALE_HISTORY_ACCESS permission UUID
+    $response = $this->makeGetRequest($memberIri . '/permissions');
+    $permissions = $response->toArray()['member'];
+    $historyPermission = array_filter($permissions, fn($p) => $p['permission'] === \App\Enum\Permission::SALE_HISTORY_ACCESS->value);
+    $historyPermission = array_values($historyPermission)[0];
+
+    // Try to delete SALE_HISTORY_ACCESS - should fail
+    $this->makeDeleteRequest($memberIri . '/permissions/' . $historyPermission['uuid']);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
   }
 }

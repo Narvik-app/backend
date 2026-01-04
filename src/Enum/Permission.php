@@ -22,6 +22,8 @@ enum Permission: string {
   case IMPORT_PRESENCES_EDIT = 'IMPORT_PRESENCES_EDIT';
 
   // Sale permissions
+  case SALE_NEW = 'SALE_NEW'; // Grants ability to make sales, implies SALE_HISTORY_ACCESS and SALE_INVENTORY_ACCESS
+
   case SALE_HISTORY_ACCESS = 'SALE_HISTORY_ACCESS';
   case SALE_HISTORY_EDIT = 'SALE_HISTORY_EDIT';
 
