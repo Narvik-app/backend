@@ -3,6 +3,7 @@
 namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Sale;
 
 use App\Entity\ClubDependent\Plugin\Sale\InventoryCategory;
+use App\Enum\ClubRole;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\InventoryCategoryFactory;
@@ -21,6 +22,14 @@ class InventoryCategoryTest extends AbstractEntityClubLinkedTestCase {
 
   protected function getRootUrl(): string {
     return "/inventory-categories";
+  }
+
+  #[\Override]
+  protected function getCollectionGrantedAccess(): array {
+    $access = parent::getCollectionGrantedAccess();
+    // Supervisors need SALE_CATEGORIES_ACCESS permission to access inventory categories collection
+    $access[ClubRole::supervisor->value] = false;
+    return $access;
   }
 
   public function initDefaultFixtures(): void {

@@ -3,6 +3,7 @@
 namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Sale;
 
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
+use App\Enum\ClubRole;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\InventoryItemFactory;
@@ -21,6 +22,14 @@ class InventoryItemTest extends AbstractEntityClubLinkedTestCase {
 
   protected function getRootUrl(): string {
     return "/inventory-items";
+  }
+
+  #[\Override]
+  protected function getCollectionGrantedAccess(): array {
+    $access = parent::getCollectionGrantedAccess();
+    // Supervisors need SALE_INVENTORY_ACCESS permission to access inventory items collection
+    $access[ClubRole::supervisor->value] = false;
+    return $access;
   }
 
   public function initDefaultFixtures(): void {

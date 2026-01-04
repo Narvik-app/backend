@@ -3,6 +3,7 @@
 namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Sale;
 
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
+use App\Enum\ClubRole;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\InventoryItemFactory;
@@ -25,6 +26,14 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
 
   protected function getRootUrl(): string {
     return "/sales";
+  }
+
+  #[\Override]
+  protected function getCollectionGrantedAccess(): array {
+    $access = parent::getCollectionGrantedAccess();
+    // Supervisors need SALE_HISTORY_ACCESS permission to access sales collection
+    $access[ClubRole::supervisor->value] = false;
+    return $access;
   }
 
   public function initDefaultFixtures(): void {
