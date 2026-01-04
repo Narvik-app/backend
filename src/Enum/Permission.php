@@ -35,10 +35,10 @@ enum Permission: string {
    * @return Permission|null The corresponding ACCESS permission, or null if this is already ACCESS
    */
   public function getAccessPermission(): ?Permission {
-    if (!$this->isEditPermission()) {
-      return null; // Already an ACCESS permission
+    if ($this->isAccessPermission()) {
+      return $this; // Already an ACCESS permission
     }
-    
+
     // Derive ACCESS permission by replacing _EDIT suffix with _ACCESS
     $accessValue = str_replace('_EDIT', '_ACCESS', $this->value);
     return self::tryFrom($accessValue);
