@@ -38,7 +38,7 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     return [
       UserRole::super_admin->value => true,
       ClubRole::admin->value => true,
-      ClubRole::supervisor->value => false,
+      ClubRole::supervisor->value => true,
       ClubRole::member->value => false,
       ClubRole::badger->value => false,
     ];
@@ -56,8 +56,11 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     return $url;
   }
 
-  // Override admin tests - permissions is a member subresource, not a club subresource
-  // So we skip the cross-club check (it's tested in testAdminFromOtherClubCannotModifyPermissions)
+  // ============ Collection Test Overrides ============
+  // Permissions is a member subresource - cross-club checks don't apply the same way
+  // The parent tests call getRootWClubUrl(club_2) to test denial, but we always use club 1 member
+  // Cross-club access denial is tested in testAdminFromOtherClubCannotModifyPermissions
+
   #[\Override]
   public function testGetCollectionAsAdminClub1(): ResponseInterface {
     $this->loggedAsAdminClub1();
@@ -70,12 +73,23 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
   #[\Override]
   public function testGetCollectionAsAdminClub2(): ResponseInterface {
     $this->loggedAsAdminClub2();
-    // Club 2 admin trying to access club 1 member's permissions should fail
+    // Club 2 admin accessing club 1 member's permissions should fail
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $this->assertResponseIsClientError();
     return $response;
   }
+
+  #[\Override]
+  public function testGetCollectionAsSupervisorClub1(): ResponseInterface {
+    $this->loggedAsSupervisorClub1();
+    // Supervisors can view permissions (read-only)
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
+    $this->assertResponseIsSuccessful();
+    return $response;
+  }
+
 
   public function testCreate(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();

@@ -31,7 +31,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
         'memberUuid' => new Link(toProperty: 'member', fromClass: Member::class),
       ],
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".ClubRole::supervisor->value."', request)",
     ),
 
     new Post(
