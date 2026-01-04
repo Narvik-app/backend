@@ -4,26 +4,14 @@ namespace App\Security\Voter;
 
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
-use App\Entity\User;
 use App\Enum\Permission;
-use App\Enum\UserRole;
-use App\Service\RequestService;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
-use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-class PermissionVoter extends Voter {
-
-  public function __construct(
-    private readonly Security $security,
-    private readonly RequestService $requestService,
-  ) {
-  }
+class PermissionVoter extends AbstractClubVoter {
 
   protected function supports(string $attribute, mixed $subject): bool {
-    // Check if attribute is a Permission enum value
     $permissionValues = Permission::values();
 
     if ($subject instanceof Request) {
@@ -35,50 +23,22 @@ class PermissionVoter extends Voter {
   }
 
   protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool {
-    $request = null;
-    if ($subject instanceof Request) {
-      $request = $subject;
-      $subject = $this->requestService->getClubFromRequest($subject);
-    }
-
-    $user = $token->getUser();
     $permission = Permission::tryFrom($attribute);
-
-    if (!$user instanceof User || !$permission) {
+    if (!$permission) {
       return false;
     }
 
-    // Super admin have full rights
-    if ($this->security->isGranted(UserRole::super_admin->value)) {
+    $context = $this->resolveClubContext($subject, $token, $vote);
+    if (!$context) {
+      return false;
+    }
+
+    // Super admin has full rights
+    if ($context['isSuperAdmin']) {
       return true;
     }
 
-    /** @var Club|null $targetedClub */
-    $targetedClub = null;
-    if ($subject instanceof Club) {
-      $targetedClub = $subject;
-    }
-    if ($subject instanceof ClubLinkedEntityInterface) {
-      $targetedClub = $subject->getClub();
-    }
-
-    // No matching club, we denied by default
-    if (!$targetedClub) {
-      $vote?->addReason('No matching club for permission check.');
-      return false;
-    }
-
-    $activeProfile = $this->requestService->getActiveProfile($request);
-    if (!$activeProfile) {
-      $vote?->addReason('No active profile.');
-      return false;
-    }
-
-    // Check if the profile is for the targeted club
-    if ($activeProfile->getClub()?->getId() !== $targetedClub->getId()) {
-      $vote?->addReason('Profile club does not match target club.');
-      return false;
-    }
+    $activeProfile = $context['activeProfile'];
 
     // Admins have all permissions
     if ($activeProfile->getRole()->isAdmin()) {
