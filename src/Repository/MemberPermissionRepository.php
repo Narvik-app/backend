@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\MemberPermission;
+use App\Entity\ClubDependent\MemberPermission;
 use App\Entity\UserMember;
 use App\Enum\Permission;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;

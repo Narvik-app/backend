@@ -2,11 +2,10 @@
 
 namespace App\Tests\Factory;
 
-use App\Entity\MemberPermission;
+use App\Entity\ClubDependent\MemberPermission;
 use App\Enum\Permission;
 use App\Repository\MemberPermissionRepository;
 use Doctrine\ORM\EntityRepository;
-use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 use Zenstruck\Foundry\Persistence\Proxy;
 use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
 
