@@ -30,11 +30,11 @@ use App\Entity\File;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\UserMember;
-use App\Enum\ClubActivity;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Filter\ClubDependent\CurrentSeasonFilter;
-use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Filter\ClubDependent\MemberSeasonNotRenewedFilter;
+use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Security\Voter\SelfMemberVoter;
@@ -143,7 +143,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -170,7 +170,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -197,7 +197,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_MEMBERS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     ),
@@ -224,7 +224,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::IMPORT_PHOTOS_EDIT->value."', request)",
       read: false,
       deserialize: false,
     )
@@ -258,6 +258,12 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
    */
   #[ORM\OneToMany(mappedBy: 'seller', targetEntity: Sale::class)]
   private Collection $sales;
+
+  /**
+   * @var Collection<int, MemberPermission>
+   */
+  #[ORM\OneToMany(mappedBy: 'member', targetEntity: MemberPermission::class, orphanRemoval: true)]
+  private Collection $permissions;
 
   #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN , options: ['default' => true])]
   #[Groups(['member', 'self-read', 'self-write'])]
@@ -376,6 +382,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     $this->memberPresences = new ArrayCollection();
     $this->memberSeasons = new ArrayCollection();
     $this->sales = new ArrayCollection();
+    $this->permissions = new ArrayCollection();
   }
 
   public function getMedicalCertificateStatus(): string {
@@ -685,6 +692,73 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   public function setMedicalCertificateExpiration(?\DateTimeImmutable $medicalCertificateExpiration): Member {
     $this->medicalCertificateExpiration = $medicalCertificateExpiration;
     return $this;
+  }
+
+  /**
+   * @return Collection<int, MemberPermission>
+   */
+  public function getPermissions(): Collection {
+    return $this->permissions;
+  }
+
+  public function addPermission(MemberPermission $permission): static {
+    if (!$this->permissions->contains($permission)) {
+      $this->permissions->add($permission);
+      $permission->setMember($this);
+    }
+    return $this;
+  }
+
+  public function removePermission(MemberPermission $permission): static {
+    if ($this->permissions->removeElement($permission)) {
+      if ($permission->getMember() === $this) {
+        $permission->setMember(null);
+      }
+    }
+    return $this;
+  }
+
+  /**
+   * Check if this member has a specific permission
+   * Admins automatically have all permissions
+   * Hierarchy: EDIT permission implies ACCESS permission
+   */
+  public function hasPermission(Permission $permission): bool {
+    // Admins have all permissions
+    $userMember = $this->getUserMember();
+    if ($userMember && $userMember->getRole()->isAdmin()) {
+      return true;
+    }
+
+    foreach ($this->permissions as $memberPermission) {
+      $grantedPermission = $memberPermission->getPermission();
+
+      // Direct match
+      if ($grantedPermission === $permission) {
+        return true;
+      }
+
+      // Hierarchy check: if user has EDIT permission, they also have ACCESS
+      // e.g., if checking for EMAIL_ACCESS and user has EMAIL_EDIT, return true
+      if ($permission->isAccessPermission() && $grantedPermission->isEditPermission()) {
+        $editImpliesAccess = $grantedPermission->getAccessPermission();
+        if ($editImpliesAccess === $permission) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get all permission values as an array of Permission enum values
+   * @return Permission[]
+   */
+  public function getPermissionValues(): array {
+    return array_map(
+      fn(MemberPermission $mp) => $mp->getPermission(),
+      $this->permissions->toArray()
+    );
   }
 
 }

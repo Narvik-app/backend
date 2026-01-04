@@ -391,7 +391,8 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
         $profile
           ->setId($id)
           ->setDisplayName($displayName)
-          ->setClub($club);
+          ->setClub($club)
+          ->setPermissions($membership->getMember()?->getPermissionValues() ?? []);
 
         $userClubs[] = $profile;
       }

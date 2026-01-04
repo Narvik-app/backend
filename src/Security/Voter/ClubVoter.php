@@ -4,26 +4,12 @@ namespace App\Security\Voter;
 
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
-use App\Entity\User;
 use App\Enum\ClubRole;
-use App\Enum\UserRole;
-use App\Service\RequestService;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
-use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-class ClubVoter extends Voter {
-
-  public function __construct(
-    private readonly Security $security,
-    private readonly RequestService $requestService,
-  ) {
-  }
+class ClubVoter extends AbstractClubVoter {
 
   protected function supports(string $attribute, mixed $subject): bool {
     $roles = [];
@@ -39,50 +25,22 @@ class ClubVoter extends Voter {
   }
 
   protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool {
-    $request = null;
-    if ($subject instanceof Request) {
-      $request = $subject;
-      $subject = $this->requestService->getClubFromRequest($subject);
-    }
-
-    $user = $token->getUser();
     $targetedClubRole = ClubRole::tryFrom($attribute);
-
-    if (!$user instanceof User || !$targetedClubRole) {
+    if (!$targetedClubRole) {
       return false;
     }
 
-    // Super admin have full right
-    if ($this->security->isGranted(UserRole::super_admin->value)) {
+    $context = $this->resolveClubContext($subject, $token, $vote);
+    if (!$context) {
+      return false;
+    }
+
+    // Super admin has full rights
+    if ($context['isSuperAdmin']) {
       return true;
     }
 
-    /** @var Club|null $targetedClub */
-    $targetedClub = null;
-    if ($subject instanceof Club) {
-      $targetedClub = $subject;
-    }
-    if ($subject instanceof ClubLinkedEntityInterface) {
-      $targetedClub = $subject->getClub();
-    }
-
-    // No matching club, we denied by default
-    if (!$targetedClub) {
-      $vote->addReason('No matching club.');
-      return false;
-    }
-
-    $activeProfile = $this->requestService->getActiveProfile($request);
-    if (!$activeProfile) {
-      $vote->addReason('No active profile.');
-      return false;
-    }
-
-    if ($activeProfile->getClub()->getId() === $targetedClub->getId()) {
-        $role = $activeProfile->getRole();
-        return $role->hasRole($targetedClubRole);
-    }
-
-    return false;
+    $role = $context['activeProfile']->getRole();
+    return $role->hasRole($targetedClubRole);
   }
 }
