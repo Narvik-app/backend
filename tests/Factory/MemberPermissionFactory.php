@@ -62,36 +62,6 @@ final class MemberPermissionFactory extends \Zenstruck\Foundry\Persistence\Persi
     ];
   }
 
-  public function emailSend(): self {
-    return $this->with([
-      'permission' => Permission::EMAIL_SEND,
-    ]);
-  }
-
-  public function emailTemplate(): self {
-    return $this->with([
-      'permission' => Permission::EMAIL_TEMPLATE,
-    ]);
-  }
-
-  public function importMembers(): self {
-    return $this->with([
-      'permission' => Permission::IMPORT_MEMBERS,
-    ]);
-  }
-
-  public function importPhotos(): self {
-    return $this->with([
-      'permission' => Permission::IMPORT_PHOTOS,
-    ]);
-  }
-
-  public function importPresences(): self {
-    return $this->with([
-      'permission' => Permission::IMPORT_PRESENCES,
-    ]);
-  }
-
   #[\Override]
   protected function initialize(): static {
     return $this;

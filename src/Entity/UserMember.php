@@ -71,5 +71,3 @@ class UserMember {
     return $this;
   }
 }
-
-
