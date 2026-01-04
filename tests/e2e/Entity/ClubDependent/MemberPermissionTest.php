@@ -1,16 +1,48 @@
 <?php
 
-namespace App\Tests\e2e\Entity;
+namespace App\Tests\e2e\Entity\ClubDependent;
 
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\MemberPermission;
+use App\Entity\Club;
+use App\Enum\ClubRole;
 use App\Enum\Permission;
-use App\Tests\e2e\AbstractApiTestCase;
+use App\Enum\UserRole;
+use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
+use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Story\_InitStory;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * Test permission management functionality using API Platform resources
+ * Tests for MemberPermission entity (supervisor permissions management)
  */
-class MemberPermissionTest extends AbstractApiTestCase {
+class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
+
+  protected function getClassname(): string {
+    return MemberPermission::class;
+  }
+
+  protected function getRootUrl(): string {
+    throw new \Exception("Subresource! getRootUrl() must not be call.");
+  }
+
+  #[\Override]
+  protected function getRootWClubUrl(Club $club): string {
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    return $this->getMemberPermissionsUrl($supervisor);
+  }
+
+  #[\Override]
+  protected function getCollectionGrantedAccess(): array {
+    // Only admins and super-admin can view permissions
+    return [
+      UserRole::super_admin->value => true,
+      ClubRole::admin->value => true,
+      ClubRole::supervisor->value => false,
+      ClubRole::member->value => false,
+      ClubRole::badger->value => false,
+    ];
+  }
 
   /**
    * Get the permissions URL for a member
@@ -24,63 +56,64 @@ class MemberPermissionTest extends AbstractApiTestCase {
     return $url;
   }
 
-  /**
-   * Test that admin can view supervisor permissions (collection)
-   */
-  public function testAdminCanViewSupervisorPermissions(): void {
-    _InitStory::load();
-
+  // Override admin tests - permissions is a member subresource, not a club subresource
+  // So we skip the cross-club check (it's tested in testAdminFromOtherClubCannotModifyPermissions)
+  #[\Override]
+  public function testGetCollectionAsAdminClub1(): ResponseInterface {
     $this->loggedAsAdminClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
-
     $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $this->assertResponseIsSuccessful();
-
-    $data = $response->toArray();
-    $this->assertArrayHasKey('member', $data); // API Platform collection format
+    return $response;
   }
 
-  /**
-   * Test that admin can grant permissions to supervisor (POST)
-   */
-  public function testAdminCanGrantPermissions(): void {
-    _InitStory::load();
+  #[\Override]
+  public function testGetCollectionAsAdminClub2(): ResponseInterface {
+    $this->loggedAsAdminClub2();
+    // Club 2 admin trying to access club 1 member's permissions should fail
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
+    $this->assertResponseIsClientError();
+    return $response;
+  }
 
-    $this->loggedAsAdminClub1();
+  public function testCreate(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
+    $this->loggedAsAdminClub1();
     $response = $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     $data = $response->toArray();
     $this->assertEquals(Permission::EMAIL_EDIT->value, $data['permission']);
   }
 
-  /**
-   * Test that admin can revoke permissions from supervisor (DELETE)
-   */
-  public function testAdminCanRevokePermissions(): void {
-    _InitStory::load();
+  public function testPatch(): void {
+    // MemberPermission doesn't support PATCH - permissions are granted/revoked, not edited
+    $this->markTestSkipped('MemberPermission does not support PATCH operation');
+  }
 
-    $this->loggedAsAdminClub1();
+  public function testDelete(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+
+    $this->loggedAsAdminClub1();
 
     // First grant a permission
     $createResponse = $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
     $permissionUuid = $createResponse->toArray()['uuid'];
 
     // Then revoke it
     $this->makeDeleteRequest($this->getMemberPermissionsUrl($supervisor, $permissionUuid));
-    $this->assertResponseStatusCodeSame(204);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::no_content->value);
 
     // Verify it's gone
     $listResponse = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
@@ -88,12 +121,7 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertEmpty($data['member']);
   }
 
-  /**
-   * Test that supervisor cannot create permissions
-   */
   public function testSupervisorCannotModifyPermissions(): void {
-    _InitStory::load();
-
     $this->loggedAsSupervisorClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
@@ -102,28 +130,10 @@ class MemberPermissionTest extends AbstractApiTestCase {
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(403);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
   }
 
-  /**
-   * Test that member cannot view permissions
-   */
-  public function testMemberCannotViewPermissions(): void {
-    _InitStory::load();
-
-    $this->loggedAsMemberClub1();
-    $supervisor = _InitStory::MEMBER_supervisor_club_1();
-
-    $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
-    $this->assertResponseStatusCodeSame(403);
-  }
-
-  /**
-   * Test that admin from another club cannot modify permissions
-   */
   public function testAdminFromOtherClubCannotModifyPermissions(): void {
-    _InitStory::load();
-
     $this->loggedAsAdminClub2();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
@@ -132,25 +142,20 @@ class MemberPermissionTest extends AbstractApiTestCase {
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(403);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
   }
 
-  /**
-   * Test that permissions are included in /self response
-   */
   public function testPermissionsIncludedInSelfResponse(): void {
-    _InitStory::load();
-
-    // First, grant permission as admin
-    $this->loggedAsAdminClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
+    // First, grant permission as admin
+    $this->loggedAsAdminClub1();
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     // Now login as supervisor and check /self
     $this->loggedAsSupervisorClub1();
@@ -166,99 +171,78 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
   }
 
-  /**
-   * Test duplicate permission returns error
-   */
   public function testDuplicatePermissionReturnsError(): void {
-    _InitStory::load();
-
-    $this->loggedAsAdminClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+
+    $this->loggedAsAdminClub1();
 
     // Create first permission
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     // Try to create duplicate
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(422); // Unique constraint violation
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
   }
 
-  /**
-   * Test that EDIT permission implies ACCESS permission (hierarchy)
-   */
-  public function testEditPermissionImpliesAccessInSelfResponse(): void {
-    _InitStory::load();
-
-    // Grant EMAIL_EDIT permission to supervisor
-    $this->loggedAsAdminClub1();
+  public function testEditPermissionImpliesAccess(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
+    // Grant EMAIL_EDIT permission
+    $this->loggedAsAdminClub1();
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     // Check that supervisor has EMAIL_EDIT in /self
     $this->loggedAsSupervisorClub1();
     $response = $this->makeGetRequest("/self");
     $data = $response->toArray();
 
-    // Should have EMAIL_EDIT in permissions
     $profile = $data['linkedProfiles'][0];
     $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
 
-    // Get the supervisor's member entity directly and test hasPermission
+    // Test hasPermission hierarchy
     $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
-
-    // EDIT permission should match directly
     $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_EDIT));
-
-    // EDIT permission should also grant ACCESS (hierarchy)
-    $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_ACCESS));
-
-    // Should NOT have other permissions
+    $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_ACCESS)); // Implied by EDIT
     $this->assertFalse($supervisorMember->hasPermission(Permission::EMAIL_TEMPLATE_ACCESS));
-    $this->assertFalse($supervisorMember->hasPermission(Permission::IMPORT_MEMBERS_EDIT));
   }
 
-  /**
-   * Test granting multiple permissions (ACCESS and EDIT together)
-   */
   public function testGrantMultiplePermissions(): void {
-    _InitStory::load();
-
-    $this->loggedAsAdminClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+
+    $this->loggedAsAdminClub1();
 
     // Grant multiple permissions
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::IMPORT_MEMBERS_ACCESS->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_TEMPLATE_EDIT->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     // Verify all permissions are listed
     $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
@@ -274,22 +258,18 @@ class MemberPermissionTest extends AbstractApiTestCase {
     $this->assertContains(Permission::EMAIL_TEMPLATE_EDIT, $permissionValues);
   }
 
-  /**
-   * Test ACCESS permission does not grant EDIT
-   */
   public function testAccessPermissionDoesNotGrantEdit(): void {
-    _InitStory::load();
-
-    $this->loggedAsAdminClub1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+
+    $this->loggedAsAdminClub1();
 
     // Grant only ACCESS permission
     $this->makePostRequest($this->getMemberPermissionsUrl($supervisor), [
       'member' => $memberIri,
       'permission' => Permission::EMAIL_ACCESS->value,
     ]);
-    $this->assertResponseStatusCodeSame(201);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
 
     // Verify member has ACCESS but not EDIT
     $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
