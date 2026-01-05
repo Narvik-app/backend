@@ -22,6 +22,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PermissionTemplateRepository::class)]
@@ -81,7 +82,6 @@ class PermissionTemplate extends UuidEntity implements ClubLinkedEntityInterface
    * @var Collection<int, MemberPermission>
    */
   #[ORM\OneToMany(mappedBy: 'template', targetEntity: MemberPermission::class, orphanRemoval: true)]
-  #[Groups(['permission-template-read'])]
   private Collection $permissions;
 
   public function __construct() {
@@ -96,6 +96,12 @@ class PermissionTemplate extends UuidEntity implements ClubLinkedEntityInterface
   public function setName(string $name): static {
     $this->name = $name;
     return $this;
+  }
+
+  #[Groups(['permission-template-read'])]
+  #[SerializedName('permissionsCount')]
+  public function getPermissionsCount(): int {
+    return $this->permissions->count();
   }
 
   /**

@@ -31,7 +31,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions/{uuid}',
   operations: [
-    // Member permissions endpoints
     new GetCollection(
       uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions.{_format}',
       uriVariables: [
@@ -57,36 +56,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     new Delete(
       security: "is_granted('".ClubRole::admin->value."', object)",
     ),
-
-    // Template permissions endpoints
-    new GetCollection(
-      uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions.{_format}',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-        'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
-      ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
-    ),
-
-    new Post(
-      uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-        'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
-      ],
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
-      read: false
-    ),
-
-    new Delete(
-      uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions/{uuid}',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-        'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
-        'uuid' => new Link(fromClass: self::class),
-      ],
-      security: "is_granted('".ClubRole::admin->value."', object)",
-    ),
   ],
   uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
@@ -100,6 +69,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     'groups' => ['member-permission', 'member-permission-write']
   ],
 )]
+
 #[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'template.uuid' => 'exact'])]
 class MemberPermission extends UuidEntity implements ClubLinkedEntityInterface {
   public static function getClubSqlPath(): string {
