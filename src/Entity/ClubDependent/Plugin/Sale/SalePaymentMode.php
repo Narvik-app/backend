@@ -21,6 +21,7 @@ use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\SortableEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -38,24 +39,24 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_ACCESS->value."', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/sale-payment-modes.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_EDIT->value."', request)",
       read: false
     ),
     new Get(
-      security: "is_granted('".ClubRole::supervisor->value."', object)"
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_ACCESS->value."', object)"
     ),
     new Patch(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_EDIT->value."', object)",
     ),
     new Delete(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_EDIT->value."', object)",
     ),
 
     new Put(
@@ -76,7 +77,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         ),
       ),
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_PAYMENT_MODES_EDIT->value."', object)",
     )
   ],
   uriVariables: [

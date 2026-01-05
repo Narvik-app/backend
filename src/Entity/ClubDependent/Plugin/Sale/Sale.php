@@ -23,6 +23,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Filter\ClubDependent\CurrentSeasonFilter;
 use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Repository\ClubDependent\Plugin\Sale\SaleRepository;
@@ -44,18 +45,18 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
+      security: "is_granted('".Permission::SALE_HISTORY_ACCESS->value."', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/sales.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
+      security: "is_granted('".Permission::SALE_NEW->value."', request)",
       read: false
     ),
     new Get(
-      security: "is_granted('".ClubRole::supervisor->value."', object)",
+      security: "is_granted('".Permission::SALE_HISTORY_ACCESS->value."', object)",
     ),
     new Patch(
       security: "is_granted('".ClubRole::admin->value."', object)  || is_granted('".SaleVoter::UPDATE."', object)",
@@ -87,7 +88,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::SALE_IMPORT_EDIT->value."', request)",
       read: false,
       deserialize: false
     ),

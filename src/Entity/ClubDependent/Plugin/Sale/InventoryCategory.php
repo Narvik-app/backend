@@ -20,6 +20,7 @@ use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\SortableEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -40,25 +41,25 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
+      security: "is_granted('".Permission::SALE_CATEGORIES_ACCESS->value."', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/inventory-categories.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".Permission::SALE_CATEGORIES_EDIT->value."', request)",
       read: false
     ),
 
     new Get(
-      security: "is_granted('".ClubRole::supervisor->value."', object)"
+      security: "is_granted('".Permission::SALE_CATEGORIES_ACCESS->value."', object)"
     ),
     new Patch(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_CATEGORIES_EDIT->value."', object)",
     ),
     new Delete(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_CATEGORIES_EDIT->value."', object)",
     ),
 
     new Put(
@@ -79,7 +80,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_CATEGORIES_EDIT->value."', object)",
     )
   ],
   uriVariables: [

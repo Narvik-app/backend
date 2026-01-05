@@ -23,6 +23,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryItemRepository;
 use App\Service\UtilsService;
@@ -42,25 +43,25 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::supervisor->value."', request)",
+      security: "is_granted('".Permission::SALE_INVENTORY_ACCESS->value."', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/inventory-items.{_format}',
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".Permission::SALE_INVENTORY_EDIT->value."', request)",
       read: false
     ),
 
     new Get(
-      security: "is_granted('".ClubRole::supervisor->value."', object)",
+      security: "is_granted('".Permission::SALE_INVENTORY_ACCESS->value."', object)",
     ),
     new Patch(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_INVENTORY_EDIT->value."', object)",
     ),
     new Delete(
-      security: "is_granted('".ClubRole::admin->value."', object)",
+      security: "is_granted('".Permission::SALE_INVENTORY_EDIT->value."', object)",
     ),
 
     new Post(
@@ -86,7 +87,7 @@ use Symfony\Component\Validator\Constraints as Assert;
           ])
         )
       ),
-      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      securityPostDenormalize: "is_granted('".Permission::SALE_IMPORT_EDIT->value."', request)",
       read: false,
       deserialize: false
     ),

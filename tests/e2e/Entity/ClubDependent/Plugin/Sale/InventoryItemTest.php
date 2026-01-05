@@ -3,6 +3,7 @@
 namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Sale;
 
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
+use App\Enum\ClubRole;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\InventoryItemFactory;
@@ -21,6 +22,14 @@ class InventoryItemTest extends AbstractEntityClubLinkedTestCase {
 
   protected function getRootUrl(): string {
     return "/inventory-items";
+  }
+
+  #[\Override]
+  protected function getCollectionGrantedAccess(): array {
+    $access = parent::getCollectionGrantedAccess();
+    // Supervisors need SALE_INVENTORY_ACCESS permission to access inventory items collection
+    $access[ClubRole::supervisor->value] = false;
+    return $access;
   }
 
   public function initDefaultFixtures(): void {
@@ -122,5 +131,55 @@ class InventoryItemTest extends AbstractEntityClubLinkedTestCase {
     // 2 new sales
     $response = $this->makeGetRequest($this->getRootWClubUrl($club));
     $this->assertCount($this->TOTAL_ADMIN_CLUB_1 + 5, $response->toArray()['member']);
+  }
+
+  /**
+   * Test that a supervisor WITH the SALE_INVENTORY_ACCESS permission can access inventory items
+   */
+  public function testSupervisorWithPermissionCanAccessInventory(): void {
+    $club = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // First, verify supervisor cannot access without permission
+    $this->loggedAsSupervisorClub1();
+    $this->makeGetRequest($this->getRootWClubUrl($club));
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    // Admin grants the ACCESS permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_INVENTORY_ACCESS->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Now supervisor should be able to access collection
+    $this->loggedAsSupervisorClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club));
+    $this->assertResponseIsSuccessful();
+
+    // But cannot create (need EDIT permission)
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      'name' => 'Test Item',
+      'sellingPrice' => '5.00',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    // Admin grants the EDIT permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_INVENTORY_EDIT->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Now supervisor can create items
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      'name' => 'Test Item',
+      'sellingPrice' => '5.00',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
   }
 }
