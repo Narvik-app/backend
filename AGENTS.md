@@ -317,10 +317,48 @@ enum Permission: string {
 - Backend: `Member.hasPermission()` and `PermissionVoter`
 - Frontend: `useSelfUser.can()`
 
+### Permission Templates
+
+Permission Templates allow defining reusable sets of permissions that can be assigned to multiple members. This simplifies permission management.
+
+#### Key Entities
+- **`PermissionTemplate` Entity** - Defines a named template with a set of permissions
+  - Club-dependent entity (each club has its own templates)
+  - Contains a name and a collection of `MemberPermission` records
+- **`MemberPermission` Entity** - Stores individual permissions
+  - Can be linked to either a `Member` OR a `PermissionTemplate` (not both)
+  - Validation constraint ensures exactly one is set
+- **`Member` Entity** - Has an optional `permissionTemplate` field
+  - When template is deleted, the field is set to NULL (not cascade delete)
+
+#### Permission Resolution Order
+When checking if a member has a permission:
+1. Check member-specific permissions first (override)
+2. If not found, check template permissions (if template is assigned)
+3. Apply EDIT implies ACCESS rule at both levels
+
+```php
+// In Member.hasPermission()
+// 1. Check member-specific permissions first
+foreach ($this->permissions as $memberPermission) { ... }
+
+// 2. Check template permissions if assigned
+if ($this->permissionTemplate !== null) {
+  foreach ($this->permissionTemplate->getPermissions() as $templatePermission) { ... }
+}
+```
+
+#### API Endpoints
+- `GET /clubs/{clubUuid}/permission-templates` - List templates (supervisor+)
+- `POST /clubs/{clubUuid}/permission-templates` - Create template (admin)
+- `PATCH /clubs/{clubUuid}/permission-templates/{uuid}` - Update template (admin)
+- `DELETE /clubs/{clubUuid}/permission-templates/{uuid}` - Delete template (admin)
+
 ### Key Components
-- **`MemberPermission` Entity** - Stores permissions per member (API Platform resource)
+- **`MemberPermission` Entity** - Stores permissions per member or template (API Platform resource)
+- **`PermissionTemplate` Entity** - Defines reusable permission sets
 - **`PermissionVoter`** - Symfony voter for permission checks
-- **`Member.hasPermission()`** - Checks permission with hierarchy
+- **`Member.hasPermission()`** - Checks permission with hierarchy and template support
 
 ### Security Annotations
 Use permission checks in API Platform security annotations:
