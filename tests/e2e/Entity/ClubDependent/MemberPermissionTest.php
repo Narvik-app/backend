@@ -45,15 +45,20 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
   }
 
   /**
-   * Get the permissions URL for a member
+   * Get the permissions collection URL for a member (for GET collection and POST)
    */
-  private function getMemberPermissionsUrl(Member $member, ?string $permissionUuid = null): string {
+  private function getMemberPermissionsUrl(Member $member): string {
     $memberUrl = $this->getIriFromResource($member);
-    $url = "{$memberUrl}/permissions";
-    if ($permissionUuid) {
-      $url .= "/{$permissionUuid}";
-    }
-    return $url;
+    return "{$memberUrl}/permissions";
+  }
+
+  /**
+   * Get the generic permission item URL (for GET item and DELETE)
+   * Uses the route: /clubs/{clubUuid}/permissions/{uuid}
+   */
+  private function getPermissionItemUrl(Club $club, string $permissionUuid): string {
+    $clubUrl = $this->getIriFromResource($club);
+    return "{$clubUrl}/permissions/{$permissionUuid}";
   }
 
   // ============ Collection Test Overrides ============
@@ -113,6 +118,7 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
 
   public function testDelete(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $club = _InitStory::club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->loggedAsAdminClub1();
@@ -125,8 +131,8 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
     $permissionUuid = $createResponse->toArray()['uuid'];
 
-    // Then revoke it
-    $this->makeDeleteRequest($this->getMemberPermissionsUrl($supervisor, $permissionUuid));
+    // Then revoke it using generic item URL
+    $this->makeDeleteRequest($this->getPermissionItemUrl($club, $permissionUuid));
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::no_content->value);
 
     // Verify it's gone
