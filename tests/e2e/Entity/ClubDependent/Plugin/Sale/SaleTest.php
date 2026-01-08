@@ -298,8 +298,10 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
    * Test cannot remove implied permissions while SALE_NEW is active
    */
   public function testCannotRemoveImpliedPermissionsWhileSaleNewActive(): void {
+    $club = _InitStory::club_1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+    $clubIri = $this->getIriFromResource($club);
 
     // Admin grants SALE_NEW permission (which auto-grants implied permissions)
     $this->loggedAsAdminClub1();
@@ -315,8 +317,8 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $historyPermission = array_filter($permissions, fn($p) => $p['permission'] === \App\Enum\Permission::SALE_HISTORY_ACCESS->value);
     $historyPermission = array_values($historyPermission)[0];
 
-    // Try to delete SALE_HISTORY_ACCESS - should fail
-    $this->makeDeleteRequest($memberIri . '/permissions/' . $historyPermission['uuid']);
+    // Try to delete SALE_HISTORY_ACCESS using generic item URL - should fail
+    $this->makeDeleteRequest($clubIri . '/permissions/' . $historyPermission['uuid']);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
   }
 }
