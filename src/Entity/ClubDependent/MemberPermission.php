@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\Post;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
+use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
 use App\Enum\Permission;
 use App\Repository\MemberPermissionRepository;
@@ -29,8 +30,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[UniqueEntity(fields: ['permission', 'member'], message: 'Permission already granted', ignoreNull: true)]
 #[UniqueEntity(fields: ['permission', 'template'], message: 'Permission already exists in this template', ignoreNull: true)]
 #[ApiResource(
-  uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions/{uuid}',
+  uriTemplate: '/clubs/{clubUuid}/permissions/{uuid}',
   operations: [
+    // Member collection operations
     new GetCollection(
       uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions.{_format}',
       uriVariables: [
@@ -39,7 +41,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
       ],
       security: "is_granted('".ClubRole::supervisor->value."', request)",
     ),
-
     new Post(
       uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions',
       uriVariables: [
@@ -50,6 +51,26 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
       read: false
     ),
 
+    // Template collection operations
+    new GetCollection(
+      uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions.{_format}',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
+      ],
+      security: "is_granted('".ClubRole::supervisor->value."', request)",
+    ),
+    new Post(
+      uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
+      ],
+      securityPostDenormalize: "is_granted('".ClubRole::admin->value."', request)",
+      read: false
+    ),
+
+    // Generic item operations (works for both member and template permissions)
     new Get(
       security: "is_granted('".ClubRole::admin->value."', object)",
     ),
@@ -59,7 +80,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
   ],
   uriVariables: [
     'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-    'memberUuid' => new Link(toProperty: 'member', fromClass: Member::class),
     'uuid' => new Link(fromClass: self::class),
   ],
   normalizationContext: [
@@ -72,10 +92,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'template.uuid' => 'exact'])]
 class MemberPermission extends UuidEntity implements ClubLinkedEntityInterface {
-  public static function getClubSqlPath(): string {
-    // Club can be resolved via member or template
-    return "COALESCE(member.club, template.club)";
-  }
+  use SelfClubLinkedEntityTrait;
 
   #[ORM\ManyToOne(targetEntity: Member::class, inversedBy: 'permissions')]
   #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
@@ -90,15 +107,6 @@ class MemberPermission extends UuidEntity implements ClubLinkedEntityInterface {
   #[ORM\Column(type: Types::STRING, enumType: Permission::class)]
   #[Groups(['member-permission', 'member-permission-read', 'permission-template-read'])]
   private Permission $permission;
-
-  public function getClub(): ?Club {
-    return $this->member?->getClub() ?? $this->template?->getClub();
-  }
-
-  public function setClub(?Club $club): static {
-    // Club is set via member or template, not directly
-    return $this;
-  }
 
   public function getMember(): ?Member {
     return $this->member;

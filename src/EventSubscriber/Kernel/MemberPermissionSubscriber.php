@@ -49,7 +49,10 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
     }
 
     $member = $permission->getMember();
-    if (!$member) {
+    $template = $permission->getTemplate();
+    $club = $permission->getClub();
+
+    if (!$member && !$template) {
       return;
     }
 
@@ -59,11 +62,21 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
       Permission::SALE_INVENTORY_ACCESS,
     ];
 
+    // Check using member or template's hasPermission
+    $target = $member ?? $template;
+
     foreach ($impliedPermissions as $impliedPermission) {
-      if (!$member->hasPermission($impliedPermission)) {
+      if (!$target->hasPermission($impliedPermission)) {
         $newPermission = new MemberPermission();
-        $newPermission->setMember($member);
+        $newPermission->setClub($club);
         $newPermission->setPermission($impliedPermission);
+
+        if ($member) {
+          $newPermission->setMember($member);
+        } else {
+          $newPermission->setTemplate($template);
+        }
+
         $this->entityManager->persist($newPermission);
       }
     }
@@ -90,14 +103,13 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
     }
 
     $member = $permission->getMember();
-    if (!$member) {
-      return;
-    }
+    $template = $permission->getTemplate();
+    $target = $member ?? $template;
 
     // Check if SALE_NEW is still active
-    if ($member->hasPermission(Permission::SALE_NEW)) {
+    if ($target?->hasPermission(Permission::SALE_NEW)) {
       throw new BadRequestHttpException(
-        "Impossible de retirer cette permission car 'Faire une vente' est activée. Désactivez d'abord 'Faire une vente'."
+        "Unable to remove this permission because “Make a sale” is enabled. Please disable “Make a sale” first."
       );
     }
   }

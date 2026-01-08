@@ -127,4 +127,16 @@ class PermissionTemplate extends UuidEntity implements ClubLinkedEntityInterface
     }
     return $this;
   }
+
+  /**
+   * Check if template has a specific permission
+   */
+  public function hasPermission(\App\Enum\Permission $permission): bool {
+    foreach ($this->permissions as $memberPermission) {
+      if ($memberPermission->getPermission() === $permission) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
