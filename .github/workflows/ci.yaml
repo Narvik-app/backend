@@ -175,6 +175,9 @@ jobs:
 
       - name: Run Rector (dry-run)
         run: docker compose exec -T php ./vendor/bin/rector process --dry-run
+      
+      - name: Composer Dependency Analyser
+        run: docker compose exec -T php ./vendor/bin/composer-dependency-analyser --config composer-dependency-analyser.php
 
 #  lint:
 #    name: Docker Lint
