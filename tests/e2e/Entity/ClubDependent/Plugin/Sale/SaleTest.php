@@ -256,6 +256,32 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
   }
 
+  public function testSaleNewCascadeInSelfResponse(): void {
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // Admin grants SALE_NEW permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Login as supervisor and check /self
+    $this->loggedAsSupervisorClub1();
+    $response = $this->makeGetRequest("/self");
+    $this->assertResponseIsSuccessful();
+
+    $data = $response->toArray();
+    $profile = $data['linkedProfiles'][0];
+    $permissions = $profile['permissions'];
+
+    $this->assertContains(\App\Enum\Permission::SALE_NEW->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_HISTORY_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
+  }
+
   /**
    * Test supervisor with SALE_NEW can create sales
    */

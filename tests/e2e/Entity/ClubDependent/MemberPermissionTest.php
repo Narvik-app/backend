@@ -190,6 +190,8 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $profile = $data['linkedProfiles'][0];
     $this->assertArrayHasKey('permissions', $profile);
     $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
+    // Verify implied permission is also present
+    $this->assertContains(Permission::EMAIL_ACCESS->value, $profile['permissions']);
   }
 
   public function testDuplicatePermissionReturnsError(): void {
