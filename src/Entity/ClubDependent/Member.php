@@ -265,6 +265,11 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[ORM\OneToMany(mappedBy: 'member', targetEntity: MemberPermission::class, orphanRemoval: true)]
   private Collection $permissions;
 
+  #[ORM\ManyToOne(targetEntity: PermissionTemplate::class)]
+  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  #[Groups(['member-read', 'club-admin-write'])]
+  private ?PermissionTemplate $permissionTemplate = null;
+
   #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN , options: ['default' => true])]
   #[Groups(['member', 'self-read', 'self-write'])]
   private bool $clubNewsletter = true;
@@ -722,6 +727,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
    * Check if this member has a specific permission
    * Admins automatically have all permissions
    * Hierarchy: EDIT permission implies ACCESS permission
+   * Template permissions are checked first, then member-specific overrides
    */
   public function hasPermission(Permission $permission): bool {
     // Admins have all permissions
@@ -730,6 +736,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
       return true;
     }
 
+    // Check member-specific permissions first (overrides template)
     foreach ($this->permissions as $memberPermission) {
       $grantedPermission = $memberPermission->getPermission();
 
@@ -739,7 +746,6 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
       }
 
       // Hierarchy check: if user has EDIT permission, they also have ACCESS
-      // e.g., if checking for EMAIL_ACCESS and user has EMAIL_EDIT, return true
       if ($permission->isAccessPermission() && $grantedPermission->isEditPermission()) {
         $editImpliesAccess = $grantedPermission->getAccessPermission();
         if ($editImpliesAccess === $permission) {
@@ -747,18 +753,67 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
         }
       }
     }
+
+    // Check template permissions if member has a template assigned
+    if ($this->permissionTemplate !== null) {
+      foreach ($this->permissionTemplate->getPermissions() as $templatePermission) {
+        $grantedPermission = $templatePermission->getPermission();
+
+        // Direct match
+        if ($grantedPermission === $permission) {
+          return true;
+        }
+
+        // Hierarchy check for template permissions too
+        if ($permission->isAccessPermission() && $grantedPermission->isEditPermission()) {
+          $editImpliesAccess = $grantedPermission->getAccessPermission();
+          if ($editImpliesAccess === $permission) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 
   /**
-   * Get all permission values as an array of Permission enum values
+   * Get all permissions including implied ones (Member + Template + Cascade)
    * @return Permission[]
    */
-  public function getPermissionValues(): array {
-    return array_map(
-      fn(MemberPermission $mp) => $mp->getPermission(),
-      $this->permissions->toArray()
-    );
+  public function getEffectivePermissions(): array {
+    $permissions = [];
+
+    // Configured permissions (member overrides)
+    foreach ($this->permissions as $p) {
+      $permissions[$p->getPermission()->value] = $p->getPermission();
+    }
+
+    // Template permissions
+    if ($this->permissionTemplate) {
+      foreach ($this->permissionTemplate->getPermissions() as $p) {
+        $permissions[$p->getPermission()->value] = $p->getPermission();
+      }
+    }
+
+    // Resolve implications
+    $allPermissions = $permissions;
+    foreach ($permissions as $p) {
+      foreach ($p->getImpliedPermissions() as $implied) {
+        $allPermissions[$implied->value] = $implied;
+      }
+    }
+
+    return array_values($allPermissions);
+  }
+
+  public function getPermissionTemplate(): ?PermissionTemplate {
+    return $this->permissionTemplate;
+  }
+
+  public function setPermissionTemplate(?PermissionTemplate $permissionTemplate): static {
+    $this->permissionTemplate = $permissionTemplate;
+    return $this;
   }
 
 }

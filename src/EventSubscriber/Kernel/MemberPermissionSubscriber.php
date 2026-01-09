@@ -34,7 +34,7 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
   }
 
   /**
-   * After SALE_NEW is granted, automatically grant implied permissions
+   * After a permission is granted, automatically grant implied permissions
    */
   public function onPostWrite(ViewEvent $event): void {
     $permission = $event->getControllerResult();
@@ -44,26 +44,46 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
       return;
     }
 
-    if ($permission->getPermission() !== Permission::SALE_NEW) {
-      return;
-    }
-
     $member = $permission->getMember();
-    if (!$member) {
+    $template = $permission->getTemplate();
+    $club = $permission->getClub();
+
+    if (!$member && !$template) {
       return;
     }
 
-    // Auto-grant SALE_HISTORY_ACCESS and SALE_INVENTORY_ACCESS
-    $impliedPermissions = [
-      Permission::SALE_HISTORY_ACCESS,
-      Permission::SALE_INVENTORY_ACCESS,
-    ];
+    // Auto-grant implied permissions (e.g. SALE_NEW -> SALE_HISTORY_ACCESS)
+    $grantedPerm = $permission->getPermission();
+    $impliedPermissions = $grantedPerm->getImpliedPermissions();
+
+    if (empty($impliedPermissions)) {
+      return;
+    }
+
+    // Check using member or template's hasPermission
+    $target = $member ?? $template;
 
     foreach ($impliedPermissions as $impliedPermission) {
-      if (!$member->hasPermission($impliedPermission)) {
+      // Check if permission is explicitly granted (don't use hasPermission as it includes implications)
+      $alreadyExplicitlyGranted = false;
+      foreach ($target->getPermissions() as $existingP) {
+        if ($existingP->getPermission() === $impliedPermission) {
+          $alreadyExplicitlyGranted = true;
+          break;
+        }
+      }
+
+      if (!$alreadyExplicitlyGranted) {
         $newPermission = new MemberPermission();
-        $newPermission->setMember($member);
+        $newPermission->setClub($club);
         $newPermission->setPermission($impliedPermission);
+
+        if ($member) {
+          $newPermission->setMember($member);
+        } else {
+          $newPermission->setTemplate($template);
+        }
+
         $this->entityManager->persist($newPermission);
       }
     }
@@ -72,7 +92,7 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
   }
 
   /**
-   * Block removal of implied permissions if SALE_NEW is still enabled
+   * Block removal of implied permissions if the parent permission is still enabled
    */
   public function onPreWrite(ViewEvent $event): void {
     $permission = $event->getControllerResult();
@@ -82,23 +102,25 @@ final readonly class MemberPermissionSubscriber implements EventSubscriberInterf
       return;
     }
 
-    $permValue = $permission->getPermission();
-
-    // Check if this is an implied permission
-    if (!in_array($permValue, [Permission::SALE_HISTORY_ACCESS, Permission::SALE_INVENTORY_ACCESS], true)) {
-      return;
-    }
-
+    $permissionToRemove = $permission->getPermission();
     $member = $permission->getMember();
-    if (!$member) {
+    $template = $permission->getTemplate();
+    $target = $member ?? $template;
+
+    if (!$target) {
       return;
     }
 
-    // Check if SALE_NEW is still active
-    if ($member->hasPermission(Permission::SALE_NEW)) {
-      throw new BadRequestHttpException(
-        "Impossible de retirer cette permission car 'Faire une vente' est activée. Désactivez d'abord 'Faire une vente'."
-      );
+    // Check if any EXISTING permission implies the one being removed
+    foreach ($target->getPermissions() as $existingMP) {
+      if ($existingMP === $permission) {
+        continue;
+      }
+
+      $parentPerm = $existingMP->getPermission();
+      if (in_array($permissionToRemove, $parentPerm->getImpliedPermissions(), true)) {
+        throw new BadRequestHttpException("Unable to remove this permission because '{$parentPerm->value}' is enabled and requires it.");
+      }
     }
   }
 }

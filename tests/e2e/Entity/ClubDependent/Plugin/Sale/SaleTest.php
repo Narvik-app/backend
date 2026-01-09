@@ -256,6 +256,32 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
   }
 
+  public function testSaleNewCascadeInSelfResponse(): void {
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // Admin grants SALE_NEW permission
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Login as supervisor and check /self
+    $this->loggedAsSupervisorClub1();
+    $response = $this->makeGetRequest("/self");
+    $this->assertResponseIsSuccessful();
+
+    $data = $response->toArray();
+    $profile = $data['linkedProfiles'][0];
+    $permissions = $profile['permissions'];
+
+    $this->assertContains(\App\Enum\Permission::SALE_NEW->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_HISTORY_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
+  }
+
   /**
    * Test supervisor with SALE_NEW can create sales
    */
@@ -298,8 +324,10 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
    * Test cannot remove implied permissions while SALE_NEW is active
    */
   public function testCannotRemoveImpliedPermissionsWhileSaleNewActive(): void {
+    $club = _InitStory::club_1();
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
     $memberIri = $this->getIriFromResource($supervisor);
+    $clubIri = $this->getIriFromResource($club);
 
     // Admin grants SALE_NEW permission (which auto-grants implied permissions)
     $this->loggedAsAdminClub1();
@@ -315,8 +343,11 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $historyPermission = array_filter($permissions, fn($p) => $p['permission'] === \App\Enum\Permission::SALE_HISTORY_ACCESS->value);
     $historyPermission = array_values($historyPermission)[0];
 
-    // Try to delete SALE_HISTORY_ACCESS - should fail
-    $this->makeDeleteRequest($memberIri . '/permissions/' . $historyPermission['uuid']);
+    // Try to delete SALE_HISTORY_ACCESS using generic item URL - should fail
+    $this->makeDeleteRequest($clubIri . '/permissions/' . $historyPermission['uuid']);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      'detail' => 'Unable to remove this permission because \'SALE_NEW\' is enabled and requires it.',
+    ]);
   }
 }

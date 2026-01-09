@@ -45,15 +45,20 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
   }
 
   /**
-   * Get the permissions URL for a member
+   * Get the permissions collection URL for a member (for GET collection and POST)
    */
-  private function getMemberPermissionsUrl(Member $member, ?string $permissionUuid = null): string {
+  private function getMemberPermissionsUrl(Member $member): string {
     $memberUrl = $this->getIriFromResource($member);
-    $url = "{$memberUrl}/permissions";
-    if ($permissionUuid) {
-      $url .= "/{$permissionUuid}";
-    }
-    return $url;
+    return "{$memberUrl}/permissions";
+  }
+
+  /**
+   * Get the generic permission item URL (for GET item and DELETE)
+   * Uses the route: /clubs/{clubUuid}/permissions/{uuid}
+   */
+  private function getPermissionItemUrl(Club $club, string $permissionUuid): string {
+    $clubUrl = $this->getIriFromResource($club);
+    return "{$clubUrl}/permissions/{$permissionUuid}";
   }
 
   // ============ Collection Test Overrides ============
@@ -113,6 +118,7 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
 
   public function testDelete(): void {
     $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $club = _InitStory::club_1();
     $memberIri = $this->getIriFromResource($supervisor);
 
     $this->loggedAsAdminClub1();
@@ -125,14 +131,15 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
     $permissionUuid = $createResponse->toArray()['uuid'];
 
-    // Then revoke it
-    $this->makeDeleteRequest($this->getMemberPermissionsUrl($supervisor, $permissionUuid));
+    // Then revoke it using generic item URL
+    $this->makeDeleteRequest($this->getPermissionItemUrl($club, $permissionUuid));
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::no_content->value);
 
-    // Verify it's gone
+    // Verify implied permission EMAIL_ACCESS remains
     $listResponse = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $data = $listResponse->toArray();
-    $this->assertEmpty($data['member']);
+    $this->assertCount(1, $data['member']);
+    $this->assertEquals(Permission::EMAIL_ACCESS->value, $data['member'][0]['permission']);
   }
 
   public function testSupervisorCannotModifyPermissions(): void {
@@ -183,6 +190,8 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $profile = $data['linkedProfiles'][0];
     $this->assertArrayHasKey('permissions', $profile);
     $this->assertContains(Permission::EMAIL_EDIT->value, $profile['permissions']);
+    // Verify implied permission is also present
+    $this->assertContains(Permission::EMAIL_ACCESS->value, $profile['permissions']);
   }
 
   public function testDuplicatePermissionReturnsError(): void {
@@ -261,15 +270,17 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     // Verify all permissions are listed
     $response = $this->makeGetRequest($this->getMemberPermissionsUrl($supervisor));
     $data = $response->toArray();
-    $this->assertCount(3, $data['member']);
+    // 3 explicit permissions + 2 implied (EMAIL_EDIT->EMAIL_ACCESS, EMAIL_TEMPLATE_EDIT->EMAIL_TEMPLATE_ACCESS)
+    $this->assertCount(5, $data['member']);
 
-    // Verify member has permissions
-    $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
-    $permissionValues = $supervisorMember->getPermissionValues();
-    $this->assertCount(3, $permissionValues);
-    $this->assertContains(Permission::EMAIL_EDIT, $permissionValues);
-    $this->assertContains(Permission::IMPORT_MEMBERS_ACCESS, $permissionValues);
-    $this->assertContains(Permission::EMAIL_TEMPLATE_EDIT, $permissionValues);
+    // Verify member has permissions (based on API response)
+    $permissionValues = array_column($data['member'], 'permission');
+    $this->assertCount(5, $permissionValues);
+    $this->assertContains(Permission::EMAIL_EDIT->value, $permissionValues);
+    $this->assertContains(Permission::EMAIL_ACCESS->value, $permissionValues);
+    $this->assertContains(Permission::IMPORT_MEMBERS_ACCESS->value, $permissionValues);
+    $this->assertContains(Permission::EMAIL_TEMPLATE_EDIT->value, $permissionValues);
+    $this->assertContains(Permission::EMAIL_TEMPLATE_ACCESS->value, $permissionValues);
   }
 
   public function testAccessPermissionDoesNotGrantEdit(): void {
@@ -287,7 +298,35 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
 
     // Verify member has ACCESS but not EDIT
     $supervisorMember = _InitStory::MEMBER_supervisor_club_1();
-    $this->assertTrue($supervisorMember->hasPermission(Permission::EMAIL_ACCESS));
     $this->assertFalse($supervisorMember->hasPermission(Permission::EMAIL_EDIT));
+  }
+
+  public function testCannotRemoveImpliedPermissionWhileParentIsActive(): void {
+    $club = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+    $clubIri = $this->getIriFromResource($club);
+
+    $this->loggedAsAdminClub1();
+
+    // Grant EMAIL_EDIT (implies EMAIL_ACCESS)
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => Permission::EMAIL_EDIT->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    // Get the EMAIL_ACCESS permission UUID
+    $response = $this->makeGetRequest($memberIri . '/permissions');
+    $permissions = $response->toArray()['member'];
+    $accessPermission = array_filter($permissions, fn($p) => $p['permission'] === Permission::EMAIL_ACCESS->value);
+    $accessPermission = array_values($accessPermission)[0];
+
+    // Try to delete EMAIL_ACCESS - should fail
+    $this->makeDeleteRequest($clubIri . '/permissions/' . $accessPermission['uuid']);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      'detail' => 'Unable to remove this permission because \'EMAIL_EDIT\' is enabled and requires it.',
+    ]);
   }
 }
