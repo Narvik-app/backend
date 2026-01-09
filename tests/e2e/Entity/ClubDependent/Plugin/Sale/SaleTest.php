@@ -320,5 +320,8 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     // Try to delete SALE_HISTORY_ACCESS using generic item URL - should fail
     $this->makeDeleteRequest($clubIri . '/permissions/' . $historyPermission['uuid']);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      'detail' => 'Unable to remove this permission because \'SALE_NEW\' is enabled and requires it.',
+    ]);
   }
 }

@@ -260,16 +260,18 @@ class PermissionTemplateTest extends AbstractEntityClubLinkedTestCase {
     // Verify permission was added
     $listResponse = $this->makeGetRequest($this->getTemplatesUrl($club, $templateUuid, 'permissions'));
     $data = $listResponse->toArray();
-    $this->assertCount(1, $data['member']);
+    // EMAIL_EDIT + implied EMAIL_ACCESS
+    $this->assertCount(2, $data['member']);
 
     // Remove the permission using generic item URL
     $this->makeDeleteRequest($this->getPermissionItemUrl($club, $permissionUuid));
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::no_content->value);
 
-    // Verify permission was removed
+    // Verify permission was removed, but implied permission EMAIL_ACCESS remains
     $listResponse = $this->makeGetRequest($this->getTemplatesUrl($club, $templateUuid, 'permissions'));
     $data = $listResponse->toArray();
-    $this->assertEmpty($data['member']);
+    $this->assertCount(1, $data['member']);
+    $this->assertEquals(Permission::EMAIL_ACCESS->value, $data['member'][0]['permission']);
   }
 
   public function testSupervisorTemplatePermissionsAccess(): void {

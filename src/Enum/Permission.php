@@ -75,4 +75,29 @@ enum Permission: string {
   public function isAccessPermission(): bool {
     return str_ends_with($this->value, '_ACCESS');
   }
+
+  /**
+   * Get implied permissions
+   * @return Permission[]
+   */
+  public function getImpliedPermissions(): array {
+    $implied = [];
+
+    // Hierarchy: EDIT implies ACCESS
+    if ($this->isEditPermission()) {
+      $access = $this->getAccessPermission();
+      if ($access) {
+        $implied[] = $access;
+      }
+    }
+
+    // Special cases
+    // SALE_NEW implies SALE_HISTORY and SALE_INVENTORY access
+    if ($this === self::SALE_NEW) {
+      $implied[] = self::SALE_HISTORY_ACCESS;
+      $implied[] = self::SALE_INVENTORY_ACCESS;
+    }
+
+    return $implied;
+  }
 }

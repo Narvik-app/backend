@@ -778,14 +778,33 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   }
 
   /**
-   * Get all permission values as an array of Permission enum values
+   * Get all permissions including implied ones (Member + Template + Cascade)
    * @return Permission[]
    */
-  public function getPermissionValues(): array {
-    return array_map(
-      fn(MemberPermission $mp) => $mp->getPermission(),
-      $this->permissions->toArray()
-    );
+  public function getEffectivePermissions(): array {
+    $permissions = [];
+
+    // Configured permissions (member overrides)
+    foreach ($this->permissions as $p) {
+      $permissions[$p->getPermission()->value] = $p->getPermission();
+    }
+
+    // Template permissions
+    if ($this->permissionTemplate) {
+      foreach ($this->permissionTemplate->getPermissions() as $p) {
+        $permissions[$p->getPermission()->value] = $p->getPermission();
+      }
+    }
+
+    // Resolve implications
+    $allPermissions = $permissions;
+    foreach ($permissions as $p) {
+      foreach ($p->getImpliedPermissions() as $implied) {
+        $allPermissions[$implied->value] = $implied;
+      }
+    }
+
+    return array_values($allPermissions);
   }
 
   public function getPermissionTemplate(): ?PermissionTemplate {
