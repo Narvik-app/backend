@@ -11,6 +11,7 @@ use App\Repository\ClubRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -49,7 +50,7 @@ final readonly class RequestService {
           $uuid = $request->attributes->get("uuid");
           dump($uuid);*/
         } else {
-          dump("Unsupported request method");
+          throw new BadRequestHttpException("Unsupported request method");
         }
       }
     }
