@@ -87,7 +87,18 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function testPatch(): void {
-    // Update a sale created today
+    // Update a sale created today - supervisor needs SALE_NEW permission
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+
+    // Grant SALE_NEW permission to supervisor
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
     $this->makeAllLoggedRequests(
       requestFunction: function (string $level, ?int $id) {
         $item = SaleFactory::createOne(['createdAt' => new \DateTimeImmutable()]);
@@ -95,7 +106,7 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
       },
     );
 
-    // Update a sale creating days ago (only admin can)
+    // Update a sale created days ago (only admin can)
     $this->makeAllLoggedRequests(
       supervisorClub1Code: ResponseCodeEnum::forbidden,
       requestFunction: function (string $level, ?int $id) {
@@ -108,6 +119,16 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
   }
 
   public function testDelete(): void {
+    // Grant SALE_NEW permission to supervisor for delete tests
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => \App\Enum\Permission::SALE_NEW->value,
+    ]);
+    // Permission might already exist from previous tests, so we don't assert status
+
     // Deleting a sale created today
     $this->makeAllLoggedRequests(
       supervisorClub1Code: ResponseCodeEnum::no_content,
