@@ -92,10 +92,12 @@ enum Permission: string {
     }
 
     // Special cases
-    // SALE_NEW implies SALE_HISTORY and SALE_INVENTORY access
+    // SALE_NEW implies SALE_HISTORY and SALE_INVENTORY access, plus categories and payment modes
     if ($this === self::SALE_NEW) {
       $implied[] = self::SALE_HISTORY_ACCESS;
       $implied[] = self::SALE_INVENTORY_ACCESS;
+      $implied[] = self::SALE_CATEGORIES_ACCESS;
+      $implied[] = self::SALE_PAYMENT_MODES_ACCESS;
     }
 
     return $implied;
