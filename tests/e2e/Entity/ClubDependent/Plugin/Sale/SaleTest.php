@@ -254,6 +254,8 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $this->assertContains(\App\Enum\Permission::SALE_NEW->value, $permissions);
     $this->assertContains(\App\Enum\Permission::SALE_HISTORY_ACCESS->value, $permissions);
     $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_CATEGORIES_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_PAYMENT_MODES_ACCESS->value, $permissions);
   }
 
   public function testSaleNewCascadeInSelfResponse(): void {
@@ -280,6 +282,8 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $this->assertContains(\App\Enum\Permission::SALE_NEW->value, $permissions);
     $this->assertContains(\App\Enum\Permission::SALE_HISTORY_ACCESS->value, $permissions);
     $this->assertContains(\App\Enum\Permission::SALE_INVENTORY_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_CATEGORIES_ACCESS->value, $permissions);
+    $this->assertContains(\App\Enum\Permission::SALE_PAYMENT_MODES_ACCESS->value, $permissions);
   }
 
   /**
