@@ -1,12 +1,22 @@
 # Executables (local)
 DOCKER_COMP = docker compose
+PODMAN_COMP = podman-compose
 
 # Container repo
 BUILD_REPO = benoitvignal/narvik-back
 
+# Version extraction from composer.json
+VERSION_FULL = $(shell cat composer.json | grep version | grep -o '\([0-9]\+\.\?\)\{3\}')
+VERSION_MAJOR = $(shell echo $(VERSION_FULL) | grep -o '^[0-9]\+')
+VERSION_MINOR = $(shell echo $(VERSION_FULL) | grep -o '^[0-9]\+\.[0-9]\+')
+
 # Docker containers
 PHP_CONT = $(DOCKER_COMP) exec php
 DB_CONT = $(DOCKER_COMP) exec database
+
+# Podman containers (for podman-based setups)
+PODMAN_PHP_CONT = $(PODMAN_COMP) exec php
+PODMAN_DB_CONT = $(PODMAN_COMP) exec database
 
 # Executables
 PHP      = $(PHP_CONT) php
@@ -15,7 +25,7 @@ SYMFONY  = $(PHP) bin/console
 
 # Misc
 .DEFAULT_GOAL = help
-.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run
+.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run buildah-build buildah-build-prod buildah-build-multiplatform podman-up podman-down podman-start build-multiplatform build-multiplatform-local
 
 # Capture the first argument as `file`
 file=$(word 2,$(MAKECMDGOALS))
@@ -31,11 +41,21 @@ build: ## Builds the Docker images
 build-cloud-local:
 	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t narvik-php --target frankenphp_dev
 
-build-prod:
-	@docker build --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod .
+build-prod: ## Build production image with version tags
+	@docker build --pull --no-cache \
+		-t $(BUILD_REPO):latest \
+		-t $(BUILD_REPO):$(VERSION_MAJOR) \
+		-t $(BUILD_REPO):$(VERSION_MINOR) \
+		-t $(BUILD_REPO):$(VERSION_FULL) \
+		--target frankenphp_prod .
 
 build-cloud-prod:
-	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache -t $(BUILD_REPO):latest -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o | grep '^[0-9]\+\.[0-9]\+' -o` -t $(BUILD_REPO):`cat composer.json | grep version | grep '\([0-9]\+\.\?\)\{3\}' -o` --target frankenphp_prod
+	@docker buildx build . --builder cloud-benoitvignal-narvik-cloud --pull --no-cache \
+		-t $(BUILD_REPO):latest \
+		-t $(BUILD_REPO):$(VERSION_MAJOR) \
+		-t $(BUILD_REPO):$(VERSION_MINOR) \
+		-t $(BUILD_REPO):$(VERSION_FULL) \
+		--target frankenphp_prod
 
 up: ## Start the docker hub in detached mode (no logs)
 	@$(DOCKER_COMP) up --detach
@@ -59,6 +79,66 @@ logs: ## Show live logs
 
 sh: ## Connect to the PHP FPM container
 	@$(PHP_CONT) bash
+
+## —— Buildah/Podman 🦭 ———————————————————————————————————————————————————————
+buildah-build: ## Build the dev image using Buildah (Podman compatible)
+	@buildah build --pull --no-cache -t narvik-php:latest --target frankenphp_dev -f Containerfile .
+
+buildah-build-prod: ## Build the prod image using Buildah (Podman compatible)
+	@buildah build --pull --no-cache \
+		-t $(BUILD_REPO):latest \
+		-t $(BUILD_REPO):$(VERSION_MAJOR) \
+		-t $(BUILD_REPO):$(VERSION_MINOR) \
+		-t $(BUILD_REPO):$(VERSION_FULL) \
+		--target frankenphp_prod \
+		-f Containerfile .
+
+buildah-build-multiplatform: ## Build multi-platform prod images using Buildah (amd64 + arm64)
+	@echo "Building for linux/amd64..."
+	@buildah build --pull --no-cache \
+		--platform linux/amd64 \
+		-t $(BUILD_REPO):latest-amd64 \
+		--target frankenphp_prod \
+		-f Containerfile .
+	@echo "Building for linux/arm64..."
+	@buildah build --pull --no-cache \
+		--platform linux/arm64 \
+		-t $(BUILD_REPO):latest-arm64 \
+		--target frankenphp_prod \
+		-f Containerfile .
+	@echo "Creating manifest..."
+	@buildah manifest create $(BUILD_REPO):latest \
+		$(BUILD_REPO):latest-amd64 \
+		$(BUILD_REPO):latest-arm64
+
+podman-up: ## Start containers using podman-compose
+	@$(PODMAN_COMP) up --detach
+
+podman-down: ## Stop containers using podman-compose
+	@$(PODMAN_COMP) down
+
+podman-start: buildah-build podman-up ## Build with Buildah and start with podman-compose
+
+podman-sh: ## Connect to the PHP container via podman-compose
+	@$(PODMAN_PHP_CONT) bash
+
+## —— Multi-platform Docker builds 🏗️ ————————————————————————————————————————
+build-multiplatform: ## Build multi-platform prod images using Docker buildx (amd64 + arm64)
+	@docker buildx build --pull --no-cache \
+		--platform linux/amd64,linux/arm64 \
+		-t $(BUILD_REPO):latest \
+		-t $(BUILD_REPO):$(VERSION_MAJOR) \
+		-t $(BUILD_REPO):$(VERSION_MINOR) \
+		-t $(BUILD_REPO):$(VERSION_FULL) \
+		--target frankenphp_prod \
+		--push .
+
+build-multiplatform-local: ## Build multi-platform prod images locally (no push)
+	@docker buildx build --pull --no-cache \
+		--platform linux/amd64,linux/arm64 \
+		-t $(BUILD_REPO):latest \
+		--target frankenphp_prod \
+		--load .
 
 ## —— Composer 🧙 ——————————————————————————————————————————————————————————————
 composer: ## Run composer, pass the parameter "c=" to run a given command, example: make composer c='req symfony/orm-pack'
