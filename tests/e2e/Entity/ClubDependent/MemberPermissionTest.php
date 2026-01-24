@@ -320,7 +320,7 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($memberIri . '/permissions');
     $permissions = $response->toArray()['member'];
     $accessPermission = array_filter($permissions, fn($p) => $p['permission'] === Permission::EMAIL_ACCESS->value);
-    $accessPermission = array_values($accessPermission)[0];
+    $accessPermission = array_first($accessPermission);
 
     // Try to delete EMAIL_ACCESS - should fail
     $this->makeDeleteRequest($clubIri . '/permissions/' . $accessPermission['uuid']);
