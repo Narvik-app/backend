@@ -366,7 +366,7 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($memberIri . '/permissions');
     $permissions = $response->toArray()['member'];
     $historyPermission = array_filter($permissions, fn($p) => $p['permission'] === \App\Enum\Permission::SALE_HISTORY_ACCESS->value);
-    $historyPermission = array_values($historyPermission)[0];
+    $historyPermission = array_first($historyPermission);
 
     // Try to delete SALE_HISTORY_ACCESS using generic item URL - should fail
     $this->makeDeleteRequest($clubIri . '/permissions/' . $historyPermission['uuid']);
