@@ -68,6 +68,7 @@ final class UserFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectF
       'email'                 => self::faker()->unique()->safeEmail(),
       'accountActivated'      => self::faker()->boolean(),
       'roles'                 => [UserRole::user->value],
+      'legalsAccepted'        => new \DateTimeImmutable(),
     ];
   }
 
