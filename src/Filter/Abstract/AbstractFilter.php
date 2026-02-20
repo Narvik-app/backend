@@ -36,4 +36,8 @@ abstract class AbstractFilter extends ApiPlatformAbstractFilter {
   protected function toBoolean($value): bool {
     return UtilsService::toBoolean($value);
   }
+
+  public function getProperties(): ?array {
+    return $this->properties;
+  }
 }

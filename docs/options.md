@@ -25,6 +25,28 @@ On Windows:
 set SYMFONY_VERSION=6.4.* && docker compose up --wait&set SYMFONY_VERSION=
 ```
 
+<!-- markdownlint-disable MD010 -->
+
+> [!NOTE]
+>
+> If you're using Symfony 7.3 or earlier with FrankenPHP in worker mode, you also need to follow these steps
+>
+> ```console
+> composer require runtime/frankenphp-symfony
+> ```
+>
+> Add this content `env APP_RUNTIME Runtime\FrankenPhpSymfony\Runtime` in the `frankenphp/Caddyfile` on the `worker`section.
+>
+> ```diff
+> worker {
+> 	file ./public/index.php
+> +	env APP_RUNTIME Runtime\FrankenPhpSymfony\Runtime
+> 	{$FRANKENPHP_WORKER_CONFIG}
+> }
+> ```
+
+<!-- markdownlint-enable MD010 -->
+
 ## Installing Development Versions of Symfony
 
 To install a non-stable version of Symfony,
@@ -84,12 +106,11 @@ to inject options block, directive or configuration.
 | `SERVER_NAME`                   | the server name or address                                                                                                                                                              | `localhost`               |
 | `FRANKENPHP_CONFIG`             | a list of extra [FrankenPHP global directives](https://frankenphp.dev/docs/config/#caddyfile-config), one per line                                                                      |                           |
 | `FRANKENPHP_WORKER_CONFIG`      | a list of extra [FrankenPHP worker directives](https://frankenphp.dev/docs/config/#caddyfile-config), one per line                                                                      |                           |
-| `MERCURE_TRANSPORT_URL`         | the value passed to the `transport_url` directive                                                                                                                                       | `bolt:///data/mercure.db` |
 | `MERCURE_PUBLISHER_JWT_KEY`     | the JWT key to use for publishers                                                                                                                                                       |                           |
 | `MERCURE_PUBLISHER_JWT_ALG`     | the JWT algorithm to use for publishers                                                                                                                                                 | `HS256`                   |
 | `MERCURE_SUBSCRIBER_JWT_KEY`    | the JWT key to use for subscribers                                                                                                                                                      |                           |
 | `MERCURE_SUBSCRIBER_JWT_ALG`    | the JWT algorithm to use for subscribers                                                                                                                                                | `HS256`                   |
-| `MERCURE_EXTRA_DIRECTIVES`      | a list of extra [Mercure directives](https://mercure.rocks/docs/hub/config), one per line                                                                                               |                           |
+| `MERCURE_EXTRA_DIRECTIVES`      | a list of extra [Mercure directives](https://mercure.rocks/docs/hub/config), one per line                                                                                               | `transport bolt { path /data/mercure.db }` |
 
 <!-- markdownlint-enable MD013 -->
 

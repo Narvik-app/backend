@@ -8,7 +8,7 @@ If you cloned the Git repository, be sure to not copy the `.git` directory
 to prevent conflicts with the `.git` directory already in your existing project.
 
 You can copy the contents of the repository using Git and tar.
-This will not contain `.git` or any uncommited changes.
+This will not contain `.git` or any uncommitted changes.
 
 ```console
 git archive --format=tar HEAD | tar -xC my-existing-project/
@@ -32,6 +32,20 @@ To use it with Symfony ≤ 7.3, install the FrankenPHP runtime:
 ```console
 composer require runtime/frankenphp-symfony
 ```
+
+Then update worker configuration:
+
+<!-- markdownlint-disable MD010 -->
+
+```diff
+ worker {
+ 	file ./public/index.php
++	env APP_RUNTIME Runtime\FrankenPhpSymfony\Runtime
+ 	{$FRANKENPHP_WORKER_CONFIG}
+ }
+```
+
+<!-- markdownlint-enable MD010 -->
 
 > [!TIP]
 >

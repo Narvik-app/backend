@@ -37,7 +37,7 @@ final class GlobalSettingStory extends Story {
 
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
       'name'  => GlobalSetting::SMTP_HOST->name,
-      'value' => 'mail',
+      'value' => 'host.docker.internal',
     ]));
 
     $this->addToPool('required_settings', GlobalSettingFactory::createOne([
