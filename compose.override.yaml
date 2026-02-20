@@ -17,7 +17,9 @@ services:
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: |
         demo
-        transport bolt:///data/mercure.db
+        transport bolt {
+            path /data/mercure.db
+        }
       # See https://xdebug.org/docs/all_settings#mode
       XDEBUG_MODE: "${XDEBUG_MODE:-off}"
       IGNORE_MIGRATION: true # Comment this line, or false if you want to play the migration (not needed on local dev env due to the fixture loading creating all the tables)
@@ -35,14 +37,6 @@ services:
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###
-  mail:
-    image: axllent/mailpit
-    ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # UI
-    environment:
-      MP_SMTP_AUTH_ACCEPT_ANY: 1
-      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 ###< symfony/mailer ###
 
 volumes:
