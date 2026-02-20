@@ -10737,16 +10737,16 @@
         },
         {
             "name": "zenstruck/foundry",
-            "version": "v2.8.6",
+            "version": "v2.9.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zenstruck/foundry.git",
-                "reference": "6b2c338241148ad1e8ee980b38d40703514cd685"
+                "reference": "9f3fe969d37fd5a0799ca455af9990a88036b6a0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zenstruck/foundry/zipball/6b2c338241148ad1e8ee980b38d40703514cd685",
-                "reference": "6b2c338241148ad1e8ee980b38d40703514cd685",
+                "url": "https://api.github.com/repos/zenstruck/foundry/zipball/9f3fe969d37fd5a0799ca455af9990a88036b6a0",
+                "reference": "9f3fe969d37fd5a0799ca455af9990a88036b6a0",
                 "shasum": ""
             },
             "require": {
@@ -10775,7 +10775,7 @@
                 "doctrine/mongodb-odm-bundle": "^4.6|^5.0",
                 "doctrine/orm": "^2.16|^3.0",
                 "doctrine/persistence": "^2.0|^3.0|^4.0",
-                "phpunit/phpunit": "^9.5.0 || ^10.0 || ^11.0 || ^12.0",
+                "phpunit/phpunit": "^9.5.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
                 "symfony/browser-kit": "^6.4|^7.0|^8.0",
                 "symfony/console": "^6.4|^7.0|^8.0",
                 "symfony/dotenv": "^6.4|^7.0|^8.0",
@@ -10845,7 +10845,7 @@
             ],
             "support": {
                 "issues": "https://github.com/zenstruck/foundry/issues",
-                "source": "https://github.com/zenstruck/foundry/tree/v2.8.6"
+                "source": "https://github.com/zenstruck/foundry/tree/v2.9.2"
             },
             "funding": [
                 {
@@ -10857,7 +10857,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-01-20T19:53:12+00:00"
+            "time": "2026-02-17T15:48:50+00:00"
         }
     ],
     "packages-dev": [
