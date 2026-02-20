@@ -11,9 +11,13 @@ use App\Tests\Story\_InitStory;
 use App\Tests\Story\SalePaymentModeStory;
 
 class SalePaymentModeTest extends AbstractEntityClubLinkedTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 3;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 3;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 0;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 3;
 
   protected function getClassname(): string {

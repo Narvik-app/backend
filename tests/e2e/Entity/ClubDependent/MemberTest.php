@@ -17,9 +17,13 @@ use Zenstruck\Messenger\Test\InteractsWithMessenger;
 class MemberTest extends AbstractEntityClubLinkedTestCase {
   use InteractsWithMessenger;
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 3;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 3;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 2;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 3;
 
   protected function getClassname(): string {

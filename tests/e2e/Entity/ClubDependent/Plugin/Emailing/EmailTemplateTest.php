@@ -11,9 +11,13 @@ use App\Tests\Story\_InitStory;
 
 class EmailTemplateTest extends AbstractEntityClubLinkedTestCase {
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 0;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 0;
 
   protected function getClassname(): string {

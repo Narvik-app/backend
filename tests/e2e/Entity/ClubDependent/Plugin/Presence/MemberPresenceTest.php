@@ -22,11 +22,17 @@ use function Zenstruck\Foundry\faker;
 class MemberPresenceTest extends AbstractEntityClubLinkedTestCase {
   use InteractsWithMessenger;
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 5;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_BADGER_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_BADGER_CLUB_2 = 5;
 
   private Member $selectedMember;

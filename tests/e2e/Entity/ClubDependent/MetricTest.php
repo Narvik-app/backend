@@ -11,9 +11,13 @@ use App\Tests\Story\ActivityStory;
 
 class MetricTest extends AbstractEntityClubLinkedTestCase {
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 5;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 5;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 5;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 5;
 
   protected function getClassname(): string {

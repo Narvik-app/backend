@@ -14,10 +14,15 @@ use App\Tests\Story\SeasonStory;
 
 class MemberSeasonTest extends AbstractEntityClubLinkedTestCase {
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 1;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 1;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 0; // Since we are forced on member club 1
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 1;
+  #[\Override]
   protected int $TOTAL_MEMBER_CLUB_1 = 1;
 
   private Member $selectedMember;

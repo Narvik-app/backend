@@ -11,9 +11,13 @@ use App\Tests\Story\_InitStory;
 use App\Tests\Story\InventoryCategoryStory;
 
 class InventoryCategoryTest extends AbstractEntityClubLinkedTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 6;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 6;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 0;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 6;
 
   protected function getClassname(): string {

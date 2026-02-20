@@ -15,6 +15,7 @@ use App\Tests\Story\GlobalSettingStory;
 
 class UserTest extends AbstractEntityApiTestCase {
 
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 11;
 
   protected function getClassname(): string {

@@ -37,6 +37,7 @@ abstract class AbstractFilter extends ApiPlatformAbstractFilter {
     return UtilsService::toBoolean($value);
   }
 
+  #[\Override]
   public function getProperties(): ?array {
     return $this->properties;
   }

@@ -13,6 +13,7 @@ abstract class AbstractTestCase extends ApiTestCase {
   use ResetDatabase;
   use Factories;
 
+  #[\Override]
   protected static ?bool $alwaysBootKernel = true; // We make the test ready for api-platform 5.0
 
   public function setUp(): void {
