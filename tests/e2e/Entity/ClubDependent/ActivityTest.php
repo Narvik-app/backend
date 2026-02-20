@@ -12,12 +12,19 @@ use App\Tests\Story\ActivityStory;
 use Zenstruck\Foundry\Persistence\Proxy;
 
 class ActivityTest extends AbstractEntityClubLinkedTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 9; // 9 = count ActivityStory::activities_club1
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 9;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 1;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 9;
+  #[\Override]
   protected int $TOTAL_MEMBER_CLUB_1 = 9;
+  #[\Override]
   protected int $TOTAL_BADGER_CLUB_1 = 9;
+  #[\Override]
   protected int $TOTAL_BADGER_CLUB_2 = 1;
 
   protected function getClassname(): string {

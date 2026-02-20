@@ -12,9 +12,13 @@ use App\Tests\Factory\InventoryItemHistoryFactory;
 use App\Tests\Story\_InitStory;
 
 class InventoryItemHistoryTest extends AbstractEntityClubLinkedTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 2;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 2;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = -1; // -1 due to the hardcoded url (and custom provider), user will get a 404 in the get collection
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 2;
 
   protected InventoryItem $inventoryItem;

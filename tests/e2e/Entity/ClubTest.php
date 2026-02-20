@@ -14,6 +14,7 @@ use App\Tests\Story\SalePaymentModeStory;
 use Zenstruck\Foundry\Persistence\Proxy;
 
 class ClubTest extends AbstractEntityApiTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 5;
 
   protected function getClassname(): string {

@@ -10,10 +10,15 @@ use App\Tests\Factory\SeasonFactory;
 use App\Tests\Story\SeasonStory;
 
 class SeasonTest extends AbstractEntityApiTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 10;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 10;
+  #[\Override]
   protected int $TOTAL_MEMBER_CLUB_1 = 10;
 
   protected function getClassname(): string {

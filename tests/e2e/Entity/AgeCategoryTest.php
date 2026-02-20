@@ -10,10 +10,15 @@ use App\Tests\Factory\AgeCategoryFactory;
 use App\Tests\Story\AgeCategoryStory;
 
 class AgeCategoryTest extends AbstractEntityApiTestCase {
+  #[\Override]
   protected int $TOTAL_SUPER_ADMIN = 16;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_1 = 16;
+  #[\Override]
   protected int $TOTAL_ADMIN_CLUB_2 = 16;
+  #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 16;
+  #[\Override]
   protected int $TOTAL_MEMBER_CLUB_1 = 16;
 
   protected function getClassname(): string {
