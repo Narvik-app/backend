@@ -46,7 +46,8 @@ And rebuild the PHP image.
 
 ```Makefile
 # Executables (local)
-DOCKER_COMP = docker compose
+DOCKER ?= $(shell command -v docker 2>/dev/null || command -v podman 2>/dev/null || echo docker)
+DOCKER_COMP = $(DOCKER) compose
 
 # Docker containers
 PHP_CONT = $(DOCKER_COMP) exec php
