@@ -4,13 +4,21 @@
 - Base de données PostgreSQL avec l'extension `unaccent` activée.
 
 ## Fonctionnalités
-- Gestion de la présence des membres
-- Import manuel des membres
-- Import des présences
+- Gestion avancée des membres
+- Système de permissions granulaire (Accès/Edition)
+- Statistiques détaillées sur les présences et les activités
+- Système d'envoi de mails intégré avec templates
+- Module de Point de Vente (POS)
+- Support multi-associations (SaaS)
+- Export des données (CSV)
+- Import manuel des membres et des présences
 
 [Plus d'informations](https://docs.narvik.app/)
 ## Roadmaps
 - [x] Export des données en csv
+- [x] Gestion des permissions
+- [x] Module Point de Vente
+- [x] Système d'emailing
 
 ## Documentations
 
