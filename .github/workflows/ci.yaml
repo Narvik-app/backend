@@ -145,7 +145,7 @@ jobs:
       -
         name: Post PHPUnit summary as PR comment
         if: ${{ github.event_name == 'pull_request' && !cancelled() }}
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: phpunit-summary
           path: formatted_phpunit_summary.md
