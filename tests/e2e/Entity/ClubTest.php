@@ -70,13 +70,13 @@ class ClubTest extends AbstractEntityApiTestCase {
   public function testDelete(): void {
     // Only super admin can delete
     $this->makeAllLoggedRequests(
-      memberClub1Code: ResponseCodeEnum::not_found,
-      supervisorClub1Code: ResponseCodeEnum::not_found,
-      adminClub1Code: ResponseCodeEnum::not_found,
-      adminClub2Code: ResponseCodeEnum::not_found,
+      memberClub1Code: ResponseCodeEnum::forbidden,
+      supervisorClub1Code: ResponseCodeEnum::forbidden,
+      adminClub1Code: ResponseCodeEnum::forbidden,
+      adminClub2Code: ResponseCodeEnum::forbidden,
       superAdminCode: ResponseCodeEnum::no_content,
-      badgerClub1Code: ResponseCodeEnum::not_found,
-      badgerClub2Code: ResponseCodeEnum::not_found,
+      badgerClub1Code: ResponseCodeEnum::forbidden,
+      badgerClub2Code: ResponseCodeEnum::forbidden,
       requestFunction: function (string $level, ?int $id) {
         $club = ClubFactory::createOne([
           'name' => 'Club to delete',
