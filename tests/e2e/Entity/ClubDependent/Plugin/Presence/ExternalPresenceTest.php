@@ -105,7 +105,6 @@ class ExternalPresenceTest extends AbstractEntityClubLinkedTestCase {
       supervisorClub1Code: ResponseCodeEnum::no_content,
       adminClub1Code: ResponseCodeEnum::no_content,
       superAdminCode: ResponseCodeEnum::no_content,
-      badgerClub1Code: ResponseCodeEnum::no_content,
       requestFunction: function (string $level, ?int $id) use (&$payloadCheck) {
         $presence = ExternalPresenceFactory::createOne();
         $this->makeDeleteRequest($this->getIriFromResource($presence));
