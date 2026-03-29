@@ -63,7 +63,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
       security: "is_granted('".ClubRole::supervisor->value."', request) || is_granted('".ClubRole::badger->value."', request)",
     ),
     new Delete(
-      security: "is_granted('".ClubRole::supervisor->value."', request) || is_granted('".ClubRole::badger->value."', request)",
+      security: "is_granted('".ClubRole::supervisor->value."', request)",
     ),
 
     new GetCollection(
