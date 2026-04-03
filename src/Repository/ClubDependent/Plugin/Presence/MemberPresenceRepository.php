@@ -149,7 +149,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
 
     $firstOrder = true;
     foreach ($orderBy as $field => $direction) {
-      $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+      $direction = strtoupper((string) $direction) === 'DESC' ? 'DESC' : 'ASC';
       if (!isset($allowedFields[$field])) {
         continue;
       }
