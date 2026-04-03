@@ -70,37 +70,34 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
   }
 
   /**
-   * Get member presence statistics with count and last presence date
+   * Get member presence statistics with count and last presence date.
    * The results are restricted to members present in the current season if $currentSeason is provided.
    *
    * @param Club|null $club
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
-   * @param string $order Sort order (ASC or DESC)
+   * @param array $orderBy Associative array of field => direction, e.g. ['presenceCount' => 'DESC'].
+   *                       Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, lastControlShooting.
    * @param int $page Page number (1-based)
    * @param int $itemsPerPage Number of items per page
    * @param Season|null $currentSeason
+   * @param Activity|null $controlShootingActivity When set, computes lastControlShooting per member
    * @return array Array of statistics with member info, presence count, and last presence date
    */
   public function getMemberPresenceStats(
     ?Club $club,
     \DateTimeImmutable $endDate,
     ?\DateTimeImmutable $startDate = null,
-    string $order = 'ASC',
+    array $orderBy = ['presenceCount' => 'DESC'],
     int $page = 1,
     int $itemsPerPage = 30,
-    ?Season $currentSeason = null
+    ?Season $currentSeason = null,
+    ?Activity $controlShootingActivity = null
   ): array {
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
-    // Validate and normalize order
-    $order = strtoupper($order);
-    if (!in_array($order, ['ASC', 'DESC'], true)) {
-      $order = 'ASC';
-    }
-
-    // Validate pagination parameters with defensive bounds
     $page = max(1, $page);
+
     // We select from Member to include those with 0 presences
     $qb = $this->getEntityManager()->createQueryBuilder();
     $qb->from(Member::class, 'mem');
@@ -112,10 +109,23 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->addSelect('mem.firstname')
       ->addSelect('mem.lastname')
       ->addSelect('mem.licence')
+      ->addSelect('mem.medicalCertificateExpiration')
       // Left join presences filtered by date range
       ->leftJoin('mem.memberPresences', 'mp', Join::WITH, $qb->expr()->between('mp.date', ':from', ':to'))
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);
+
+    // Compute lastControlShooting via correlated subquery when a control activity is configured
+    if ($controlShootingActivity) {
+      $subQb = $this->getEntityManager()->createQueryBuilder();
+      $subQb->select('MAX(mpcs.date)')
+        ->from(MemberPresence::class, 'mpcs')
+        ->join('mpcs.activities', 'acss')
+        ->where('mpcs.member = mem')
+        ->andWhere('acss.id = :controlActivityId');
+      $qb->addSelect('(' . $subQb->getDQL() . ') as lastControlShooting')
+         ->setParameter('controlActivityId', $controlShootingActivity->getId());
+    }
 
     if ($club) {
       $this->applyClubRestriction($qb, $club);
@@ -127,23 +137,32 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
          ->setParameter('currentSeason', $currentSeason);
     }
 
-    // Sorting logic
-    $qb->orderBy('presenceCount', $order);
+    // Allowed sortable fields mapped to their DQL expression
+    $allowedFields = [
+      'presenceCount'              => 'presenceCount',
+      'lastPresenceDate'           => 'lastPresenceDate',
+      'medicalCertificateExpiration' => 'mem.medicalCertificateExpiration',
+      'lastControlShooting'        => 'lastControlShooting',
+    ];
 
-    // Secondary sort by date
-    // If we want "least present" (ASC), we want NULL dates first (which is default in MySQL ASC)
-    // If we want "most present" (DESC), we want latest dates first (DESC handles this)
-    $qb->addOrderBy('lastPresenceDate', $order);
+    foreach ($orderBy as $field => $direction) {
+      if (!isset($allowedFields[$field])) {
+        continue;
+      }
+      $qb->addOrderBy($allowedFields[$field], $direction);
+    }
 
-    // Tertiary sort by name for stability
+    // Stability sort by name
     $qb->addOrderBy('mem.lastname', 'ASC')
        ->addOrderBy('mem.firstname', 'ASC');
 
     $qb
-      ->groupBy('memberUuid')
+      ->groupBy('mem.id')
+      ->addGroupBy('memberUuid')
       ->addGroupBy('mem.firstname')
       ->addGroupBy('mem.lastname')
-      ->addGroupBy('mem.licence');
+      ->addGroupBy('mem.licence')
+      ->addGroupBy('mem.medicalCertificateExpiration');
 
     if ($itemsPerPage > 0) {
         $qb->setFirstResult(($page - 1) * $itemsPerPage)

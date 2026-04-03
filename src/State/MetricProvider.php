@@ -209,15 +209,35 @@ class MetricProvider implements ProviderInterface {
   protected function getMemberPresenceStats(string $identifier): Metric {
     $request = $this->requestStack->getCurrentRequest();
 
-    // Get and validate query parameters
-    $order = strtoupper((string) $request?->query->get('order', 'ASC'));
-    if (!in_array($order, ['ASC', 'DESC'])) {
-      throw new BadRequestHttpException('Invalid order parameter. Must be ASC or DESC.');
-    }
-
     $page = $request->query->getInt('page', 1);
     $itemsPerPage = $request->query->getInt('itemsPerPage', 30);
-    $order = $request->query->get('order', 'ASC');
+
+    // Parse API Platform-style order[field]=direction query params
+    $allowedFields = ['presenceCount', 'lastPresenceDate', 'medicalCertificateExpiration', 'lastControlShooting'];
+    $orderParam = $request->query->all('order');
+    $orderBy = [];
+    if (!empty($orderParam) && is_array($orderParam)) {
+      foreach ($orderParam as $field => $direction) {
+        $direction = strtoupper((string) $direction);
+        if (in_array($field, $allowedFields, true) && in_array($direction, ['ASC', 'DESC'], true)) {
+          $orderBy[$field] = $direction;
+        }
+      }
+    }
+    if (empty($orderBy)) {
+      $orderBy = ['presenceCount' => 'DESC'];
+    }
+
+    // Fetch control shooting activity from club settings (if configured)
+    $controlShootingActivity = $this->club?->getSettings()?->getControlShootingActivity();
+
+    // lastControlShooting is only sortable when the alias exists (requires control activity)
+    if (!$controlShootingActivity) {
+      unset($orderBy['lastControlShooting']);
+      if (empty($orderBy)) {
+        $orderBy = ['presenceCount' => 'DESC'];
+      }
+    }
 
     // Get current season to enforce filter
     $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
@@ -225,10 +245,11 @@ class MetricProvider implements ProviderInterface {
       $this->club,
       $this->filterDates['end'],
       $this->filterDates['start'],
-      $order,
+      $orderBy,
       $page,
       $itemsPerPage,
-      $currentSeason
+      $currentSeason,
+      $controlShootingActivity
     );
 
     // Get total count for pagination metadata
@@ -244,7 +265,7 @@ class MetricProvider implements ProviderInterface {
       $itemsPerPage,
       $totalItems,
       $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
-      $order
+      $orderBy
     ));
 
     return $metric;

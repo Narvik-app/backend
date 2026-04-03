@@ -210,14 +210,16 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertArrayHasKey('totalPages', $pagination);
     $this->assertArrayHasKey('order', $pagination);
     $this->assertEquals(1, $pagination['currentPage']);
-    $this->assertEquals('ASC', $pagination['order']);
+    $this->assertIsArray($pagination['order']);
+    // Default ordering is presenceCount DESC
+    $this->assertEquals(['presenceCount' => 'DESC'], $pagination['order']);
 
-    // Check that stats are ordered by presence count (ASC)
+    // Check that stats are ordered by presence count DESC (default)
     $items = $data['values'];
     if (count($items) >= 2) {
       $firstMemberCount = $items[0]['presenceCount'];
       $secondMemberCount = $items[1]['presenceCount'];
-      $this->assertLessThanOrEqual($secondMemberCount, $firstMemberCount);
+      $this->assertGreaterThanOrEqual($secondMemberCount, $firstMemberCount);
     }
 
     // Verify structure of each stat entry
@@ -227,6 +229,8 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       $this->assertArrayHasKey('lastPresenceDate', $stat);
       $this->assertArrayHasKey('firstname', $stat);
       $this->assertArrayHasKey('lastname', $stat);
+      $this->assertArrayHasKey('medicalCertificateExpiration', $stat);
+      // lastControlShooting is only present when a control activity is configured
     }
   }
 
@@ -297,8 +301,8 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $this->loggedAsSupervisorClub1();
 
-    // Test DESC ordering (default - most present first)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=DESC";
+    // Test DESC ordering (most present first) via order[presenceCount]=DESC
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
@@ -306,9 +310,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     // First member should have most presences
     $this->assertGreaterThanOrEqual(5, $items[0]['presenceCount']);
+    $this->assertEquals(['presenceCount' => 'DESC'], $data['pagination']['order']);
 
-    // Test DESC ordering (least present first)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=DESC";
+    // Test ASC ordering (least present first) via order[presenceCount]=ASC
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=ASC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
@@ -316,8 +321,21 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     // First member should have least presences
     if (count($items) >= 2) {
-      $this->assertGreaterThan($items[1]['presenceCount'], $items[0]['presenceCount']);
+      $this->assertLessThanOrEqual($items[1]['presenceCount'], $items[0]['presenceCount']);
     }
+
+    // Test ordering by medicalCertificateExpiration
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[medicalCertificateExpiration]=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['medicalCertificateExpiration' => 'ASC'], $response->toArray()['pagination']['order']);
+
+    // Note: order[lastControlShooting] is only valid when the club has a control shooting
+    // activity configured. Without it the field is stripped and falls back to default.
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test pagination
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=1&itemsPerPage=2";
@@ -331,14 +349,105 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertLessThanOrEqual(2, count($data['values']));
   }
 
+  public function testMemberPresenceStatsWithControlShootingActivity(): void {
+    $member1 = _InitStory::MEMBER_member_club_1();
+    $member2 = _InitStory::MEMBER_admin_club_1();
+    $member3 = _InitStory::MEMBER_supervisor_club_1();
+    $club1 = _InitStory::club_1();
+    $controlActivity = ActivityStory::getRandom('activities_club1');
+
+    $settingsIri = $this->getIriFromResource($club1->getSettings());
+    $activityIri = $this->getIriFromResource($controlActivity);
+
+    $this->loggedAsAdminClub1();
+    $this->makePatchRequest($settingsIri, ['controlShootingActivity' => $activityIri]);
+    $this->assertResponseIsSuccessful();
+
+    // member1: 3 control shooting presences, latest = most recent
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-1 month'),
+      'member' => $member1,
+      'activities' => [$controlActivity],
+    ])->create();
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-3 months'),
+      'member' => $member1,
+      'activities' => [$controlActivity],
+    ])->create();
+
+    // member2: 1 control shooting presence, older than member1
+    MemberPresenceFactory::new([
+      'date' => new \DateTimeImmutable('-6 months'),
+      'member' => $member2,
+      'activities' => [$controlActivity],
+    ])->create();
+
+    // member3: no control shooting presence
+
+    $this->loggedAsSupervisorClub1();
+
+    // lastControlShooting is now included in response
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    foreach ($data['values'] as $stat) {
+      $this->assertArrayHasKey('lastControlShooting', $stat);
+    }
+
+    // Sort ASC: member with oldest control shooting first (member2), then member1, then member3 (null last)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    $this->assertEquals(['lastControlShooting' => 'ASC'], $data['pagination']['order']);
+
+    // Sort DESC: member with most recent control shooting first (member1)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+    $this->assertEquals(['lastControlShooting' => 'DESC'], $data['pagination']['order']);
+    $items = $data['values'];
+    // First item should have the most recent lastControlShooting
+    $firstWithShooting = null;
+    foreach ($items as $item) {
+      if ($item['lastControlShooting'] !== null) {
+        $firstWithShooting = $item;
+        break;
+      }
+    }
+    $this->assertNotNull($firstWithShooting, 'Expected at least one member with a control shooting date');
+    $this->assertEquals($member1->getUuid(), $firstWithShooting['memberUuid']);
+
+    // Remove control activity from settings — lastControlShooting should no longer appear
+    $this->loggedAsAdminClub1();
+    $this->makePatchRequest($settingsIri, ['controlShootingActivity' => null]);
+    $this->assertResponseIsSuccessful();
+
+    $this->loggedAsSupervisorClub1();
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
+    $data = $this->makeGetRequest($iri)->toArray();
+    foreach ($data['values'] as $stat) {
+      $this->assertArrayNotHasKey('lastControlShooting', $stat);
+    }
+  }
+
   public function testMemberPresenceStatsWithInvalidParameters(): void {
     $club1 = _InitStory::club_1();
     $this->loggedAsSupervisorClub1();
 
-    // Test invalid order parameter
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=INVALID";
-    $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+    // Invalid order field is silently ignored, falls back to default ordering
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[unknownField]=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
+
+    // Invalid direction is silently ignored, falls back to default order
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=INVALID";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test invalid page parameter (negative)
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=-1";
