@@ -210,7 +210,9 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertArrayHasKey('totalPages', $pagination);
     $this->assertArrayHasKey('order', $pagination);
     $this->assertEquals(1, $pagination['currentPage']);
-    $this->assertEquals('ASC', $pagination['order']);
+    $this->assertIsArray($pagination['order']);
+    // Default ordering is presenceCount DESC
+    $this->assertEquals(['presenceCount' => 'DESC'], $pagination['order']);
 
     // Check that stats are ordered by presence count (ASC)
     $items = $data['values'];
@@ -227,6 +229,8 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       $this->assertArrayHasKey('lastPresenceDate', $stat);
       $this->assertArrayHasKey('firstname', $stat);
       $this->assertArrayHasKey('lastname', $stat);
+      $this->assertArrayHasKey('medicalCertificateExpiration', $stat);
+      $this->assertArrayHasKey('lastControlShooting', $stat);
     }
   }
 
@@ -297,8 +301,8 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $this->loggedAsSupervisorClub1();
 
-    // Test DESC ordering (default - most present first)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=DESC";
+    // Test DESC ordering (most present first) via order[presenceCount]=DESC
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
@@ -306,9 +310,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     // First member should have most presences
     $this->assertGreaterThanOrEqual(5, $items[0]['presenceCount']);
+    $this->assertEquals(['presenceCount' => 'DESC'], $data['pagination']['order']);
 
-    // Test DESC ordering (least present first)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=DESC";
+    // Test ASC ordering (least present first) via order[presenceCount]=ASC
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=ASC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
@@ -316,8 +321,20 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     // First member should have least presences
     if (count($items) >= 2) {
-      $this->assertGreaterThan($items[1]['presenceCount'], $items[0]['presenceCount']);
+      $this->assertLessThanOrEqual($items[1]['presenceCount'], $items[0]['presenceCount']);
     }
+
+    // Test ordering by medicalCertificateExpiration
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[medicalCertificateExpiration]=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['medicalCertificateExpiration' => 'ASC'], $response->toArray()['pagination']['order']);
+
+    // Test ordering by lastControlShooting
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['lastControlShooting' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test pagination
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=1&itemsPerPage=2";
@@ -335,10 +352,18 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $club1 = _InitStory::club_1();
     $this->loggedAsSupervisorClub1();
 
-    // Test invalid order parameter
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order=INVALID";
-    $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+    // Invalid order field is silently ignored, falls back to default ordering
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[unknownField]=ASC";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
+
+    // Invalid direction is silently ignored (falls back to ASC), valid field is kept
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=INVALID";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    // Falls back to default since direction is invalid
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test invalid page parameter (negative)
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=-1";
