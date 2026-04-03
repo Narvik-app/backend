@@ -214,12 +214,12 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     // Default ordering is presenceCount DESC
     $this->assertEquals(['presenceCount' => 'DESC'], $pagination['order']);
 
-    // Check that stats are ordered by presence count (ASC)
+    // Check that stats are ordered by presence count DESC (default)
     $items = $data['values'];
     if (count($items) >= 2) {
       $firstMemberCount = $items[0]['presenceCount'];
       $secondMemberCount = $items[1]['presenceCount'];
-      $this->assertLessThanOrEqual($secondMemberCount, $firstMemberCount);
+      $this->assertGreaterThanOrEqual($secondMemberCount, $firstMemberCount);
     }
 
     // Verify structure of each stat entry
@@ -230,7 +230,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       $this->assertArrayHasKey('firstname', $stat);
       $this->assertArrayHasKey('lastname', $stat);
       $this->assertArrayHasKey('medicalCertificateExpiration', $stat);
-      $this->assertArrayHasKey('lastControlShooting', $stat);
+      // lastControlShooting is only present when a control activity is configured
     }
   }
 
@@ -330,11 +330,12 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $this->assertEquals(['medicalCertificateExpiration' => 'ASC'], $response->toArray()['pagination']['order']);
 
-    // Test ordering by lastControlShooting
+    // Note: order[lastControlShooting] is only valid when the club has a control shooting
+    // activity configured. Without it the field is stripped and falls back to default.
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
-    $this->assertEquals(['lastControlShooting' => 'DESC'], $response->toArray()['pagination']['order']);
+    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test pagination
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=1&itemsPerPage=2";

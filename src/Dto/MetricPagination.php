@@ -2,6 +2,7 @@
 
 namespace App\Dto;
 
+use ApiPlatform\Metadata\ApiProperty;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 final class MetricPagination {
@@ -15,6 +16,7 @@ final class MetricPagination {
       #[Groups(['metric'])]
       private int $totalPages,
       #[Groups(['metric'])]
+      #[ApiProperty(schema: ['type' => 'object', 'additionalProperties' => ['type' => 'string']])]
       private array $order
   )
   {

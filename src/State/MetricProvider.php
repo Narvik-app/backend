@@ -231,6 +231,14 @@ class MetricProvider implements ProviderInterface {
     // Fetch control shooting activity from club settings (if configured)
     $controlShootingActivity = $this->club?->getSettings()?->getControlShootingActivity();
 
+    // lastControlShooting is only sortable when the alias exists (requires control activity)
+    if (!$controlShootingActivity) {
+      unset($orderBy['lastControlShooting']);
+      if (empty($orderBy)) {
+        $orderBy = ['presenceCount' => 'DESC'];
+      }
+    }
+
     // Get current season to enforce filter
     $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
     $values = $this->memberPresenceRepository->getMemberPresenceStats(

@@ -125,8 +125,6 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
         ->andWhere('acss.id = :controlActivityId');
       $qb->addSelect('(' . $subQb->getDQL() . ') as lastControlShooting')
          ->setParameter('controlActivityId', $controlShootingActivity->getId());
-    } else {
-      $qb->addSelect('NULL as lastControlShooting');
     }
 
     if ($club) {
