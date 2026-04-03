@@ -359,11 +359,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
-    // Invalid direction is silently ignored (falls back to ASC), valid field is kept
+    // Invalid direction is silently ignored, falls back to default order
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[presenceCount]=INVALID";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
-    // Falls back to default since direction is invalid
     $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
 
     // Test invalid page parameter (negative)

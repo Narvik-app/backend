@@ -145,19 +145,11 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       'lastControlShooting'        => 'lastControlShooting',
     ];
 
-    $firstOrder = true;
     foreach ($orderBy as $field => $direction) {
-      $direction = strtoupper((string) $direction) === 'DESC' ? 'DESC' : 'ASC';
       if (!isset($allowedFields[$field])) {
         continue;
       }
-      $dqlField = $allowedFields[$field];
-      if ($firstOrder) {
-        $qb->orderBy($dqlField, $direction);
-        $firstOrder = false;
-      } else {
-        $qb->addOrderBy($dqlField, $direction);
-      }
+      $qb->addOrderBy($allowedFields[$field], $direction);
     }
 
     // Stability sort by name
