@@ -23,14 +23,14 @@ trait PresenceRepositoryTrait {
     return $qb;
   }
 
-  private function applyActivityExclusionConstraint(?Club $club, QueryBuilder $qb): void {
+  private function applyActivityExclusionConstraint(?Club $club, QueryBuilder $qb, string $presenceAlias = 'm'): void {
     if ($club) {
       $this->applyClubRestriction($qb, $club);
 
       $ignoredActivities = $club->getSettings()?->getExcludedActivitiesFromOpeningDays();
 
       if ($ignoredActivities && $ignoredActivities->count() > 0) {
-        $qb->leftJoin('m.activities', 'mpa')
+          $qb->leftJoin($presenceAlias . '.activities', 'mpa')
            ->andWhere($qb->expr()->notIn("mpa", ":ids"))
            ->setParameter("ids", $ignoredActivities)
         ;
@@ -95,11 +95,10 @@ trait PresenceRepositoryTrait {
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
     $qb = $this->createQueryBuilder("m");
-    if ($club) {
-      $this->applyClubRestriction($qb, $club);
-    }
+    $this->applyActivityExclusionConstraint($club, $qb);
+
     return $qb
-      ->select($qb->expr()->count("m.id"))
+      ->select($qb->expr()->countDistinct("m.id"))
       ->andWhere($qb->expr()->between("m.date", ":from", ":to"))
       ->setParameter("from", $dateRange['start'])
       ->setParameter("to", $dateRange['end'])
