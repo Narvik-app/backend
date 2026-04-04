@@ -104,7 +104,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
 
     $qb
       ->select('mem.uuid as memberUuid')
-      ->addSelect('COUNT(mp.id) as presenceCount')
+      ->addSelect('COUNT(DISTINCT mp.id) as presenceCount')
       ->addSelect('MAX(mp.date) as lastPresenceDate')
       ->addSelect('mem.firstname')
       ->addSelect('mem.lastname')
@@ -129,6 +129,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
 
     if ($club) {
       $this->applyClubRestriction($qb, $club);
+      $this->applyActivityExclusionConstraint($club, $qb, 'mp');
     }
 
     if ($currentSeason) {
