@@ -23,10 +23,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update composer.json
-        run: |
-          VERSION=${{ github.ref_name }}
-          VERSION_NUMBER=${VERSION#v}
-          jq --indent 4 --arg ver "$VERSION_NUMBER" '.version = $ver' composer.json > composer.json.tmp && mv composer.json.tmp composer.json
+        uses: froozeify/gh-version-updater@v1
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v7
