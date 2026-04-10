@@ -96,6 +96,9 @@ jobs:
           PHPUNIT_LOG="phpunit-output.log"
           FORMATTED_OUTPUT="formatted_phpunit_summary.md"
 
+          # Strip ANSI escape codes from log
+          sed -i 's/\x1B\[[0-9;]*[mGKHF]//g' "$PHPUNIT_LOG"
+
           # Extract summary lines
           TEST_SUMMARY=$(grep -o 'Tests:.*' "$PHPUNIT_LOG" | head -n 1)
           TIME_SUMMARY=$(grep -o 'Time:.*, Memory:.*' "$PHPUNIT_LOG" | head -n 1)
