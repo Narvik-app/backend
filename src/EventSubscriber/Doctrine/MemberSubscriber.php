@@ -32,6 +32,7 @@ class MemberSubscriber extends AbstractEventSubscriber {
   public function preRemove(Member $member, PreRemoveEventArgs $args): void {
     $image = $member->getProfileImage();
     if ($image) {
+      $this->entityManager->initializeObject($image);
       $this->entityManager->remove($image);
     }
   }

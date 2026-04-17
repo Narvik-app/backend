@@ -82,7 +82,9 @@ class ImageService {
 
   public function importMemberPhoto(Member $member, ?UploadedFile $file): void {
     if ($member->getProfileImage()) {
-      $this->entityManager->remove($member->getProfileImage());
+      $oldImage = $member->getProfileImage();
+      $this->entityManager->initializeObject($oldImage);
+      $this->entityManager->remove($oldImage);
       $member->setProfileImage(null);
     }
     if ($file) {
@@ -122,7 +124,9 @@ class ImageService {
       }
 
       if ($member->getProfileImage() !== null) {
-        $this->entityManager->remove($member->getProfileImage());
+        $oldImage = $member->getProfileImage();
+        $this->entityManager->initializeObject($oldImage);
+        $this->entityManager->remove($oldImage);
         $member->setProfileImage(null);
       }
 
