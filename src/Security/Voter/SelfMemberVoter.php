@@ -17,6 +17,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class SelfMemberVoter extends Voter {
   public const string READ = 'SELF_READ';
+  public const string EDIT_PROFILE_IMAGE = 'SELF_EDIT_PROFILE_IMAGE';
 
   public function __construct(
     private readonly Security $security,
@@ -24,7 +25,7 @@ class SelfMemberVoter extends Voter {
   }
 
   protected function supports(string $attribute, mixed $subject): bool {
-    if (!in_array($attribute, [self::READ])) {
+    if (!in_array($attribute, [self::READ, self::EDIT_PROFILE_IMAGE])) {
       return false;
     }
 
