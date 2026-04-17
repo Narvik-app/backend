@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Member;
 use App\Enum\FileCategory;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\FileRepository;
@@ -79,13 +80,22 @@ class ImageService {
     $this->entityManager->flush();
   }
 
-  public function importItacPhotos(Club $club, UploadedFile $file): void {
-    // We remove all old profile images
-    $oldPictures = $this->fileRepository->findByClubAndCategory($club, FileCategory::member_picture);
-    foreach ($oldPictures as $oldPicture) {
-      $this->entityManager->remove($oldPicture);
+  public function importMemberPhoto(Member $member, ?UploadedFile $file): void {
+    if ($member->getProfileImage()) {
+      $oldImage = $member->getProfileImage();
+      $this->entityManager->initializeObject($oldImage);
+      $this->entityManager->remove($oldImage);
+      $member->setProfileImage(null);
     }
+    if ($file) {
+      $dbFile = $this->fileService->importFile($file, $file->getClientOriginalName(), FileCategory::member_picture, club: $member->getClub(), flush: false);
+      $member->setProfileImage($dbFile);
+    }
+    $this->entityManager->persist($member);
+    $this->entityManager->flush();
+  }
 
+  public function importItacPhotos(Club $club, UploadedFile $file): void {
     $fileFolder = $this->params->get('app.files');
     $tmpFolder = $fileFolder . '/tmp_zip_itac_photos_' . UuidService::generateUuid();
     $this->fileService->createFolderIfNotExist($tmpFolder);
@@ -111,6 +121,13 @@ class ImageService {
       $member = $this->memberRepository->findOneByLicence($club, $licence);
       if (!$member) {
         continue;
+      }
+
+      if ($member->getProfileImage() !== null) {
+        $oldImage = $member->getProfileImage();
+        $this->entityManager->initializeObject($oldImage);
+        $this->entityManager->remove($oldImage);
+        $member->setProfileImage(null);
       }
 
       $uploadedFile = new SfFile($findFile->getRealPath());

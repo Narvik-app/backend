@@ -21,6 +21,7 @@ use App\Controller\ClubDependent\MemberImportFromItac;
 use App\Controller\ClubDependent\MemberImportSecondaryClubFromItac;
 use App\Controller\ClubDependent\MemberLinkWithUser;
 use App\Controller\ClubDependent\MemberPhotosImportFromItac;
+use App\Controller\ClubDependent\MemberProfileImageUpdate;
 use App\Controller\ClubDependent\MemberSearchByLicenceOrName;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
@@ -227,6 +228,35 @@ use Symfony\Component\Validator\Constraints as Assert;
       securityPostDenormalize: "is_granted('".Permission::IMPORT_PHOTOS_EDIT->value."', request)",
       read: false,
       deserialize: false,
+    ),
+    new Post(
+      uriTemplate: '/clubs/{clubUuid}/members/{uuid}/profile-image',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'uuid' => new Link(fromClass: self::class),
+      ],
+      controller: MemberProfileImageUpdate::class,
+      openapi: new Model\Operation(
+        requestBody: new Model\RequestBody(
+          content: new \ArrayObject([
+            'multipart/form-data' => [
+              'schema' => [
+                'type' => 'object',
+                'properties' => [
+                  'file' => [
+                    'type' => 'string',
+                    'format' => 'binary'
+                  ]
+                ]
+              ]
+            ]
+          ])
+        )
+      ),
+      security: "is_granted('".Permission::IMPORT_PHOTOS_EDIT->value."', request) or is_granted('".SelfMemberVoter::EDIT_PROFILE_IMAGE."', object)",
+      read: true,
+      deserialize: false,
+      write: false,
     )
   ],
 

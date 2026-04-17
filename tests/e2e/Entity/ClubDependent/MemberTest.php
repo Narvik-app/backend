@@ -342,6 +342,10 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $member = _InitStory::MEMBER_member_club_1();
     $memberIri = $this->getIriFromResource($member);
 
+    // A second member not in the zip gets a photo first (to verify additive behavior)
+    $otherMember = MemberFactory::createOne(['club' => _InitStory::club_1()]);
+    $otherMemberIri = $this->getIriFromResource($otherMember);
+
     $this->loggedAsAdminClub1();
     $this->makePatchRequest($memberIri, ["licence" => "01234321"]);
     $this->assertResponseIsSuccessful();
@@ -350,7 +354,17 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $this->assertJsonNotHasKey("profileImage", $response);
     $this->assertJsonContains(["licence" => "01234321"]);
 
-    // We upload the zip
+    // Give the other member a photo via the single-member endpoint
+    $logoFile = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($otherMemberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $logoFile]],
+    ]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonHasKey("profileImage", $this->makeGetRequest($otherMemberIri));
+
+    // We upload the zip (which does not contain the other member)
     $file = FixtureFileManager::getUploadedFile(FixtureFileManager::PROFILE_PICTURES);
     $this->makePostRequest($this->getRootWClubUrl($club) . "/-/photos-from-itac", [
       '_not_json' => true,
@@ -369,6 +383,127 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     // We get the image
     $r = $this->makeGetRequest($response->toArray(false)['profileImage']['privateUrl']);
     $this->assertResponseIsSuccessful();
+
+    // The other member's photo was not removed by the zip import (additive behavior)
+    $this->assertJsonHasKey("profileImage", $this->makeGetRequest($otherMemberIri));
+  }
+
+  public function testUploadMemberPhoto(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    $memberIri = $this->getIriFromResource($member);
+
+    $this->loggedAsAdminClub1();
+
+    $response = $this->makeGetRequest($memberIri);
+    $this->assertJsonNotHasKey("profileImage", $response);
+
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file]],
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    $response = $this->makeGetRequest($memberIri);
+    $this->assertJsonHasKey("profileImage", $response);
+
+    // The image is accessible
+    $this->makeGetRequest($response->toArray(false)['profileImage']['privateUrl']);
+    $this->assertResponseIsSuccessful();
+
+    // Uploading again replaces (no duplicate)
+    $file2 = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file2]],
+    ]);
+    $this->assertResponseIsSuccessful();
+  }
+
+  public function testClearMemberPhoto(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    $memberIri = $this->getIriFromResource($member);
+
+    $this->loggedAsAdminClub1();
+
+    // Upload a photo first
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file]],
+    ]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonHasKey("profileImage", $this->makeGetRequest($memberIri));
+
+    // Clear it by posting with no file
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => [],
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    $this->assertJsonNotHasKey("profileImage", $this->makeGetRequest($memberIri));
+  }
+
+  public function testMemberDeletionRemovesPhoto(): void {
+    $member = MemberFactory::createOne(['club' => _InitStory::club_1()]);
+    $memberIri = $this->getIriFromResource($member);
+
+    $this->loggedAsAdminClub1();
+
+    // Upload a photo
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file]],
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    $response = $this->makeGetRequest($memberIri);
+    $privateUrl = $response->toArray(false)['profileImage']['privateUrl'];
+
+    // Delete the member
+    $this->loggedAsSuperAdmin();
+    $this->makeDeleteRequest($memberIri);
+    $this->assertResponseIsSuccessful();
+
+    // The file should be gone
+    $this->loggedAsAdminClub1();
+    $this->makeGetRequest($privateUrl);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::not_found->value);
+  }
+
+  public function testSelfCanEditOwnPhoto(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    $memberIri = $this->getIriFromResource($member);
+
+    $otherMember = _InitStory::MEMBER_admin_club_1();
+    $otherMemberIri = $this->getIriFromResource($otherMember);
+
+    $this->loggedAsMemberClub1();
+
+    // Self can upload their own photo
+    $file = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($memberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file]],
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    // Self cannot edit another member's photo
+    $file2 = FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, true);
+    $this->makePostRequest($otherMemberIri . "/profile-image", [
+      '_not_json' => true,
+      'headers' => ['Content-Type' => 'multipart/form-data'],
+      'extra' => ['files' => ['file' => $file2]],
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
   }
 
   public function testDeleteUserShouldNotCascade(): void {
