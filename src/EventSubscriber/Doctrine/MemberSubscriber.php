@@ -21,8 +21,8 @@ class MemberSubscriber extends AbstractEventSubscriber {
   public function postLoad(Member $member, PostLoadEventArgs $args): void {
     $this->memberService->setCurrentSeason($member);
 
-    $controlShootingActivity = $member->getClub()?->getSettings()?->getControlShootingActivity();
-    $this->memberService->setLastControlShooting($member, $controlShootingActivity);
+    $controlActivity = $member->getClub()?->getSettings()?->getControlActivity();
+    $this->memberService->setLastControlActivity($member, $controlActivity);
   }
 
   public function postPersist(Member $member, PostPersistEventArgs $args): void {

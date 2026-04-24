@@ -77,11 +77,11 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
    * @param array $orderBy Associative array of field => direction, e.g. ['presenceCount' => 'DESC'].
-   *                       Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, lastControlShooting.
+   *                       Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, lastControlActivity.
    * @param int $page Page number (1-based)
    * @param int $itemsPerPage Number of items per page
    * @param Season|null $currentSeason
-   * @param Activity|null $controlShootingActivity When set, computes lastControlShooting per member
+   * @param Activity|null $controlActivity When set, computes lastControlActivity per member
    * @return array Array of statistics with member info, presence count, and last presence date
    */
   public function getMemberPresenceStats(
@@ -92,7 +92,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     int $page = 1,
     int $itemsPerPage = 30,
     ?Season $currentSeason = null,
-    ?Activity $controlShootingActivity = null
+    ?Activity $controlActivity = null
   ): array {
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
@@ -115,16 +115,15 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);
 
-    // Compute lastControlShooting via correlated subquery when a control activity is configured
-    if ($controlShootingActivity) {
+    if ($controlActivity) {
       $subQb = $this->getEntityManager()->createQueryBuilder();
       $subQb->select('MAX(mpcs.date)')
         ->from(MemberPresence::class, 'mpcs')
         ->join('mpcs.activities', 'acss')
         ->where('mpcs.member = mem')
         ->andWhere('acss.id = :controlActivityId');
-      $qb->addSelect('(' . $subQb->getDQL() . ') as lastControlShooting')
-         ->setParameter('controlActivityId', $controlShootingActivity->getId());
+      $qb->addSelect('(' . $subQb->getDQL() . ') as lastControlActivity')
+         ->setParameter('controlActivityId', $controlActivity->getId());
     }
 
     if ($club) {
@@ -143,7 +142,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       'presenceCount'              => 'presenceCount',
       'lastPresenceDate'           => 'lastPresenceDate',
       'medicalCertificateExpiration' => 'mem.medicalCertificateExpiration',
-      'lastControlShooting'        => 'lastControlShooting',
+      'lastControlActivity'        => 'lastControlActivity',
     ];
 
     foreach ($orderBy as $field => $direction) {

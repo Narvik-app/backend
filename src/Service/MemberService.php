@@ -37,14 +37,14 @@ class MemberService {
     }
   }
 
-  public function setLastControlShooting(Member $member, ?Activity $controlShootingActivity = null): void {
-    if (!$controlShootingActivity) {
+  public function setLastControlActivity(Member $member, ?Activity $controlActivity = null): void {
+    if (!$controlActivity) {
       return;
     }
 
-    $presence = $this->memberPresenceRepository->findLastOneByActivity($member, $controlShootingActivity);
+    $presence = $this->memberPresenceRepository->findLastOneByActivity($member, $controlActivity);
     if ($presence) {
-      $member->setLastControlShooting($presence->getDate());
+      $member->setLastControlActivity($presence->getDate());
     }
   }
 
