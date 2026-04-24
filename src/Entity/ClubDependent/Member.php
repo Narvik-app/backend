@@ -664,7 +664,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     $this->lastControlActivity = $lastControlActivity;
   }
 
-  public function isControlActivityAlertDisabled(): bool {
+  public function getControlActivityAlertDisabled(): bool {
     return $this->controlActivityAlertDisabled;
   }
 
