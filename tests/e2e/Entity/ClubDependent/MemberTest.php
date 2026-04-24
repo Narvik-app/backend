@@ -669,6 +669,28 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseIsSuccessful();
   }
 
+  public function testControlActivityAlertDisabled(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    $memberIri = $this->getIriFromResource($member);
+
+    // Supervisor can set the flag
+    $this->loggedAsSupervisorClub1();
+    $this->makePatchRequest($memberIri, ['controlActivityAlertDisabled' => true]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains(['controlActivityAlertDisabled' => true]);
+
+    // Flag round-trips on GET
+    $response = $this->makeGetRequest($memberIri);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains(['controlActivityAlertDisabled' => true]);
+
+    // Regular member cannot set the flag (club-supervisor-write group required)
+    $memberIri2 = $this->getIriFromResource(_InitStory::MEMBER_admin_club_1());
+    $this->loggedAsMemberClub1();
+    $this->makePatchRequest($memberIri2, ['controlActivityAlertDisabled' => true]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+  }
+
   public function testCustomFilters(): void {
     $club = _InitStory::club_1();
 

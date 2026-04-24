@@ -230,7 +230,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       $this->assertArrayHasKey('firstname', $stat);
       $this->assertArrayHasKey('lastname', $stat);
       $this->assertArrayHasKey('medicalCertificateExpiration', $stat);
-      // lastControlShooting is only present when a control activity is configured
+      // lastControlActivity is only present when a control activity is configured
     }
   }
 
@@ -330,9 +330,9 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $this->assertEquals(['medicalCertificateExpiration' => 'ASC'], $response->toArray()['pagination']['order']);
 
-    // Note: order[lastControlShooting] is only valid when the club has a control shooting
-    // activity configured. Without it the field is stripped and falls back to default.
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
+    // Note: order[lastControlActivity] is only valid when the club has a control activity
+    // configured. Without it the field is stripped and falls back to default.
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
@@ -349,7 +349,7 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertLessThanOrEqual(2, count($data['values']));
   }
 
-  public function testMemberPresenceStatsWithControlShootingActivity(): void {
+  public function testMemberPresenceStatsWithControlActivity(): void {
     $member1 = _InitStory::MEMBER_member_club_1();
     $member2 = _InitStory::MEMBER_admin_club_1();
     $member3 = _InitStory::MEMBER_supervisor_club_1();
@@ -360,10 +360,10 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $activityIri = $this->getIriFromResource($controlActivity);
 
     $this->loggedAsAdminClub1();
-    $this->makePatchRequest($settingsIri, ['controlShootingActivity' => $activityIri]);
+    $this->makePatchRequest($settingsIri, ['controlActivity' => $activityIri]);
     $this->assertResponseIsSuccessful();
 
-    // member1: 3 control shooting presences, latest = most recent
+    // member1: 3 control activity presences, latest = most recent
     MemberPresenceFactory::new([
       'date' => new \DateTimeImmutable('-1 month'),
       'member' => $member1,
@@ -375,61 +375,60 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       'activities' => [$controlActivity],
     ])->create();
 
-    // member2: 1 control shooting presence, older than member1
+    // member2: 1 control activity presence, older than member1
     MemberPresenceFactory::new([
       'date' => new \DateTimeImmutable('-6 months'),
       'member' => $member2,
       'activities' => [$controlActivity],
     ])->create();
 
-    // member3: no control shooting presence
+    // member3: no control activity presence
 
     $this->loggedAsSupervisorClub1();
 
-    // lastControlShooting is now included in response
+    // lastControlActivity is now included in response
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
     foreach ($data['values'] as $stat) {
-      $this->assertArrayHasKey('lastControlShooting', $stat);
+      $this->assertArrayHasKey('lastControlActivity', $stat);
     }
 
-    // Sort ASC: member with oldest control shooting first (member2), then member1, then member3 (null last)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=ASC";
+    // Sort ASC: member with oldest control activity first (member2), then member1, then member3 (null last)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=ASC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $this->assertEquals(['lastControlShooting' => 'ASC'], $data['pagination']['order']);
+    $this->assertEquals(['lastControlActivity' => 'ASC'], $data['pagination']['order']);
 
-    // Sort DESC: member with most recent control shooting first (member1)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlShooting]=DESC";
+    // Sort DESC: member with most recent control activity first (member1)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $this->assertEquals(['lastControlShooting' => 'DESC'], $data['pagination']['order']);
+    $this->assertEquals(['lastControlActivity' => 'DESC'], $data['pagination']['order']);
     $items = $data['values'];
-    // First item should have the most recent lastControlShooting
-    $firstWithShooting = null;
+    $firstWithActivity = null;
     foreach ($items as $item) {
-      if ($item['lastControlShooting'] !== null) {
-        $firstWithShooting = $item;
+      if ($item['lastControlActivity'] !== null) {
+        $firstWithActivity = $item;
         break;
       }
     }
-    $this->assertNotNull($firstWithShooting, 'Expected at least one member with a control shooting date');
-    $this->assertEquals($member1->getUuid(), $firstWithShooting['memberUuid']);
+    $this->assertNotNull($firstWithActivity, 'Expected at least one member with a control activity date');
+    $this->assertEquals($member1->getUuid(), $firstWithActivity['memberUuid']);
 
-    // Remove control activity from settings — lastControlShooting should no longer appear
+    // Remove control activity from settings — lastControlActivity should no longer appear
     $this->loggedAsAdminClub1();
-    $this->makePatchRequest($settingsIri, ['controlShootingActivity' => null]);
+    $this->makePatchRequest($settingsIri, ['controlActivity' => null]);
     $this->assertResponseIsSuccessful();
 
     $this->loggedAsSupervisorClub1();
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
     $data = $this->makeGetRequest($iri)->toArray();
     foreach ($data['values'] as $stat) {
-      $this->assertArrayNotHasKey('lastControlShooting', $stat);
+      $this->assertArrayNotHasKey('lastControlActivity', $stat);
     }
   }
 

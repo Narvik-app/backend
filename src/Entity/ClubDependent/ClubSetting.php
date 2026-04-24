@@ -94,9 +94,9 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   private string $seasonEnd = "08-31";
 
   #[ORM\OneToOne(targetEntity: Activity::class)]
-  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  #[ORM\JoinColumn(name: 'control_activity_id', nullable: true, onDelete: 'SET NULL')]
   #[Groups(['club-setting'])]
-  private ?Activity $controlShootingActivity = null;
+  private ?Activity $controlActivity = null;
 
   /**
    * @var Collection<int, Activity>
@@ -153,12 +153,12 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
     return $this;
   }
 
-  public function getControlShootingActivity(): ?Activity {
-    return $this->controlShootingActivity;
+  public function getControlActivity(): ?Activity {
+    return $this->controlActivity;
   }
 
-  public function setControlShootingActivity(?Activity $controlShootingActivity): ClubSetting {
-    $this->controlShootingActivity = $controlShootingActivity;
+  public function setControlActivity(?Activity $controlActivity): ClubSetting {
+    $this->controlActivity = $controlActivity;
     return $this;
   }
 

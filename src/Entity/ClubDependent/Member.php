@@ -310,7 +310,11 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   private ?File $profileImage = null;
 
   #[Groups(['member-read', 'member-presence-read'])]
-  private ?\DateTimeImmutable $lastControlShooting = null;
+  private ?\DateTimeImmutable $lastControlActivity = null;
+
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ['default' => false])]
+  #[Groups(['member-read', 'member-presence-read', 'club-supervisor-write'])]
+  private bool $controlActivityAlertDisabled = false;
 
   #[Groups(['member-read', 'member-presence-read'])]
   private ?MemberSeason $currentSeason = null;
@@ -652,12 +656,21 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     return $this;
   }
 
-  public function getLastControlShooting(): ?\DateTimeImmutable {
-    return $this->lastControlShooting;
+  public function getLastControlActivity(): ?\DateTimeImmutable {
+    return $this->lastControlActivity;
   }
 
-  public function setLastControlShooting(?\DateTimeImmutable $lastControlShooting): void {
-    $this->lastControlShooting = $lastControlShooting;
+  public function setLastControlActivity(?\DateTimeImmutable $lastControlActivity): void {
+    $this->lastControlActivity = $lastControlActivity;
+  }
+
+  public function isControlActivityAlertDisabled(): bool {
+    return $this->controlActivityAlertDisabled;
+  }
+
+  public function setControlActivityAlertDisabled(bool $controlActivityAlertDisabled): self {
+    $this->controlActivityAlertDisabled = $controlActivityAlertDisabled;
+    return $this;
   }
 
   public function getCurrentSeason(): ?MemberSeason {

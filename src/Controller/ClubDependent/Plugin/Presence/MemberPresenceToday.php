@@ -16,7 +16,7 @@ class MemberPresenceToday extends AbstractClubDependentController {
     /** @var MemberPresence[] $todayPresentMembers */
     $todayPresentMembers = $memberPresenceRepository->findAllPresentToday($this->getClub($request));
 
-    $controlShootingActivity = $this->getClub($request)->getSettings()?->getControlShootingActivity();
+    $controlActivity = $this->getClub($request)->getSettings()?->getControlActivity();
 
     foreach ($todayPresentMembers as $memberPresence) {
       if (!$memberPresence->getMember()) {
@@ -24,8 +24,8 @@ class MemberPresenceToday extends AbstractClubDependentController {
       }
 
       $memberService->setCurrentSeason($memberPresence->getMember());
-      if ($controlShootingActivity) {
-        $memberService->setLastControlShooting($memberPresence->getMember(), $controlShootingActivity);
+      if ($controlActivity) {
+        $memberService->setLastControlActivity($memberPresence->getMember(), $controlActivity);
       }
     }
 

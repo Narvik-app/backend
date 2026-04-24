@@ -213,7 +213,7 @@ class MetricProvider implements ProviderInterface {
     $itemsPerPage = $request->query->getInt('itemsPerPage', 30);
 
     // Parse API Platform-style order[field]=direction query params
-    $allowedFields = ['presenceCount', 'lastPresenceDate', 'medicalCertificateExpiration', 'lastControlShooting'];
+    $allowedFields = ['presenceCount', 'lastPresenceDate', 'medicalCertificateExpiration', 'lastControlActivity'];
     $orderParam = $request->query->all('order');
     $orderBy = [];
     if (!empty($orderParam) && is_array($orderParam)) {
@@ -228,12 +228,11 @@ class MetricProvider implements ProviderInterface {
       $orderBy = ['presenceCount' => 'DESC'];
     }
 
-    // Fetch control shooting activity from club settings (if configured)
-    $controlShootingActivity = $this->club?->getSettings()?->getControlShootingActivity();
+    $controlActivity = $this->club?->getSettings()?->getControlActivity();
 
-    // lastControlShooting is only sortable when the alias exists (requires control activity)
-    if (!$controlShootingActivity) {
-      unset($orderBy['lastControlShooting']);
+    // lastControlActivity is only sortable when the alias exists (requires control activity)
+    if (!$controlActivity) {
+      unset($orderBy['lastControlActivity']);
       if (empty($orderBy)) {
         $orderBy = ['presenceCount' => 'DESC'];
       }
@@ -249,7 +248,7 @@ class MetricProvider implements ProviderInterface {
       $page,
       $itemsPerPage,
       $currentSeason,
-      $controlShootingActivity
+      $controlActivity
     );
 
     // Get total count for pagination metadata
