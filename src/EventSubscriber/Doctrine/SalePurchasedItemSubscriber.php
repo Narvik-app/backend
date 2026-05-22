@@ -3,6 +3,7 @@
 namespace App\EventSubscriber\Doctrine;
 
 use App\Entity\ClubDependent\Plugin\Sale\SalePurchasedItem;
+use App\Enum\SalePaymentModeKind;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
@@ -27,7 +28,9 @@ class SalePurchasedItemSubscriber extends AbstractEventSubscriber {
       return;
     }
 
-    if (!$salePurchasedItem->getItemPrice()) {
+    if ($salePurchasedItem->getSale()?->getPaymentMode()?->getKind() === SalePaymentModeKind::stock_removal) {
+      $salePurchasedItem->setItemPrice('0');
+    } elseif (!$salePurchasedItem->getItemPrice()) {
       $salePurchasedItem->setItemPrice($item->getSellingPrice());
     }
 

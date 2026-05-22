@@ -4,6 +4,7 @@ namespace App\Tests\e2e\Entity\ClubDependent\Plugin\Sale;
 
 use App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode;
 use App\Enum\ClubRole;
+use App\Enum\SalePaymentModeKind;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\SalePaymentModeFactory;
@@ -91,6 +92,64 @@ class SalePaymentModeTest extends AbstractEntityClubLinkedTestCase {
         $this->makeDeleteRequest($this->getIriFromResource($item));
       },
     );
+  }
+
+  public function testCreateDefaultsToPaymentKind(): void {
+    $this->loggedAsAdminClub1();
+    $club1 = _InitStory::club_1();
+
+    $this->makePostRequest($this->getRootWClubUrl($club1), [
+      "name" => "No kind",
+      "icon" => "banknotes",
+    ]);
+
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+    $this->assertJsonContains(["kind" => SalePaymentModeKind::payment->value]);
+  }
+
+  public function testCreateWithStockRemovalKind(): void {
+    $this->loggedAsAdminClub1();
+    $club1 = _InitStory::club_1();
+
+    $this->makePostRequest($this->getRootWClubUrl($club1), [
+      "name" => "Stock removal",
+      "icon" => "archive-box-arrow-down",
+      "kind" => SalePaymentModeKind::stock_removal->value,
+    ]);
+
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+    $this->assertJsonContains(["kind" => SalePaymentModeKind::stock_removal->value]);
+  }
+
+  public function testPatchKindIsImmutable(): void {
+    $this->loggedAsAdminClub1();
+
+    $item = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+
+    $this->makePatchRequest($this->getIriFromResource($item), [
+      "kind" => SalePaymentModeKind::stock_removal->value,
+    ]);
+
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+    $this->assertJsonContains([
+      "detail" => "The type of a payment method cannot be changed after it has been created.",
+    ]);
+  }
+
+  public function testPatchOtherFieldsStillWorkAfterKindIsSet(): void {
+    $this->loggedAsAdminClub1();
+
+    $item = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::stock_removal]);
+
+    $this->makePatchRequest($this->getIriFromResource($item), [
+      "name" => "New name",
+    ]);
+
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      "name" => "New name",
+      "kind" => SalePaymentModeKind::stock_removal->value,
+    ]);
   }
 
   public function testMove(): void {
