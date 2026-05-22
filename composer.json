@@ -1,6 +1,6 @@
 {
     "name": "benoit-vignal/narvik-back",
-    "version": "3.17.0",
+    "version": "3.18.0",
     "type": "project",
     "license": "GNU AGPLv3",
     "description": "App to manage multiple french association, especially sporting associations",
