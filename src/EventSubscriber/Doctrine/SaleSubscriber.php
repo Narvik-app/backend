@@ -4,6 +4,7 @@ namespace App\EventSubscriber\Doctrine;
 
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
+use App\Enum\SalePaymentModeKind;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostRemoveEventArgs;
@@ -26,7 +27,9 @@ class SaleSubscriber extends AbstractEventSubscriber {
       $sale->setSeller($member);
     }
 
-    $this->autoSetFields($sale, $args);
+    if (!$this->forceZeroIfStockRemoval($sale)) {
+      $this->autoSetFields($sale, $args);
+    }
   }
 
   public function postPersist(Sale $sale, PostPersistEventArgs $args): void {
@@ -51,7 +54,9 @@ class SaleSubscriber extends AbstractEventSubscriber {
   }
 
   public function preUpdate(Sale $sale, PreUpdateEventArgs $args): void {
-    $this->autoSetFields($sale, $args);
+    if (!$this->forceZeroIfStockRemoval($sale)) {
+      $this->autoSetFields($sale, $args);
+    }
   }
 
   public function postRemove(Sale $sale, PostRemoveEventArgs $args): void {
@@ -67,6 +72,17 @@ class SaleSubscriber extends AbstractEventSubscriber {
       $objectManager->persist($inventoryItem);
     }
     $objectManager->flush();
+  }
+
+  private function forceZeroIfStockRemoval(Sale $sale): bool {
+    if ($sale->getPaymentMode()?->getKind() !== SalePaymentModeKind::stock_removal) {
+      return false;
+    }
+    $sale->setPrice('0');
+    foreach ($sale->getSalePurchasedItems() as $item) {
+      $item->setItemPrice('0');
+    }
+    return true;
   }
 
   public function autoSetFields(Sale $sale, LifecycleEventArgs $args): void {

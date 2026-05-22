@@ -22,6 +22,7 @@ use App\Entity\Interface\SortableEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\ClubRole;
 use App\Enum\Permission;
+use App\Enum\SalePaymentModeKind;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -116,6 +117,11 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   #[Groups(['sale-payment-mode'])]
   private ?int $weight = null;
 
+  #[ORM\Column(type: 'string', enumType: SalePaymentModeKind::class, options: ['default' => 'payment'])]
+  #[Groups(['sale-payment-mode', 'sale-read'])]
+  #[Assert\NotNull]
+  private SalePaymentModeKind $kind = SalePaymentModeKind::payment;
+
   public function getName(): ?string {
     return $this->name;
   }
@@ -149,6 +155,15 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
 
   public function setWeight(?int $weight): static {
     $this->weight = $weight;
+    return $this;
+  }
+
+  public function getKind(): SalePaymentModeKind {
+    return $this->kind;
+  }
+
+  public function setKind(SalePaymentModeKind $kind): static {
+    $this->kind = $kind;
     return $this;
   }
 }

@@ -3,6 +3,7 @@
 namespace App\Tests\Factory;
 
 use App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode;
+use App\Enum\SalePaymentModeKind;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
 use App\Tests\Story\_InitStory;
 use Doctrine\ORM\EntityRepository;
@@ -67,6 +68,7 @@ final class SalePaymentModeFactory extends \Zenstruck\Foundry\Persistence\Persis
       'icon'      => 'banknotes',
       'name'      => self::faker()->text(12),
       'available' => self::faker()->boolean(75),
+      'kind'      => SalePaymentModeKind::payment,
     ];
   }
 
