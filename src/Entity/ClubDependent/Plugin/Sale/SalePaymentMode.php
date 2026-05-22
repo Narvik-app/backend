@@ -20,10 +20,10 @@ use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\SortableEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
-use App\Enum\ClubRole;
 use App\Enum\Permission;
 use App\Enum\SalePaymentModeKind;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -117,7 +117,7 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   #[Groups(['sale-payment-mode'])]
   private ?int $weight = null;
 
-  #[ORM\Column(type: 'string', enumType: SalePaymentModeKind::class, options: ['default' => 'payment'])]
+  #[ORM\Column(type: Types::STRING, enumType: SalePaymentModeKind::class, options: ['default' => 'payment'])]
   #[Groups(['sale-payment-mode', 'sale-read'])]
   #[Assert\NotNull]
   private SalePaymentModeKind $kind = SalePaymentModeKind::payment;
