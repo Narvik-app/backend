@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 class SalePaymentModeSubscriber extends AbstractEventSubscriber {
   public function preUpdate(SalePaymentMode $mode, PreUpdateEventArgs $args): void {
     if ($args->hasChangedField('kind')) {
-      throw new BadRequestHttpException("Le type d'un mode de paiement ne peut pas être modifié après sa création.");
+      throw new BadRequestHttpException("The type of a payment method cannot be changed after it has been created.");
     }
   }
 }
