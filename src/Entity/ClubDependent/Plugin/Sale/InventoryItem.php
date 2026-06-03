@@ -159,6 +159,8 @@ class InventoryItem extends UuidEntity implements TimestampEntityInterface, Club
   #[Groups(['inventory-item'])]
   private ?InventoryCategory $category = null;
 
+  private ?Sale $pendingSale = null;
+
   public function getName(): ?string {
     return $this->name;
   }
@@ -246,6 +248,15 @@ class InventoryItem extends UuidEntity implements TimestampEntityInterface, Club
 
   public function setCategory(?InventoryCategory $category): static {
     $this->category = $category;
+    return $this;
+  }
+
+  public function getPendingSale(): ?Sale {
+    return $this->pendingSale;
+  }
+
+  public function setPendingSale(?Sale $sale): static {
+    $this->pendingSale = $sale;
     return $this;
   }
 }

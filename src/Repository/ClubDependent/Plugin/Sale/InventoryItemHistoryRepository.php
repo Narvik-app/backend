@@ -2,6 +2,7 @@
 
 namespace App\Repository\ClubDependent\Plugin\Sale;
 
+use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -14,28 +15,16 @@ class InventoryItemHistoryRepository extends ServiceEntityRepository {
     parent::__construct($registry, InventoryItemHistory::class);
   }
 
-  //    /**
-  //     * @return InventoryItemHistory[] Returns an array of InventoryItemHistory objects
-  //     */
-  //    public function findByExampleField($value): array
-  //    {
-  //        return $this->createQueryBuilder('i')
-  //            ->andWhere('i.exampleField = :val')
-  //            ->setParameter('val', $value)
-  //            ->orderBy('i.id', 'ASC')
-  //            ->setMaxResults(10)
-  //            ->getQuery()
-  //            ->getResult()
-  //        ;
-  //    }
-
-  //    public function findOneBySomeField($value): ?InventoryItemHistory
-  //    {
-  //        return $this->createQueryBuilder('i')
-  //            ->andWhere('i.exampleField = :val')
-  //            ->setParameter('val', $value)
-  //            ->getQuery()
-  //            ->getOneOrNullResult()
-  //        ;
-  //    }
+  /** @return InventoryItemHistory[] */
+  public function findBetweenDates(InventoryItem $item, \DateTimeInterface $start, \DateTimeInterface $end): array {
+    return $this->createQueryBuilder('h')
+      ->where('h.item = :item')
+      ->andWhere('h.createdAt > :start')
+      ->andWhere('h.createdAt < :end')
+      ->setParameter('item', $item)
+      ->setParameter('start', $start)
+      ->setParameter('end', $end)
+      ->getQuery()
+      ->getResult();
+  }
 }
