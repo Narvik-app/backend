@@ -36,6 +36,9 @@ enum Permission: string {
   case SALE_PAYMENT_MODES_ACCESS = 'SALE_PAYMENT_MODES_ACCESS';
   case SALE_PAYMENT_MODES_EDIT = 'SALE_PAYMENT_MODES_EDIT';
 
+  case SALE_PAYMENT_TERMINALS_ACCESS = 'SALE_PAYMENT_TERMINALS_ACCESS';
+  case SALE_PAYMENT_TERMINALS_EDIT = 'SALE_PAYMENT_TERMINALS_EDIT';
+
   case SALE_IMPORT_ACCESS = 'SALE_IMPORT_ACCESS';
   case SALE_IMPORT_EDIT = 'SALE_IMPORT_EDIT';
 
@@ -105,12 +108,13 @@ enum Permission: string {
     }
 
     // Special cases
-    // SALE_NEW implies SALE_HISTORY and SALE_INVENTORY access, plus categories and payment modes
+    // SALE_NEW implies SALE_HISTORY and SALE_INVENTORY access, plus categories, payment modes and terminals
     if ($this === self::SALE_NEW) {
       $implied[] = self::SALE_HISTORY_ACCESS;
       $implied[] = self::SALE_INVENTORY_ACCESS;
       $implied[] = self::SALE_CATEGORIES_ACCESS;
       $implied[] = self::SALE_PAYMENT_MODES_ACCESS;
+      $implied[] = self::SALE_PAYMENT_TERMINALS_ACCESS;
     }
 
     return $implied;
