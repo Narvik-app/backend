@@ -12,8 +12,10 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\OpenApi\Model;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckout;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckoutStatus;
+use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalDevices;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalDeviceStatus;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalListDevices;
+use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalSetDevice;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
@@ -113,6 +115,48 @@ use Symfony\Component\Validator\Constraints as Assert;
       ),
       security: "is_granted('".Permission::SALE_NEW->value."', request)",
       read: false,
+    ),
+
+    // List devices for an existing terminal using its stored credentials (reconfiguration)
+    new Get(
+      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/devices',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'uuid' => new Link(fromClass: self::class),
+      ],
+      controller: SalePaymentTerminalDevices::class,
+      openapi: new Model\Operation(
+        summary: 'List devices using the terminal\'s stored credentials',
+      ),
+      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
+      read: false,
+    ),
+
+    // Re-select the device for an existing terminal (merges into stored credentials)
+    new Post(
+      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/device',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'uuid' => new Link(fromClass: self::class),
+      ],
+      controller: SalePaymentTerminalSetDevice::class,
+      openapi: new Model\Operation(
+        summary: 'Select the active device for this terminal',
+        requestBody: new Model\RequestBody(
+          content: new \ArrayObject([
+            'application/json' => [
+              'schema' => [
+                'type' => 'object',
+                'required' => ['deviceId'],
+                'properties' => ['deviceId' => ['type' => 'string']],
+              ],
+            ],
+          ]),
+        ),
+      ),
+      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
+      read: false,
+      deserialize: false,
     ),
 
     // Test connection: live status of the configured device

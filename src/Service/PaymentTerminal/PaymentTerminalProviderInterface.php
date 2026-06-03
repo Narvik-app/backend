@@ -50,6 +50,16 @@ interface PaymentTerminalProviderInterface {
   public function getDeviceStatus(TerminalCredentialsInterface $credentials): TerminalDevice;
 
   /**
+   * Return a new raw credentials map with the chosen device selected
+   * (e.g. set `readerId` for SumUp). Used when re-selecting a device during
+   * reconfiguration, preserving the other stored (secret) credentials.
+   *
+   * @param array $credentials existing raw credentials map
+   * @return array updated raw credentials map
+   */
+  public function withDevice(array $credentials, string $deviceId): array;
+
+  /**
    * Initiate a payment on the terminal for the given amount (decimal string, e.g. "15.00").
    *
    * @throws PaymentTerminalException
