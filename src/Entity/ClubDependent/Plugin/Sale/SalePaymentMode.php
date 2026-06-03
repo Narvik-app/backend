@@ -28,6 +28,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
 
 #[ORM\Entity(repositoryClass: SalePaymentModeRepository::class)]
 #[UniqueEntity(fields: ['weight', 'club'], ignoreNull: true)]
@@ -122,6 +123,11 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   #[Assert\NotNull]
   private SalePaymentModeKind $kind = SalePaymentModeKind::payment;
 
+  #[ORM\ManyToOne(targetEntity: SalePaymentTerminal::class)]
+  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  #[Groups(['sale-payment-mode', 'sale-read'])]
+  private ?SalePaymentTerminal $paymentTerminal = null;
+
   public function getName(): ?string {
     return $this->name;
   }
@@ -164,6 +170,15 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
 
   public function setKind(SalePaymentModeKind $kind): static {
     $this->kind = $kind;
+    return $this;
+  }
+
+  public function getPaymentTerminal(): ?SalePaymentTerminal {
+    return $this->paymentTerminal;
+  }
+
+  public function setPaymentTerminal(?SalePaymentTerminal $paymentTerminal): static {
+    $this->paymentTerminal = $paymentTerminal;
     return $this;
   }
 }
