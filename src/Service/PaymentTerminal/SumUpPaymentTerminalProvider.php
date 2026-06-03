@@ -74,6 +74,11 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     return $devices;
   }
 
+  public function withDevice(array $credentials, string $deviceId): array {
+    $credentials['readerId'] = $deviceId;
+    return $credentials;
+  }
+
   public function getDeviceStatus(TerminalCredentialsInterface $credentials): TerminalDevice {
     /** @var SumUpCredentials $credentials */
     $credentials->assertComplete();
@@ -171,11 +176,12 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
   private function mapReaderToDevice(SumUp $sumup, SumUpCredentials $credentials, Reader $reader): TerminalDevice {
     $paired = $reader->status === ReaderStatus::PAIRED;
     $online = false;
+    $statusData = null;
 
     if ($paired) {
       try {
-        $status = $sumup->readers()->getStatus($credentials->merchantCode, $reader->id);
-        $online = ($status->data->status ?? null) === StatusResponseDataStatus::ONLINE;
+        $statusData = $sumup->readers()->getStatus($credentials->merchantCode, $reader->id)->data;
+        $online = ($statusData->status ?? null) === StatusResponseDataStatus::ONLINE;
       }
       catch (SDKException $e) {
         // Status unavailable → treat as offline; log for diagnostics
@@ -192,6 +198,10 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
       model: $reader->device->model->value ?? null,
       online: $online,
       paired: $paired,
+      state: $statusData?->state?->value,
+      lastActivity: $statusData?->lastActivity,
+      batteryLevel: $statusData?->batteryLevel,
+      connectionType: $statusData?->connectionType?->value,
     );
   }
 
