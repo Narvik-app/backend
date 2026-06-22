@@ -109,6 +109,9 @@ db-restore: ## Restore a database dump. The file must be called './dump/dump.sql
 	docker compose exec database sh -c 'psql -d $$POSTGRES_DB -U $$POSTGRES_USER -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"'
 	gunzip < ./dump/dump.sql.gz | docker compose exec -T database sh -c 'psql -d $$POSTGRES_DB -U $$POSTGRES_USER'
 
+db-make-migration: ## Generate Doctrine migration based on current database diff with Entities
+	@$(PHP_CONT) bin/console make:migration
+
 db-migrate: ## Run pending Doctrine migrations
 	@$(PHP_CONT) bin/console doctrine:migrations:migrate --no-interaction
 
