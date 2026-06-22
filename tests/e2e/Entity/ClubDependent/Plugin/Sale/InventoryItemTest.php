@@ -186,4 +186,36 @@ class InventoryItemTest extends AbstractEntityClubLinkedTestCase {
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
   }
+
+  /**
+   * Patching an item's quantity must create a new InventoryItemHistory row
+   * that captures the updated quantity alongside the current prices.
+   */
+  public function testQuantityChangeCreatesHistoryRow(): void {
+    $club       = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri  = $this->getIriFromResource($supervisor);
+
+    // Grant EDIT permission to admin so we can patch
+    $this->loggedAsAdminClub1();
+    $item    = InventoryItemFactory::createOne(['quantity' => 20, 'sellingPrice' => '9.00']);
+    $itemIri = $this->getIriFromResource($item);
+
+    // Patch the quantity
+    $this->makePatchRequest($itemIri, ['quantity' => 35]);
+    $this->assertResponseIsSuccessful();
+
+    // A new history row must exist capturing the new quantity
+    $historiesUrl = $this->getIriFromResource($club) . "/inventory-items/{$item->getUuid()}/histories";
+    $response     = $this->makeGetRequest($historiesUrl);
+    $this->assertResponseIsSuccessful();
+
+    $member = $response->toArray()['member'];
+    $this->assertGreaterThanOrEqual(1, count($member));
+
+    // Most recent row (first in DESC order) should have the patched quantity
+    $latest = $member[0];
+    $this->assertEquals(35, $latest['quantity']);
+    $this->assertEquals('9.00', $latest['sellingPrice']);
+  }
 }
