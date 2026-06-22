@@ -43,7 +43,7 @@ class SaleSubscriber extends AbstractEventSubscriber {
       if (!$inventoryItem || is_null($inventoryItem->getQuantity())) {
         continue;
       }
-      $inventoryItem->setPendingSale($sale);
+      $inventoryItem->setProcessingSale($sale);
       $inventoryItem->setQuantity($inventoryItem->getQuantity() - ($purchasedItem->getQuantity() * $inventoryItem->getSellingQuantity()));
 
       // No more in stock we don't go negative
@@ -56,7 +56,7 @@ class SaleSubscriber extends AbstractEventSubscriber {
     $objectManager->flush();
 
     foreach ($sale->getSalePurchasedItems() as $purchasedItem) {
-      $purchasedItem->getItem()?->setPendingSale(null);
+      $purchasedItem->getItem()?->setProcessingSale(null);
     }
   }
 

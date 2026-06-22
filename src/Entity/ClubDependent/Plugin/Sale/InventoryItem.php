@@ -159,7 +159,8 @@ class InventoryItem extends UuidEntity implements TimestampEntityInterface, Club
   #[Groups(['inventory-item'])]
   private ?InventoryCategory $category = null;
 
-  private ?Sale $pendingSale = null;
+  // Transient: set by SaleSubscriber before flush so InventoryItemSubscriber can link the history row to its originating sale.
+  private ?Sale $processingSale = null;
 
   public function getName(): ?string {
     return $this->name;
@@ -251,12 +252,12 @@ class InventoryItem extends UuidEntity implements TimestampEntityInterface, Club
     return $this;
   }
 
-  public function getPendingSale(): ?Sale {
-    return $this->pendingSale;
+  public function getProcessingSale(): ?Sale {
+    return $this->processingSale;
   }
 
-  public function setPendingSale(?Sale $sale): static {
-    $this->pendingSale = $sale;
+  public function setProcessingSale(?Sale $sale): static {
+    $this->processingSale = $sale;
     return $this;
   }
 }

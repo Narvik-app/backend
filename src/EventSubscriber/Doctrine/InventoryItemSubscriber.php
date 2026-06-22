@@ -24,7 +24,7 @@ class InventoryItemSubscriber extends AbstractEventSubscriber {
       ->setSellingPrice($inventoryItem->getSellingPrice())
       ->setQuantity($inventoryItem->getQuantity())
       ->setItem($inventoryItem)
-      ->setSale($inventoryItem->getPendingSale());
+      ->setSale($inventoryItem->getProcessingSale());
 
     $objectManager->persist($itemHistory);
     $objectManager->flush();
