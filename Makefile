@@ -15,7 +15,7 @@ SYMFONY  = $(PHP) bin/console
 
 # Misc
 .DEFAULT_GOAL = help
-.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run db-dump db-restore db-migrate
+.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run db-dump db-restore db-migrate code-quality
 
 # Capture the first argument as `file`
 file=$(word 2,$(MAKECMDGOALS))
@@ -121,3 +121,6 @@ rector: ## Run rector to fix code issues
 
 rector-dry-run: ## Run rector in dry-run mode to see what would be changed
 	@$(PHP_CONT) ./vendor/bin/rector process --dry-run
+
+code-quality: rector ## Run all code quality checks (mirrors CI)
+	$(PHP_CONT) ./vendor/bin/composer-dependency-analyser --config composer-dependency-analyser.php

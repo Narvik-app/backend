@@ -141,8 +141,8 @@ class InventoryItemHistoryPerDayTest extends AbstractEntityClubLinkedTestCase {
     $url = $this->getIriFromResource(_InitStory::club_1()) . "/inventory-items/{$item->getUuid()}/histories-per-day";
 
     // Only the -10d and -2d rows should appear in this range
-    $start = (new \DateTimeImmutable('-15 days'))->format('Y-m-d');
-    $end   = (new \DateTimeImmutable('today'))->format('Y-m-d');
+    $start = new \DateTimeImmutable('-15 days')->format('Y-m-d');
+    $end   = new \DateTimeImmutable('today')->format('Y-m-d');
     $response = $this->makeGetRequest($url . "?start={$start}&end={$end}");
 
     $this->assertResponseIsSuccessful();

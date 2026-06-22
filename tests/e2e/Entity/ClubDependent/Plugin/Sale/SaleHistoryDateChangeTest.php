@@ -67,10 +67,10 @@ class SaleHistoryDateChangeTest extends AbstractApiTestCase {
     $hSale = null;
     $hMid  = null;
     foreach ($histories as $row) {
-      if (str_starts_with($row['createdAt'], $tNewPrefix)) {
+      if (str_starts_with((string) $row['createdAt'], $tNewPrefix)) {
         $hSale = $row;
       }
-      if (str_starts_with($row['createdAt'], $tMidPrefix)) {
+      if (str_starts_with((string) $row['createdAt'], $tMidPrefix)) {
         $hMid = $row;
       }
     }
@@ -132,10 +132,10 @@ class SaleHistoryDateChangeTest extends AbstractApiTestCase {
     $hSale = null;
     $hMid  = null;
     foreach ($histories as $row) {
-      if (str_starts_with($row['createdAt'], $tNewPrefix)) {
+      if (str_starts_with((string) $row['createdAt'], $tNewPrefix)) {
         $hSale = $row;
       }
-      if (str_starts_with($row['createdAt'], $tMidPrefix)) {
+      if (str_starts_with((string) $row['createdAt'], $tMidPrefix)) {
         $hMid = $row;
       }
     }
