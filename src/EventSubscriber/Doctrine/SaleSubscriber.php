@@ -7,6 +7,7 @@ use App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory;
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
 use App\Enum\SalePaymentModeKind;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
@@ -73,6 +74,21 @@ class SaleSubscriber extends AbstractEventSubscriber {
       return;
     }
 
+    $this->realignStockHistoryToSaleDate($sale, $oldDate, $newDate, $objectManager);
+  }
+
+  /**
+   * Keeps the per-day aggregated stock chart coherent when a sale is moved in time.
+   *
+   * Each sale creates a stock-snapshot (InventoryItemHistory) dated to the sale's createdAt.
+   * If that date changes, the snapshot must follow it.
+   */
+  private function realignStockHistoryToSaleDate(
+    Sale $sale,
+    \DateTimeInterface $oldDate,
+    \DateTimeInterface $newDate,
+    EntityManagerInterface $objectManager,
+  ): void {
     $historyRepo = $objectManager->getRepository(InventoryItemHistory::class);
     $minDate = min($oldDate, $newDate);
     $maxDate = max($oldDate, $newDate);
@@ -93,7 +109,9 @@ class SaleSubscriber extends AbstractEventSubscriber {
       $historyRow->setCreatedAt($newDate);
       $objectManager->persist($historyRow);
 
-      // Rows strictly between the two dates need their snapshot adjusted
+      // Rows strictly between the two dates need their snapshot adjusted:
+      // moving later → those days no longer include the sale's deduction → add back delta.
+      // moving earlier → those days now include the sale's deduction → subtract delta.
       $adjustment = $movingLater ? $delta : -$delta;
       foreach ($historyRepo->findBetweenDates($inventoryItem, $minDate, $maxDate) as $row) {
         if ($row->getQuantity() !== null) {
