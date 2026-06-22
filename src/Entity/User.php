@@ -479,14 +479,6 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
     return $this;
   }
 
-  /**
-   * @see UserInterface
-   */
-  public function eraseCredentials(): void {
-    // If you store any temporary, sensitive data on the user, clear it here
-    $this->plainPassword = null;
-  }
-
   public function getFirstname(): ?string {
     return $this->firstname;
   }
@@ -564,5 +556,10 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
   public function setSkipAutoSetUserMember(bool $skipAutoSetUserMember): User {
     $this->skipAutoSetUserMember = $skipAutoSetUserMember;
     return $this;
+  }
+
+  public function serialize(): void {
+      // If you store any temporary, sensitive data on the user, clear it here
+      $this->plainPassword = null;
   }
 }
