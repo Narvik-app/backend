@@ -38,23 +38,16 @@ use Symfony\Component\Serializer\Attribute\Groups;
   provider: InventoryItemHistoryProvider::class,
 )]
 #[ApiResource(
-  uriTemplate: '/clubs/{clubUuid}/inventory-items/{itemUuid}/histories-per-day.{_format}',
-  operations: [
+  uriTemplate: '/clubs/{clubUuid}/inventory-items/{itemUuid}/histories-per-day.{_format}', operations: [
     new GetCollection(
       security: "is_granted('".ClubRole::supervisor->value."', request)",
     ),
-  ],
-  uriVariables: [
+  ], uriVariables: [
     'itemUuid' => new Link(toProperty: 'item', fromClass: InventoryItem::class),
     'clubUuid' => new Link(toClass: Club::class),
-  ],
-  normalizationContext: [
+  ], normalizationContext: [
     'groups' => ['common-read', 'timestamp', 'inventory-item-history-read']
   ],
-  paginationEnabled: true,
-  paginationItemsPerPage: 30,
-  paginationClientItemsPerPage: true,
-  paginationClientEnabled: true,
   provider: InventoryItemHistoryProvider::class,
 )]
 #[QueryParameter(key: 'start', schema: ['type' => 'string', 'format' => 'date'], required: false)]
