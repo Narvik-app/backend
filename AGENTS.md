@@ -81,6 +81,10 @@ config/
 ### Database (`migrations/`)
 Contains Doctrine migration files for database schema versioning and updates.
 
+Generate using `make db-make-migration`
+
+See @CONTRIBUTING.md for more information, specially step 7 with the specific fields to not include in the migration.
+
 ## Agent Context Exclusions
 
 When working with agents, certain files and directories should be excluded from the agent's context to ensure security and performance:

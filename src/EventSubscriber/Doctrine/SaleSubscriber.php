@@ -3,11 +3,14 @@
 namespace App\EventSubscriber\Doctrine;
 
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory;
 use App\Entity\ClubDependent\Plugin\Sale\Sale;
 use App\Enum\SalePaymentModeKind;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostRemoveEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
@@ -41,6 +44,7 @@ class SaleSubscriber extends AbstractEventSubscriber {
       if (!$inventoryItem || is_null($inventoryItem->getQuantity())) {
         continue;
       }
+      $inventoryItem->setProcessingSale($sale);
       $inventoryItem->setQuantity($inventoryItem->getQuantity() - ($purchasedItem->getQuantity() * $inventoryItem->getSellingQuantity()));
 
       // No more in stock we don't go negative
@@ -50,6 +54,73 @@ class SaleSubscriber extends AbstractEventSubscriber {
 
       $objectManager->persist($inventoryItem);
     }
+    $objectManager->flush();
+
+    foreach ($sale->getSalePurchasedItems() as $purchasedItem) {
+      $purchasedItem->getItem()?->setProcessingSale(null);
+    }
+  }
+
+  public function postUpdate(Sale $sale, PostUpdateEventArgs $args): void {
+    $objectManager = $args->getObjectManager();
+    $changeSet = $objectManager->getUnitOfWork()->getEntityChangeSet($sale);
+
+    if (!array_key_exists('createdAt', $changeSet)) {
+      return;
+    }
+
+    [$oldDate, $newDate] = $changeSet['createdAt'];
+    if (!$oldDate instanceof \DateTimeInterface || !$newDate instanceof \DateTimeInterface || $oldDate == $newDate) {
+      return;
+    }
+
+    $this->realignStockHistoryToSaleDate($sale, $oldDate, $newDate, $objectManager);
+  }
+
+  /**
+   * Keeps the per-day aggregated stock chart coherent when a sale is moved in time.
+   *
+   * Each sale creates a stock-snapshot (InventoryItemHistory) dated to the sale's createdAt.
+   * If that date changes, the snapshot must follow it.
+   */
+  private function realignStockHistoryToSaleDate(
+    Sale $sale,
+    \DateTimeInterface $oldDate,
+    \DateTimeInterface $newDate,
+    EntityManagerInterface $objectManager,
+  ): void {
+    $historyRepo = $objectManager->getRepository(InventoryItemHistory::class);
+    $minDate = min($oldDate, $newDate);
+    $maxDate = max($oldDate, $newDate);
+    $movingLater = $newDate > $oldDate;
+
+    foreach ($sale->getSalePurchasedItems() as $purchasedItem) {
+      $inventoryItem = $purchasedItem->getItem();
+      if (!$inventoryItem || is_null($inventoryItem->getQuantity())) {
+        continue;
+      }
+
+      $historyRow = $historyRepo->findOneBy(['item' => $inventoryItem, 'sale' => $sale]);
+      if (!$historyRow) {
+        continue;
+      }
+
+      $delta = $purchasedItem->getQuantity() * $inventoryItem->getSellingQuantity();
+      $historyRow->setCreatedAt($newDate);
+      $objectManager->persist($historyRow);
+
+      // Rows strictly between the two dates need their snapshot adjusted:
+      // moving later → those days no longer include the sale's deduction → add back delta.
+      // moving earlier → those days now include the sale's deduction → subtract delta.
+      $adjustment = $movingLater ? $delta : -$delta;
+      foreach ($historyRepo->findBetweenDates($inventoryItem, $minDate, $maxDate) as $row) {
+        if ($row->getQuantity() !== null) {
+          $row->setQuantity($row->getQuantity() + $adjustment);
+          $objectManager->persist($row);
+        }
+      }
+    }
+
     $objectManager->flush();
   }
 

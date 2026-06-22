@@ -14,7 +14,7 @@ class InventoryItemSubscriber extends AbstractEventSubscriber {
 
   public function postUpdate(InventoryItem $inventoryItem, PostUpdateEventArgs $args): void {
     $objectManager = $args->getObjectManager();
-    if (!$this->hasChangedProperties($objectManager, $inventoryItem, ['purchasePrice', 'sellingPrice'])) {
+    if (!$this->hasChangedProperties($objectManager, $inventoryItem, ['purchasePrice', 'sellingPrice', 'quantity'])) {
       return;
     }
 
@@ -22,7 +22,9 @@ class InventoryItemSubscriber extends AbstractEventSubscriber {
     $itemHistory
       ->setPurchasePrice($inventoryItem->getPurchasePrice())
       ->setSellingPrice($inventoryItem->getSellingPrice())
-      ->setItem($inventoryItem);
+      ->setQuantity($inventoryItem->getQuantity())
+      ->setItem($inventoryItem)
+      ->setSale($inventoryItem->getProcessingSale());
 
     $objectManager->persist($itemHistory);
     $objectManager->flush();

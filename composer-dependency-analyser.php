@@ -9,7 +9,7 @@ $config = new Configuration();
 return $config
     // Prod dependencies used only in dev paths
     ->ignoreErrorsOnPackage('symfony/dotenv', [ErrorType::PROD_DEPENDENCY_ONLY_IN_DEV])
-    ->ignoreErrorsOnPackage('zenstruck/foundry', [ErrorType::PROD_DEPENDENCY_ONLY_IN_DEV])
+    //->ignoreErrorsOnPackage('zenstruck/foundry', [ErrorType::PROD_DEPENDENCY_ONLY_IN_DEV])
 
     // Unused dependencies
     // These are used in config/bundles.php, YAML configuration, or Twig templates, which are not scanned by the analyser.

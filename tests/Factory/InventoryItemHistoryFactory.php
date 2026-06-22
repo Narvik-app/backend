@@ -65,6 +65,7 @@ final class InventoryItemHistoryFactory extends \Zenstruck\Foundry\Persistence\P
       'item' => InventoryItemFactory::random(),
       'purchasePrice' => self::faker()->randomFloat(2, 1, 20),
       'sellingPrice' => self::faker()->randomFloat(2, 20, 80),
+      'quantity' => self::faker()->numberBetween(0, 200),
     ];
   }
 

@@ -15,7 +15,7 @@ SYMFONY  = $(PHP) bin/console
 
 # Misc
 .DEFAULT_GOAL = help
-.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run
+.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run db-dump db-restore db-migrate code-quality
 
 # Capture the first argument as `file`
 file=$(word 2,$(MAKECMDGOALS))
@@ -109,9 +109,18 @@ db-restore: ## Restore a database dump. The file must be called './dump/dump.sql
 	docker compose exec database sh -c 'psql -d $$POSTGRES_DB -U $$POSTGRES_USER -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"'
 	gunzip < ./dump/dump.sql.gz | docker compose exec -T database sh -c 'psql -d $$POSTGRES_DB -U $$POSTGRES_USER'
 
+db-make-migration: ## Generate Doctrine migration based on current database diff with Entities
+	@$(PHP_CONT) bin/console make:migration
+
+db-migrate: ## Run pending Doctrine migrations
+	@$(PHP_CONT) bin/console doctrine:migrations:migrate --no-interaction
+
 ## —— Code quality 🚀 ————————————————————————————————————————————————————————————————
 rector: ## Run rector to fix code issues
 	@$(PHP_CONT) ./vendor/bin/rector process
 
 rector-dry-run: ## Run rector in dry-run mode to see what would be changed
 	@$(PHP_CONT) ./vendor/bin/rector process --dry-run
+
+code-quality: rector ## Run all code quality checks (mirrors CI)
+	$(PHP_CONT) ./vendor/bin/composer-dependency-analyser --config composer-dependency-analyser.php

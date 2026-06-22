@@ -13,16 +13,10 @@ final class Version20260522120000 extends AbstractMigration {
   }
 
   public function up(Schema $schema): void {
-    $this->addSql(<<<'SQL'
-        ALTER TABLE sale_payment_mode ADD kind VARCHAR(255) DEFAULT 'payment' NOT NULL
-    SQL
-    );
+    $this->addSql('ALTER TABLE sale_payment_mode ADD kind VARCHAR(255) DEFAULT \'payment\' NOT NULL');
   }
 
   public function down(Schema $schema): void {
-    $this->addSql(<<<'SQL'
-        ALTER TABLE sale_payment_mode DROP kind
-    SQL
-    );
+    $this->addSql('ALTER TABLE sale_payment_mode DROP kind');
   }
 }
