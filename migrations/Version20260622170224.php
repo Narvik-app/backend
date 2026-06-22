@@ -18,7 +18,6 @@ final class Version20260622170224 extends AbstractMigration
   {
     $this->addSql('ALTER TABLE inventory_item_history ADD quantity INT DEFAULT NULL');
     $this->addSql('ALTER TABLE inventory_item_history ADD sale_id INT DEFAULT NULL');
-    $this->addSql('ALTER TABLE sale_payment_mode ADD kind VARCHAR(255) DEFAULT \'payment\' NOT NULL');
     $this->addSql('CREATE INDEX IDX_27487B024A7E4868 ON inventory_item_history (sale_id)');
     $this->addSql('ALTER TABLE inventory_item_history ADD CONSTRAINT FK_27487B024A7E4868 FOREIGN KEY (sale_id) REFERENCES sale (id) ON DELETE SET NULL NOT DEFERRABLE');
   }
@@ -27,7 +26,6 @@ final class Version20260622170224 extends AbstractMigration
   {
     $this->addSql('ALTER TABLE inventory_item_history DROP quantity');
     $this->addSql('ALTER TABLE inventory_item_history DROP sale_id');
-    $this->addSql('ALTER TABLE sale_payment_mode DROP kind');
 
     $this->addSql('ALTER TABLE inventory_item_history DROP CONSTRAINT FK_27487B024A7E4868');
     $this->addSql('DROP INDEX IDX_27487B024A7E4868');
