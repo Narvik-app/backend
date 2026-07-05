@@ -89,12 +89,10 @@ class ImageThumbnailService {
         // Atomic swap so concurrent first-requests never read a partial file.
         $this->fs->rename($tmpPath, $cachePath, true);
       } finally {
-        imagedestroy($dest);
       }
 
       return $cachePath;
     } finally {
-      imagedestroy($source);
     }
   }
 }
