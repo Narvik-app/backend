@@ -193,25 +193,27 @@ class MetricProvider implements ProviderInterface {
     $metric->setClub($this->club);
     $metric->setName($identifier);
     $metric->setValue($stats['total']);
-    $metric->setValues([
-      'openNow' => $stats['openNow'],
-      'distinctItems' => $stats['distinctItems'],
-      'distinctBorrowers' => $stats['distinctBorrowers'],
-      'avgDurationDays' => $stats['avgDurationDays'],
-      'dailyCounts' => $stats['dailyCounts'],
-    ]);
+    $metric->setValues($stats['dailyCounts']);
 
-    $childMetrics = array_map(function (array $item) {
-      return new Metric()
+    $childMetrics = [
+      new Metric()->setName('open-now')->setValue($stats['openNow']),
+      new Metric()->setName('distinct-items')->setValue($stats['distinctItems']),
+      new Metric()->setName('distinct-borrowers')->setValue($stats['distinctBorrowers']),
+      new Metric()->setName('avg-duration-days')->setValue($stats['avgDurationDays']),
+    ];
+
+    foreach ($stats['items'] as $item) {
+      $itemMetric = new Metric()
         ->setName($item['uuid'])
         ->setValue($item['count'])
-        ->setValues([
-          'itemName' => $item['name'],
-          'openCount' => $item['openCount'],
-          'avgDurationDays' => $item['avgDurationDays'],
-          'dailyCounts' => $item['dailyCounts'],
-        ]);
-    }, $stats['items']);
+        ->setValues($item['dailyCounts']);
+      $itemMetric->setChildMetrics([
+        new Metric()->setName('open-count')->setValue($item['openCount']),
+        new Metric()->setName('avg-duration-days')->setValue($item['avgDurationDays']),
+      ]);
+      $childMetrics[] = $itemMetric;
+    }
+
     $metric->setChildMetrics($childMetrics);
 
     return $metric;
