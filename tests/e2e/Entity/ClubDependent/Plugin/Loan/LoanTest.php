@@ -129,7 +129,7 @@ class LoanTest extends AbstractEntityClubLinkedTestCase {
     $loan = LoanFactory::createOne(['loanItem' => $item, 'endDate' => null]);
 
     $this->loggedAsAdminClub1();
-    $this->makePatchRequest($this->getIriFromResource($loan), ['endDate' => (new \DateTimeImmutable())->format('c')]);
+    $this->makePatchRequest($this->getIriFromResource($loan), ['endDate' => new \DateTimeImmutable()->format('c')]);
     $this->assertResponseIsSuccessful();
   }
 
