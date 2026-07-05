@@ -23,6 +23,19 @@ use Symfony\Component\Serializer\Attribute\Groups;
       uriTemplate: '/public/files/inline/{id}',
       name: 'inline_public_file'
     ),
+
+    new Get(
+      uriTemplate: '/files/{id}/thumbnail',
+      name: 'thumbnail_file'
+    ),
+    new Get(
+      uriTemplate: '/public/files/{id}/thumbnail',
+      name: 'public_image_thumbnail_file'
+    ),
+    new Get(
+      uriTemplate: '/public/files/inline/{id}/thumbnail',
+      name: 'inline_public_image_thumbnail_file'
+    ),
   ],
   normalizationContext: [
     'groups' => ['exposed-file']

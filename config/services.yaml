@@ -17,6 +17,7 @@ parameters:
 
     app.files: '%kernel.project_dir%/private/files'
     app.public_images: '%kernel.project_dir%/public/images'
+    app.image_cache: '%kernel.cache_dir%/images'
     # app.members_photos: '%app.files%/members'
 
 when@test:

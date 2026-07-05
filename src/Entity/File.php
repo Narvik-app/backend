@@ -26,6 +26,15 @@ class File extends UuidEntity implements TimestampEntityInterface {
   #[Groups(['common-read'])]
   private ?string $privateUrl = null;
 
+  #[Groups(['common-read'])]
+  private ?string $publicThumbnailUrl = null;
+
+  #[Groups(['common-read'])]
+  private ?string $publicInlineThumbnailUrl = null;
+
+  #[Groups(['common-read'])]
+  private ?string $privateThumbnailUrl = null;
+
   #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: FileCategory::class)]
   private ?FileCategory $category = null;
 
@@ -76,6 +85,33 @@ class File extends UuidEntity implements TimestampEntityInterface {
 
   public function setPrivateUrl(?string $privateUrl): File {
     $this->privateUrl = $privateUrl;
+    return $this;
+  }
+
+  public function getPublicThumbnailUrl(): ?string {
+    return $this->publicThumbnailUrl;
+  }
+
+  public function setPublicThumbnailUrl(?string $publicThumbnailUrl): File {
+    $this->publicThumbnailUrl = $publicThumbnailUrl;
+    return $this;
+  }
+
+  public function getPublicInlineThumbnailUrl(): ?string {
+    return $this->publicInlineThumbnailUrl;
+  }
+
+  public function setPublicInlineThumbnailUrl(?string $publicInlineThumbnailUrl): File {
+    $this->publicInlineThumbnailUrl = $publicInlineThumbnailUrl;
+    return $this;
+  }
+
+  public function getPrivateThumbnailUrl(): ?string {
+    return $this->privateThumbnailUrl;
+  }
+
+  public function setPrivateThumbnailUrl(?string $privateThumbnailUrl): File {
+    $this->privateThumbnailUrl = $privateThumbnailUrl;
     return $this;
   }
 

@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Club;
 use App\Entity\ExposedFile;
 use App\Entity\File as FileEntity;
+use App\Enum\ThumbnailSize;
 use App\Repository\FileRepository;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\File\File as SfFile;
@@ -21,7 +22,12 @@ class FileService {
     private readonly FileRepository $fileRepository,
     private readonly ContainerBagInterface $params,
     private readonly EntityManagerInterface $entityManager,
+    private readonly ImageThumbnailService $imageThumbnailService,
   ) {
+  }
+
+  public function isThumbnailable(FileEntity $file): bool {
+    return $this->imageThumbnailService->isThumbnailable($file);
   }
 
 
@@ -100,6 +106,14 @@ class FileService {
     }
 
     $file->setPrivateUrl("/files/$fileId");
+
+    if ($this->isThumbnailable($file)) {
+      if ($file->getIsPublic()) {
+        $file->setPublicThumbnailUrl("/public/files/$fileId/thumbnail");
+        $file->setPublicInlineThumbnailUrl("/public/files/inline/$fileId/thumbnail");
+      }
+      $file->setPrivateThumbnailUrl("/files/$fileId/thumbnail");
+    }
   }
 
   /**
@@ -139,6 +153,48 @@ class FileService {
     }
 
     return $this->loadFileFromFile($file, $isInline);
+  }
+
+  public function loadThumbnailFromProtectedPath(string $publicId, ThumbnailSize $size, bool $isInline = false): ?ExposedFile {
+    $uuid = $this->decodeEncodedUriId($publicId);
+    $file = $this->fileRepository->findOneByUuid($uuid->toString());
+    if (!$file instanceof FileEntity) {
+      return null;
+    }
+
+    return $this->loadThumbnailFromFile($file, $size, $isInline);
+  }
+
+  public function loadThumbnailFromPublicPath(string $publicId, ThumbnailSize $size, bool $isInline = false): ?ExposedFile {
+    $uuid = $this->decodeEncodedUriId($publicId);
+    $file = $this->fileRepository->findOneByUuid($uuid->toString());
+    if (!$file instanceof FileEntity || !$file->getIsPublic()) {
+      return null;
+    }
+
+    return $this->loadThumbnailFromFile($file, $size, $isInline);
+  }
+
+  /**
+   * Serves a cached WebP derivative of $file, generating it on first request. Falls back to the
+   * original (same behavior as loadFileFromFile) when the file isn't a supported raster image.
+   */
+  private function loadThumbnailFromFile(FileEntity $file, ThumbnailSize $size, bool $isInline = false): ?ExposedFile {
+    $thumbnailPath = $this->imageThumbnailService->getOrCreateThumbnailPath($file, $size);
+    if (!$thumbnailPath) {
+      return $this->loadFileFromFile($file, $isInline);
+    }
+
+    $image = new ExposedFile();
+    $image->setId(UuidService::encodeToReadable($file->getUuid()))
+          ->setName($file->getFilename())
+          ->setPath($thumbnailPath);
+
+    if (!$isInline) {
+      $this->setDataUri($thumbnailPath, $image);
+    }
+
+    return $image;
   }
 
   private function loadFileFromFile(FileEntity $file, bool $isInline = false): ?ExposedFile {
