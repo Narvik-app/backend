@@ -6,7 +6,7 @@ use Symfony\Component\Validator\Constraint;
 
 #[\Attribute]
 class LoanItemMustBeAvailable extends Constraint {
-  public string $message = 'Cet article n\'est pas disponible pour le prêt.';
+  public string $message = 'This item is not available for loan.';
 
   #[\Override]
   public function getTargets(): string {
