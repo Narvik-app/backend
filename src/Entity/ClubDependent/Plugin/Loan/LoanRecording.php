@@ -62,7 +62,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'uuid' => new Link(fromClass: self::class),
   ],
   normalizationContext: [
-    'groups' => ['loan-recording', 'loan-recording-read']
+    'groups' => ['loan-recording', 'loan-recording-read', 'autocomplete']
   ],
   denormalizationContext: [
     'groups' => ['loan-recording', 'loan-recording-write', 'timestamp-write-create']

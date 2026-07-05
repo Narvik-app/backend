@@ -10,6 +10,7 @@ use App\Entity\Club;
 use App\Entity\ClubDependent\Metric;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubDependent\MemberSeasonRepository;
+use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
@@ -29,6 +30,7 @@ class MetricProvider implements ProviderInterface {
     "external-presences",
     "opened-days",
     "member-presence-stats",
+    "loans",
 //    "import-batches",
 //    "activities"
   ];
@@ -55,6 +57,7 @@ class MetricProvider implements ProviderInterface {
     private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly ExternalPresenceRepository $externalPresenceRepository,
     private readonly SeasonRepository $seasonRepository,
+    private readonly LoanRepository $loanRepository,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
@@ -180,6 +183,37 @@ class MetricProvider implements ProviderInterface {
     $metric->setName($identifier);
     $metric->setValue($totalPresences);
     $metric->setChildMetrics($metrics);
+    return $metric;
+  }
+
+  protected function getLoans(string $identifier): Metric {
+    $stats = $this->loanRepository->getLoanStats($this->club, $this->filterDates['end'], $this->filterDates['start']);
+
+    $metric = new Metric();
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValue($stats['total']);
+    $metric->setValues([
+      'openNow' => $stats['openNow'],
+      'distinctItems' => $stats['distinctItems'],
+      'distinctBorrowers' => $stats['distinctBorrowers'],
+      'avgDurationDays' => $stats['avgDurationDays'],
+      'dailyCounts' => $stats['dailyCounts'],
+    ]);
+
+    $childMetrics = array_map(function (array $item) {
+      return new Metric()
+        ->setName($item['uuid'])
+        ->setValue($item['count'])
+        ->setValues([
+          'itemName' => $item['name'],
+          'openCount' => $item['openCount'],
+          'avgDurationDays' => $item['avgDurationDays'],
+          'dailyCounts' => $item['dailyCounts'],
+        ]);
+    }, $stats['items']);
+    $metric->setChildMetrics($childMetrics);
+
     return $metric;
   }
 

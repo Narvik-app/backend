@@ -23,6 +23,7 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
+use App\Validator\Constraints\LoanItemMustBeAvailable;
 use App\Validator\Constraints\LoanItemNotAlreadyLoaned;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -31,6 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LoanRepository::class)]
 #[LoanItemNotAlreadyLoaned]
+#[LoanItemMustBeAvailable]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loans/{uuid}',
   operations: [

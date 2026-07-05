@@ -139,7 +139,7 @@ use Symfony\Component\Validator\Constraints as Assert;
   paginationClientEnabled: true,
 )]
 #[ApiFilter(OrderFilter::class, properties: ['name' => 'ASC', 'category.name' => 'ASC', 'category.weight' => 'ASC', 'weight' => 'ASC'])]
-#[ApiFilter(SearchFilter::class, properties: ['category.uuid' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['category.uuid' => 'exact', 'status' => 'exact'])]
 #[ApiFilter(BooleanFilter::class, properties: ['visibleOnSalePage'])]
 class LoanItem extends UuidEntity implements TimestampEntityInterface, ClubLinkedEntityInterface, SortableEntityInterface {
   use TimestampTrait;
