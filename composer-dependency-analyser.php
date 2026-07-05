@@ -15,7 +15,7 @@ return $config
     // These are used in config/bundles.php, YAML configuration, or Twig templates, which are not scanned by the analyser.
     ->ignoreErrorsOnPackage('api-platform/ramsey-uuid', [ErrorType::UNUSED_DEPENDENCY])
     ->ignoreErrorsOnPackage('doctrine/doctrine-migrations-bundle', [ErrorType::UNUSED_DEPENDENCY]) // config/bundles.php
-    ->ignoreErrorsOnExtension('ext-gd', [ErrorType::UNUSED_DEPENDENCY]) // Used by imaging libraries/functions
+    //->ignoreErrorsOnExtension('ext-gd', [ErrorType::UNUSED_DEPENDENCY]) // Used by imaging libraries/functions
     ->ignoreErrorsOnExtension('ext-iconv', [ErrorType::UNUSED_DEPENDENCY]) // Used by string manipulation
     ->ignoreErrorsOnPackage('nelmio/cors-bundle', [ErrorType::UNUSED_DEPENDENCY]) // config/bundles.php
     ->ignoreErrorsOnPackage('phpdocumentor/reflection-docblock', [ErrorType::UNUSED_DEPENDENCY]) // Used by Serializer/PropertyInfo
