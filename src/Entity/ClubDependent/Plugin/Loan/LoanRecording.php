@@ -83,9 +83,8 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
   #[Assert\NotNull]
   private ?LoanItem $loanItem = null;
 
-  #[ORM\Column(length: 2048)]
+  #[ORM\Column(length: 2048, nullable: true)]
   #[Groups(['loan-recording'])]
-  #[Assert\NotBlank]
   private ?string $description = null;
 
   #[ORM\ManyToOne(targetEntity: LoanRecordingType::class)]
@@ -122,7 +121,10 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
     return $this->description;
   }
 
-  public function setDescription(string $description): static {
+  public function setDescription(?string $description): static {
+    if (empty($description)) {
+      $description = null;
+    }
     $this->description = $description;
     return $this;
   }

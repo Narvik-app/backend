@@ -25,7 +25,7 @@ final class Version20260623130845 extends AbstractMigration
         $this->addSql('CREATE SEQUENCE loan_item_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE loan_recording_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE loan_recording_type_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
-        $this->addSql('CREATE TABLE loan (start_date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, comment VARCHAR(1024) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, loan_item_id INT NOT NULL, member_id INT DEFAULT NULL, author_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE loan (start_date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, end_date TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, comment VARCHAR(1024) DEFAULT NULL, borrower_name VARCHAR(255) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, loan_item_id INT NOT NULL, member_id INT DEFAULT NULL, author_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_C5D30D03D17F50A6 ON loan (uuid)');
         $this->addSql('CREATE INDEX IDX_C5D30D033C20DC2A ON loan (loan_item_id)');
         $this->addSql('CREATE INDEX IDX_C5D30D037597D3FE ON loan (member_id)');
@@ -39,7 +39,7 @@ final class Version20260623130845 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_CEB65F6A12469DE2 ON loan_item (category_id)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_CEB65F6A3DA5256D ON loan_item (image_id)');
         $this->addSql('CREATE INDEX IDX_CEB65F6A61190A32 ON loan_item (club_id)');
-        $this->addSql('CREATE TABLE loan_recording (description VARCHAR(2048) NOT NULL, date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, loan_item_id INT NOT NULL, recording_type_id INT DEFAULT NULL, author_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE loan_recording (description VARCHAR(2048) DEFAULT NULL, date TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, loan_item_id INT NOT NULL, recording_type_id INT DEFAULT NULL, author_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_FA0017C9D17F50A6 ON loan_recording (uuid)');
         $this->addSql('CREATE INDEX IDX_FA0017C93C20DC2A ON loan_recording (loan_item_id)');
         $this->addSql('CREATE INDEX IDX_FA0017C94A1AB7F1 ON loan_recording (recording_type_id)');

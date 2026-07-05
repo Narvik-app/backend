@@ -3,6 +3,7 @@
 namespace App\Entity\ClubDependent\Plugin\Loan;
 
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
@@ -75,6 +76,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(OrderFilter::class, properties: ['startDate' => 'DESC', 'endDate' => 'ASC'])]
 #[ApiFilter(SearchFilter::class, properties: ['loanItem.uuid' => 'exact', 'member.uuid' => 'exact', 'author.uuid' => 'exact'])]
 #[ApiFilter(DateFilter::class, properties: ['startDate' => DateFilter::EXCLUDE_NULL, 'endDate'])]
+#[ApiFilter(ExistsFilter::class, properties: ['endDate'])]
 class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEntityInterface {
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;
@@ -90,6 +92,11 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
   #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
   #[Groups(['loan'])]
   private ?Member $member = null;
+
+  /** Free-text borrower name, used when the borrower is not a club member */
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['loan'])]
+  private ?string $borrowerName = null;
 
   /** The supervisor/admin who lends the item */
   #[ORM\ManyToOne(targetEntity: Member::class)]
@@ -130,6 +137,18 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
 
   public function setMember(?Member $member): static {
     $this->member = $member;
+    return $this;
+  }
+
+  public function getBorrowerName(): ?string {
+    return $this->borrowerName;
+  }
+
+  public function setBorrowerName(?string $borrowerName): static {
+    if (empty($borrowerName)) {
+      $borrowerName = null;
+    }
+    $this->borrowerName = $borrowerName;
     return $this;
   }
 

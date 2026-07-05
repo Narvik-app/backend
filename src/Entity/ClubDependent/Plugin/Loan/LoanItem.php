@@ -188,6 +188,14 @@ class LoanItem extends UuidEntity implements TimestampEntityInterface, ClubLinke
   #[Groups(['loan-item-read'])]
   private ?File $image = null;
 
+  /** Computed on load: true if at least one open Loan exists (endDate IS NULL) */
+  #[Groups(['loan-item-read'])]
+  private bool $isCurrentlyLoaned = false;
+
+  /** Computed on load: total number of times this item has been loaned */
+  #[Groups(['loan-item-read'])]
+  private int $timesLoaned = 0;
+
   public function getName(): ?string {
     return $this->name;
   }
@@ -275,6 +283,24 @@ class LoanItem extends UuidEntity implements TimestampEntityInterface, ClubLinke
 
   public function setImage(?File $image): static {
     $this->image = $image;
+    return $this;
+  }
+
+  public function getIsCurrentlyLoaned(): bool {
+    return $this->isCurrentlyLoaned;
+  }
+
+  public function setIsCurrentlyLoaned(bool $isCurrentlyLoaned): static {
+    $this->isCurrentlyLoaned = $isCurrentlyLoaned;
+    return $this;
+  }
+
+  public function getTimesLoaned(): int {
+    return $this->timesLoaned;
+  }
+
+  public function setTimesLoaned(int $timesLoaned): static {
+    $this->timesLoaned = $timesLoaned;
     return $this;
   }
 }
