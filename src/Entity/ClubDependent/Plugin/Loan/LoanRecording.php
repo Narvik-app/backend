@@ -6,6 +6,7 @@ use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -80,6 +81,9 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
   #[ORM\ManyToOne(targetEntity: LoanItem::class)]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['loan-recording'])]
+  // LoanItem's uuid/createdAt/updatedAt (auto-injected common-read/timestamp groups) would
+  // otherwise make this embed as a full object, breaking the declared IRI-string API schema.
+  #[ApiProperty(readableLink: false)]
   #[Assert\NotNull]
   private ?LoanItem $loanItem = null;
 

@@ -130,12 +130,17 @@ use Symfony\Component\Validator\Constraints as Assert;
     'uuid' => new Link(fromClass: self::class),
   ],
   normalizationContext: [
-    'groups' => ['loan-item', 'loan-item-read']
+    'groups' => ['loan-item', 'loan-item-read', 'common-read']
   ],
   denormalizationContext: [
     'groups' => ['loan-item', 'loan-item-write']
   ],
-  order: ['category.weight' => 'ASC', 'weight' => 'ASC', 'name' => 'ASC'],
+  // Items within a category are sorted alphabetically by default — "weight" is a manual
+  // reordering field (via the /move endpoint) not currently exposed in the admin UI, so it's
+  // intentionally not part of the default sort (it previously came before "name", ordering
+  // items by creation order instead of alphabetically since every item gets an auto-assigned
+  // weight on creation).
+  order: ['category.weight' => 'ASC', 'name' => 'ASC'],
   paginationClientEnabled: true,
 )]
 #[ApiFilter(OrderFilter::class, properties: ['name' => 'ASC', 'category.name' => 'ASC', 'category.weight' => 'ASC', 'weight' => 'ASC'])]
