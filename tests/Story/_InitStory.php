@@ -48,6 +48,7 @@ final class _InitStory extends Story {
         'name' => 'Club 1',
         'presencesEnabled' => true,
         'salesEnabled' => true,
+        'loansEnabled' => true,
         'badgerToken' => 'club1longbadgertoken',
       ]), 'clubs');
     $this->addState('club_2', ClubFactory::createOne([
