@@ -22,7 +22,6 @@ final class LoanCategoryFactory extends \Zenstruck\Foundry\Persistence\Persisten
     return [
       'club' => _InitStory::club_1(),
       'name' => ucfirst(self::faker()->words(2, true)),
-      'weight' => self::faker()->numberBetween(0, 100),
     ];
   }
 }
