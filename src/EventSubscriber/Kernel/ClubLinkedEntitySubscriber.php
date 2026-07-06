@@ -109,6 +109,18 @@ final readonly class ClubLinkedEntitySubscriber implements EventSubscriberInterf
     if ($checked) {
       return;
     }
+
+    $loansPattern = [
+      '/loans',
+      '/loan-items',
+      '/loan-categories',
+      '/loan-recordings',
+      '/loan-recording-types',
+    ];
+    $checked = $this->verifyAccessForPlugin("Loans", $loansPattern, $club->getLoansEnabled(), $cleanedPath, $event);
+    if ($checked) {
+      return;
+    }
   }
 
   private function verifyAccessForPlugin(string $pluginName, array $urlPatterns, bool $pluginEnabled, string $requestedPath, RequestEvent $event): bool {

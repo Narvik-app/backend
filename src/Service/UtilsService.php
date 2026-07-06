@@ -32,6 +32,16 @@ class UtilsService {
     return filter_var(str_replace(',', '.', $string), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
   }
 
+  public static function nullIfEmpty(?string $value): ?string
+  {
+    return empty($value) ? null : $value;
+  }
+
+  public static function isToday(?\DateTimeImmutable $date): bool
+  {
+    return $date !== null && $date->format('Y-m-d') === new \DateTimeImmutable()->format('Y-m-d');
+  }
+
   public function generateRandomToken(int $length): string
   {
     $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-';

@@ -8,5 +8,7 @@ enum FileCategory: string {
 
   case member_picture = 'member_picture';
 
+  case loan_item_picture = 'loan_item_picture';
+
   case club_email = 'club_email';
 }

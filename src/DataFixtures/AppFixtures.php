@@ -4,9 +4,16 @@ namespace App\DataFixtures;
 
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
+use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
+use App\Entity\ClubDependent\Plugin\Loan\LoanRecordingType;
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
+use App\Tests\Factory\LoanCategoryFactory;
+use App\Tests\Factory\LoanFactory;
+use App\Tests\Factory\LoanItemFactory;
+use App\Tests\Factory\LoanRecordingFactory;
+use App\Tests\Factory\LoanRecordingTypeFactory;
 use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
@@ -71,6 +78,32 @@ class AppFixtures extends Fixture {
     SaleFactory::createMany(faker()->numberBetween(15, 25));
     SaleFactory::createMany(faker()->numberBetween(3, 6), ['createdAt' => new \DateTimeImmutable('yesterday')]);
     SaleFactory::createMany(faker()->numberBetween(3, 6), ['createdAt' => new \DateTimeImmutable('today')]);
+
+    /*******************************************************
+     *                       LOAN                          *
+     ******************************************************/
+
+    $loanRecordingTypes = [
+      LoanRecordingTypeFactory::createOne(['name' => 'Nettoyage', 'color' => '#22c55e']),
+      LoanRecordingTypeFactory::createOne(['name' => 'Révision', 'color' => '#3b82f6']),
+      LoanRecordingTypeFactory::createOne(['name' => 'Panne', 'color' => '#ef4444']),
+      LoanRecordingTypeFactory::createOne(['name' => 'Contrôle', 'color' => '#f59e0b']),
+    ];
+
+    $loanItemsMapping = [
+      'Optique' => ['Lunette 4x32', 'Point rouge'],
+      'Armes' => ['Carabine 22LR', 'Pistolet 9mm', 'Arc classique'],
+      'Accessoires' => ['Sac de transport', 'Trépied', 'Chronographe'],
+    ];
+
+    $weight = 0;
+    foreach ($loanItemsMapping as $categoryName => $itemNames) {
+      $category = LoanCategoryFactory::createOne(['name' => $categoryName, 'weight' => $weight++]);
+      foreach ($itemNames as $name) {
+        $item = LoanItemFactory::createOne(['name' => $name, 'category' => $category]);
+        $this->generateLoanHistory($item, $loanRecordingTypes);
+      }
+    }
   }
 
   private function generateItemHistory(InventoryItem $item, int $months = 6): void {
@@ -101,6 +134,55 @@ class AppFixtures extends Fixture {
         'sellingPrice'  => round($selling, 2),
         'quantity'      => $stock,
       ]);
+    }
+  }
+
+  /**
+   * Generates a few years of non-overlapping loan history (and the occasional maintenance
+   * recording) for a single LoanItem, so the loan statistics page has real quantity to show.
+   *
+   * @param LoanRecordingType[] $recordingTypes
+   */
+  private function generateLoanHistory(LoanItem $item, array $recordingTypes, int $months = 30): void {
+    $date = new \DateTimeImmutable("-{$months} months");
+    $now = new \DateTimeImmutable();
+    $lastRecordingDate = $date;
+
+    while ($date < $now) {
+      // Idle time between loans
+      $date = $date->modify('+' . faker()->numberBetween(8, 25) . ' days');
+      if ($date >= $now) {
+        break;
+      }
+
+      $startDate = $date;
+      $durationDays = faker()->numberBetween(1, 7);
+      $endDate = $startDate->modify("+{$durationDays} days");
+
+      // Leave a few recent loans currently open, to simulate items out in the field
+      $isRecent = $startDate >= $now->modify('-10 days');
+      $stillOpen = $isRecent && faker()->boolean(50);
+
+      $member = faker()->boolean(75) ? MemberFactory::random() : null;
+      LoanFactory::createOne([
+        'loanItem' => $item,
+        'startDate' => $startDate,
+        'endDate' => $stillOpen ? null : ($endDate < $now ? $endDate : $now),
+        'member' => $member,
+        'borrowerName' => $member === null && faker()->boolean(50) ? faker()->name() : null,
+      ]);
+
+      $date = $stillOpen ? $now : $endDate;
+
+      // Occasional maintenance/cleaning recording between loans
+      if ($date >= $lastRecordingDate->modify('+45 days') && faker()->boolean(35)) {
+        LoanRecordingFactory::createOne([
+          'loanItem' => $item,
+          'recordingType' => faker()->randomElement($recordingTypes),
+          'date' => $date,
+        ]);
+        $lastRecordingDate = $date;
+      }
     }
   }
 }

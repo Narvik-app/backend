@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
 use App\Enum\FileCategory;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\FileRepository;
@@ -77,6 +78,21 @@ class ImageService {
     $clubSettings->setLogo($dbFile);
     $this->entityManager->persist($clubSettings);
 
+    $this->entityManager->flush();
+  }
+
+  public function importLoanItemImage(LoanItem $item, ?UploadedFile $file): void {
+    if ($item->getImage()) {
+      $oldImage = $item->getImage();
+      $this->entityManager->initializeObject($oldImage);
+      $this->entityManager->remove($oldImage);
+      $item->setImage(null);
+    }
+    if ($file) {
+      $dbFile = $this->fileService->importFile($file, $file->getClientOriginalName(), FileCategory::loan_item_picture, club: $item->getClub(), flush: false);
+      $item->setImage($dbFile);
+    }
+    $this->entityManager->persist($item);
     $this->entityManager->flush();
   }
 

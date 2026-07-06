@@ -65,4 +65,22 @@ trait ClubLinkedTrait {
       return null;
     }
   }
+
+  /**
+   * Append a club_id raw-SQL condition (and its bound parameter) to a WHERE-clause
+   * accumulator, for repositories building raw SQL instead of a DQL QueryBuilder
+   * (e.g. stats queries using features DQL can't express, like FILTER or EXTRACT).
+   * No-op when no club is given, so callers can use it unconditionally.
+   *
+   * @param array<int, string> $whereClauses
+   * @param array<string, mixed> $params
+   */
+  public function addClubRawSqlRestriction(?Club $club, array &$whereClauses, array &$params, string $columnPrefix = ''): void {
+    if (!$club) {
+      return;
+    }
+
+    $whereClauses[] = "{$columnPrefix}club_id = :clubId";
+    $params['clubId'] = $club->getId();
+  }
 }

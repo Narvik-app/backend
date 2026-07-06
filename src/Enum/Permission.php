@@ -39,6 +39,19 @@ enum Permission: string {
   case SALE_IMPORT_ACCESS = 'SALE_IMPORT_ACCESS';
   case SALE_IMPORT_EDIT = 'SALE_IMPORT_EDIT';
 
+  // Loan permissions
+  case LOAN_ACCESS = 'LOAN_ACCESS'; // Access loan events (borrow/return list)
+  case LOAN_EDIT = 'LOAN_EDIT'; // Create/edit/close loan events
+
+  case LOAN_ITEMS_ACCESS = 'LOAN_ITEMS_ACCESS';
+  case LOAN_ITEMS_EDIT = 'LOAN_ITEMS_EDIT';
+
+  case LOAN_CATEGORIES_ACCESS = 'LOAN_CATEGORIES_ACCESS';
+  case LOAN_CATEGORIES_EDIT = 'LOAN_CATEGORIES_EDIT';
+
+  case LOAN_RECORDINGS_ACCESS = 'LOAN_RECORDINGS_ACCESS';
+  case LOAN_RECORDINGS_EDIT = 'LOAN_RECORDINGS_EDIT';
+
   /**
    * Returns all available permissions as an array of values
    * @return string[]

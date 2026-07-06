@@ -122,11 +122,9 @@ trait PresenceRepositoryTrait {
     $paramTypes = [];
 
     $whereClauses = ['p.date BETWEEN :from AND :to'];
+    $this->addClubRawSqlRestriction($club, $whereClauses, $params, 'p.');
 
     if ($club) {
-      $whereClauses[] = 'p.club_id = :clubId';
-      $params['clubId'] = $club->getId();
-
       if (!is_null($activity?->getId())) {
         $whereClauses[] = 'a.id = :activityId';
         $params['activityId'] = $activity->getId();
