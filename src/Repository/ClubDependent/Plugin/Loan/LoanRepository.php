@@ -69,14 +69,13 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
     $conn = $this->getEntityManager()->getConnection();
 
-    $clubClause = $this->clubWhereClause($club);
     $params = [
       'from' => $dateRange['start']->format('Y-m-d H:i:s'),
       'to' => $dateRange['end']->format('Y-m-d H:i:s'),
     ];
-    if ($club) {
-      $params['clubId'] = $club->getId();
-    }
+    $whereClauses = ['start_date BETWEEN :from AND :to'];
+    $this->addClubRawSqlRestriction($club, $whereClauses, $params);
+    $whereSql = implode(' AND ', $whereClauses);
 
     // Global aggregates over the period
     $aggregateSql = <<<SQL
@@ -86,29 +85,31 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
         COUNT(DISTINCT COALESCE(member_id::text, borrower_name)) AS distinct_borrowers,
         AVG(EXTRACT(EPOCH FROM (end_date - start_date)) / 86400) FILTER (WHERE end_date IS NOT NULL) AS avg_duration_days
       FROM loan
-      WHERE{$clubClause} start_date BETWEEN :from AND :to
+      WHERE {$whereSql}
     SQL;
     $aggregate = $conn->executeQuery($aggregateSql, $params)->fetchAssociative() ?: [];
 
     // Live snapshot — not period-bound
-    $openNowParams = $club ? ['clubId' => $club->getId()] : [];
-    $openNowSql = $club
-      ? 'SELECT COUNT(*) FROM loan WHERE club_id = :clubId AND end_date IS NULL'
-      : 'SELECT COUNT(*) FROM loan WHERE end_date IS NULL';
+    $openNowParams = [];
+    $openNowWhereClauses = ['end_date IS NULL'];
+    $this->addClubRawSqlRestriction($club, $openNowWhereClauses, $openNowParams);
+    $openNowSql = 'SELECT COUNT(*) FROM loan WHERE ' . implode(' AND ', $openNowWhereClauses);
     $openNow = (int) $conn->executeQuery($openNowSql, $openNowParams)->fetchOne();
 
     // Daily counts for the chart
     $dailySql = <<<SQL
       SELECT DATE(start_date) AS day, COUNT(*) AS count
       FROM loan
-      WHERE{$clubClause} start_date BETWEEN :from AND :to
+      WHERE {$whereSql}
       GROUP BY DATE(start_date)
       ORDER BY day
     SQL;
     $dailyCounts = $conn->executeQuery($dailySql, $params)->fetchAllAssociative();
 
     // Per-item breakdown
-    $itemsClubClause = $this->clubWhereClause($club, 'l.');
+    $itemsWhereClauses = ['l.start_date BETWEEN :from AND :to'];
+    $this->addClubRawSqlRestriction($club, $itemsWhereClauses, $params, 'l.');
+    $itemsWhereSql = implode(' AND ', $itemsWhereClauses);
     $itemsSql = <<<SQL
       SELECT
         li.uuid AS uuid,
@@ -118,7 +119,7 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
         AVG(EXTRACT(EPOCH FROM (l.end_date - l.start_date)) / 86400) FILTER (WHERE l.end_date IS NOT NULL) AS avg_duration_days
       FROM loan l
       INNER JOIN loan_item li ON li.id = l.loan_item_id
-      WHERE{$itemsClubClause} l.start_date BETWEEN :from AND :to
+      WHERE {$itemsWhereSql}
       GROUP BY li.id, li.uuid, li.name
       ORDER BY count DESC
     SQL;
@@ -129,7 +130,7 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
       SELECT li.uuid AS uuid, DATE(l.start_date) AS day, COUNT(*) AS count
       FROM loan l
       INNER JOIN loan_item li ON li.id = l.loan_item_id
-      WHERE{$itemsClubClause} l.start_date BETWEEN :from AND :to
+      WHERE {$itemsWhereSql}
       GROUP BY li.uuid, DATE(l.start_date)
       ORDER BY day
     SQL;
@@ -166,9 +167,5 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
       ),
       'items' => $items,
     ];
-  }
-
-  private function clubWhereClause(?Club $club, string $columnPrefix = ''): string {
-    return $club ? " {$columnPrefix}club_id = :clubId AND" : '';
   }
 }
