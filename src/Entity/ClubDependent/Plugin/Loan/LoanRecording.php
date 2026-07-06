@@ -163,6 +163,6 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
 
   /** Whether this recording was logged today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return $this->date !== null && $this->date->format('Y-m-d') === (new \DateTimeImmutable())->format('Y-m-d');
+    return $this->date !== null && $this->date->format('Y-m-d') === new \DateTimeImmutable()->format('Y-m-d');
   }
 }

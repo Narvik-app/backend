@@ -15,7 +15,7 @@ class LoanTest extends TestCase {
 
   public function testIsEditableTodayWhenStartedEarlierToday(): void {
     $loan = new Loan();
-    $loan->setStartDate((new \DateTimeImmutable('today'))->setTime(0, 0, 1));
+    $loan->setStartDate(new \DateTimeImmutable('today')->setTime(0, 0, 1));
 
     $this->assertTrue($loan->isEditableToday());
   }

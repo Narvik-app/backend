@@ -15,7 +15,7 @@ class LoanRecordingTest extends TestCase {
 
   public function testIsEditableTodayWhenLoggedEarlierToday(): void {
     $recording = new LoanRecording();
-    $recording->setDate((new \DateTimeImmutable('today'))->setTime(0, 0, 1));
+    $recording->setDate(new \DateTimeImmutable('today')->setTime(0, 0, 1));
 
     $this->assertTrue($recording->isEditableToday());
   }

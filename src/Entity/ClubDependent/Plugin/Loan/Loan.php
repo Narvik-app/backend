@@ -202,6 +202,6 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
 
   /** Whether this loan was started today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return $this->startDate !== null && $this->startDate->format('Y-m-d') === (new \DateTimeImmutable())->format('Y-m-d');
+    return $this->startDate !== null && $this->startDate->format('Y-m-d') === new \DateTimeImmutable()->format('Y-m-d');
   }
 }
