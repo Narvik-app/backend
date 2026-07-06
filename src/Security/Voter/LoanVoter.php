@@ -4,6 +4,7 @@ namespace App\Security\Voter;
 
 use App\Entity\ClubDependent\Plugin\Loan\Loan;
 use App\Entity\User;
+use App\Enum\ClubRole;
 use App\Enum\Permission;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -31,6 +32,11 @@ class LoanVoter extends Voter {
       !$subject instanceof Loan
     ) {
       return false;
+    }
+
+    // Admins can delete a loan regardless of when it was started
+    if ($this->security->isGranted(ClubRole::admin->value, $subject)) {
+      return true;
     }
 
     if (!$this->security->isGranted(Permission::LOAN_EDIT->value, $subject)) {

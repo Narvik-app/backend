@@ -4,6 +4,7 @@ namespace App\Security\Voter;
 
 use App\Entity\ClubDependent\Plugin\Loan\LoanRecording;
 use App\Entity\User;
+use App\Enum\ClubRole;
 use App\Enum\Permission;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -32,6 +33,11 @@ class LoanRecordingVoter extends Voter {
       !$subject instanceof LoanRecording
     ) {
       return false;
+    }
+
+    // Admins can update/delete a recording regardless of when it was logged
+    if ($this->security->isGranted(ClubRole::admin->value, $subject)) {
+      return true;
     }
 
     if (!$this->security->isGranted(Permission::LOAN_RECORDINGS_EDIT->value, $subject)) {

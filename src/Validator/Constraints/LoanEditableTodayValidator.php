@@ -3,13 +3,18 @@
 namespace App\Validator\Constraints;
 
 use App\Entity\ClubDependent\Plugin\Loan\Loan;
+use App\Enum\ClubRole;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 final class LoanEditableTodayValidator extends ConstraintValidator {
-  public function __construct(private readonly EntityManagerInterface $entityManager) {}
+  public function __construct(
+    private readonly EntityManagerInterface $entityManager,
+    private readonly Security $security,
+  ) {}
 
   public function validate(mixed $value, Constraint $constraint): void {
     if (!$constraint instanceof LoanEditableToday) {
@@ -27,6 +32,11 @@ final class LoanEditableTodayValidator extends ConstraintValidator {
 
     // Loans started today can be freely corrected
     if ($value->isEditableToday()) {
+      return;
+    }
+
+    // Admins can correct a loan on any day
+    if ($this->security->isGranted(ClubRole::admin->value, $value)) {
       return;
     }
 
