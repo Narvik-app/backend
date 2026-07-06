@@ -25,6 +25,7 @@ use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
 use App\Security\Voter\LoanVoter;
+use App\Service\UtilsService;
 use App\Validator\Constraints\LoanEditableToday;
 use App\Validator\Constraints\LoanItemMustBeAvailable;
 use App\Validator\Constraints\LoanItemNotAlreadyLoaned;
@@ -154,10 +155,7 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
   }
 
   public function setBorrowerName(?string $borrowerName): static {
-    if (empty($borrowerName)) {
-      $borrowerName = null;
-    }
-    $this->borrowerName = $borrowerName;
+    $this->borrowerName = UtilsService::nullIfEmpty($borrowerName);
     return $this;
   }
 
@@ -193,15 +191,12 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
   }
 
   public function setComment(?string $comment): static {
-    if (empty($comment)) {
-      $comment = null;
-    }
-    $this->comment = $comment;
+    $this->comment = UtilsService::nullIfEmpty($comment);
     return $this;
   }
 
   /** Whether this loan was started today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return $this->startDate !== null && $this->startDate->format('Y-m-d') === new \DateTimeImmutable()->format('Y-m-d');
+    return UtilsService::isToday($this->startDate);
   }
 }

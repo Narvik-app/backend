@@ -24,6 +24,7 @@ use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRecordingRepository;
 use App\Security\Voter\LoanRecordingVoter;
+use App\Service\UtilsService;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -127,10 +128,7 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
   }
 
   public function setDescription(?string $description): static {
-    if (empty($description)) {
-      $description = null;
-    }
-    $this->description = $description;
+    $this->description = UtilsService::nullIfEmpty($description);
     return $this;
   }
 
@@ -163,6 +161,6 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
 
   /** Whether this recording was logged today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return $this->date !== null && $this->date->format('Y-m-d') === new \DateTimeImmutable()->format('Y-m-d');
+    return UtilsService::isToday($this->date);
   }
 }

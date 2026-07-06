@@ -24,18 +24,6 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
   }
 
   /**
-   * Count all borrow events for a given item.
-   */
-  public function countByItem(LoanItem $item): int {
-    return (int) $this->createQueryBuilder('l')
-      ->select('COUNT(l.id)')
-      ->andWhere('l.loanItem = :item')
-      ->setParameter('item', $item)
-      ->getQuery()
-      ->getSingleScalarResult();
-  }
-
-  /**
    * Count currently open (not returned) borrow events for a given item.
    */
   public function countOpenByItem(LoanItem $item): int {
@@ -46,6 +34,25 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
       ->setParameter('item', $item)
       ->getQuery()
       ->getSingleScalarResult();
+  }
+
+  /**
+   * Count total and currently open borrow events for a given item in a single query.
+   *
+   * @return array{total: int, open: int}
+   */
+  public function getUsageCounts(LoanItem $item): array {
+    $result = $this->createQueryBuilder('l')
+      ->select('COUNT(l.id) AS total, SUM(CASE WHEN l.endDate IS NULL THEN 1 ELSE 0 END) AS open')
+      ->andWhere('l.loanItem = :item')
+      ->setParameter('item', $item)
+      ->getQuery()
+      ->getSingleResult();
+
+    return [
+      'total' => (int) $result['total'],
+      'open' => (int) ($result['open'] ?? 0),
+    ];
   }
 
   /**
@@ -62,7 +69,7 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
     $conn = $this->getEntityManager()->getConnection();
 
-    $clubClause = $club ? ' club_id = :clubId AND' : '';
+    $clubClause = $this->clubWhereClause($club);
     $params = [
       'from' => $dateRange['start']->format('Y-m-d H:i:s'),
       'to' => $dateRange['end']->format('Y-m-d H:i:s'),
@@ -101,7 +108,7 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
     $dailyCounts = $conn->executeQuery($dailySql, $params)->fetchAllAssociative();
 
     // Per-item breakdown
-    $itemsClubClause = $club ? ' l.club_id = :clubId AND' : '';
+    $itemsClubClause = $this->clubWhereClause($club, 'l.');
     $itemsSql = <<<SQL
       SELECT
         li.uuid AS uuid,
@@ -159,5 +166,9 @@ class LoanRepository extends ServiceEntityRepository implements ClubLinkedInterf
       ),
       'items' => $items,
     ];
+  }
+
+  private function clubWhereClause(?Club $club, string $columnPrefix = ''): string {
+    return $club ? " {$columnPrefix}club_id = :clubId AND" : '';
   }
 }

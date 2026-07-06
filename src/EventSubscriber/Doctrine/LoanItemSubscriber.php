@@ -13,7 +13,8 @@ class LoanItemSubscriber extends AbstractEventSubscriber {
   }
 
   public function postLoad(LoanItem $loanItem, PostLoadEventArgs $args): void {
-    $loanItem->setIsCurrentlyLoaned($this->loanRepository->countOpenByItem($loanItem) > 0);
-    $loanItem->setTimesLoaned($this->loanRepository->countByItem($loanItem));
+    $counts = $this->loanRepository->getUsageCounts($loanItem);
+    $loanItem->setIsCurrentlyLoaned($counts['open'] > 0);
+    $loanItem->setTimesLoaned($counts['total']);
   }
 }

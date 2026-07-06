@@ -10,11 +10,13 @@ use App\Entity\ClubDependent\Plugin\Sale\InventoryItemHistory;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryItemHistoryRepository;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryItemRepository;
 use App\Repository\ClubRepository;
+use App\State\Trait\DateRangeQueryTrait;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 final readonly class InventoryItemHistoryProvider implements ProviderInterface {
+  use DateRangeQueryTrait;
+
   public function __construct(
     private ClubRepository $clubRepository,
     private InventoryItemRepository $inventoryItemRepository,
@@ -48,24 +50,7 @@ final readonly class InventoryItemHistoryProvider implements ProviderInterface {
 
   private function providePerDay(int $itemId): TraversablePaginator|array {
     $request = $this->requestStack->getCurrentRequest();
-
-    $start = null;
-    $end = null;
-
-    $startFilter = $request?->query->get('start');
-    $endFilter = $request?->query->get('end');
-    if ($startFilter || $endFilter) {
-      try {
-        if ($endFilter) {
-          $end = new \DateTimeImmutable($endFilter . ' 23:59:59');
-        }
-        if ($startFilter) {
-          $start = new \DateTimeImmutable($startFilter . ' 00:00:00');
-        }
-      } catch (\Exception $e) {
-        throw new BadRequestHttpException('Invalid date filter.', $e);
-      }
-    }
+    [$start, $end] = $this->parseDateRangeFilter($request);
 
     $dateFilter = '';
     $params = ['itemId' => $itemId];
@@ -106,15 +91,6 @@ final readonly class InventoryItemHistoryProvider implements ProviderInterface {
       return $history;
     }, $rows);
 
-    if ($request?->query->get('pagination') === 'false') {
-      return $items;
-    }
-
-    $page = max(1, $request?->query->getInt('page', 1) ?? 1);
-    $itemsPerPage = max(1, $request?->query->getInt('itemsPerPage', 30) ?? 30);
-    $total = count($items);
-    $sliced = array_slice($items, ($page - 1) * $itemsPerPage, $itemsPerPage);
-
-    return new TraversablePaginator(new \ArrayIterator($sliced), $page, $itemsPerPage, $total);
+    return $this->paginateRows($items, $request);
   }
 }
