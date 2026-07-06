@@ -24,6 +24,8 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
+use App\Security\Voter\LoanVoter;
+use App\Validator\Constraints\LoanEditableToday;
 use App\Validator\Constraints\LoanItemMustBeAvailable;
 use App\Validator\Constraints\LoanItemNotAlreadyLoaned;
 use Doctrine\DBAL\Types\Types;
@@ -34,6 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: LoanRepository::class)]
 #[LoanItemNotAlreadyLoaned]
 #[LoanItemMustBeAvailable]
+#[LoanEditableToday]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loans/{uuid}',
   operations: [
@@ -60,7 +63,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       security: "is_granted('".Permission::LOAN_EDIT->value."', object)",
     ),
     new Delete(
-      security: "is_granted('".Permission::LOAN_EDIT->value."', object)",
+      security: "is_granted('".LoanVoter::DELETE."', object)",
     ),
   ],
   uriVariables: [
@@ -195,5 +198,10 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
     }
     $this->comment = $comment;
     return $this;
+  }
+
+  /** Whether this loan was started today, i.e. still correctable in case of a mistake */
+  public function isEditableToday(): bool {
+    return $this->startDate !== null && $this->startDate->format('Y-m-d') === (new \DateTimeImmutable())->format('Y-m-d');
   }
 }

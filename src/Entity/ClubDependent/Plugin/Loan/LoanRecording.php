@@ -23,6 +23,7 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRecordingRepository;
+use App\Security\Voter\LoanRecordingVoter;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -52,10 +53,10 @@ use Symfony\Component\Validator\Constraints as Assert;
       security: "is_granted('".Permission::LOAN_RECORDINGS_ACCESS->value."', object)",
     ),
     new Patch(
-      security: "is_granted('".Permission::LOAN_RECORDINGS_EDIT->value."', object)",
+      security: "is_granted('".LoanRecordingVoter::UPDATE."', object)",
     ),
     new Delete(
-      security: "is_granted('".Permission::LOAN_RECORDINGS_EDIT->value."', object)",
+      security: "is_granted('".LoanRecordingVoter::DELETE."', object)",
     ),
   ],
   uriVariables: [
@@ -158,5 +159,10 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
   public function setDate(\DateTimeImmutable $date): static {
     $this->date = $date;
     return $this;
+  }
+
+  /** Whether this recording was logged today, i.e. still correctable in case of a mistake */
+  public function isEditableToday(): bool {
+    return $this->date !== null && $this->date->format('Y-m-d') === (new \DateTimeImmutable())->format('Y-m-d');
   }
 }
