@@ -55,7 +55,7 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
   }
 
   public function listDevices(\App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface $credentials): array {
-    throw new PaymentTerminalException('Ce fournisseur ne permet pas de lister les terminaux.');
+    throw new PaymentTerminalException('This provider does not support listing devices.');
   }
 
   public function getDeviceStatus(\App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface $credentials): \App\Service\PaymentTerminal\Dto\TerminalDevice {
