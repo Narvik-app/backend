@@ -23,6 +23,7 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\Permission;
 use App\Enum\SalePaymentTerminalProvider;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentTerminalRepository;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -216,6 +217,19 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
   #[Assert\NotBlank]
   private ?string $name = null;
 
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['sale-payment-terminal', 'sale-read'])]
+  private ?string $description = null;
+
+  #[ORM\Column(length: 255, nullable: true)]
+  #[Groups(['sale-payment-terminal', 'sale-read'])]
+  private ?string $icon = null;
+
+  #[ORM\ManyToOne(targetEntity: SalePaymentMode::class, inversedBy: 'paymentTerminals')]
+  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  #[Groups(['sale-payment-terminal', 'sale-payment-terminal-write'])]
+  private ?SalePaymentMode $paymentMode = null;
+
   #[ORM\Column(type: Types::STRING, enumType: SalePaymentTerminalProvider::class, options: ['default' => 'sumup'])]
   #[Groups(['sale-payment-terminal', 'sale-read'])]
   #[Assert\NotNull]
@@ -241,6 +255,33 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
 
   public function setName(string $name): static {
     $this->name = ucfirst($name);
+    return $this;
+  }
+
+  public function getDescription(): ?string {
+    return $this->description;
+  }
+
+  public function setDescription(?string $description): static {
+    $this->description = $description;
+    return $this;
+  }
+
+  public function getIcon(): ?string {
+    return $this->icon;
+  }
+
+  public function setIcon(?string $icon): static {
+    $this->icon = $icon;
+    return $this;
+  }
+
+  public function getPaymentMode(): ?SalePaymentMode {
+    return $this->paymentMode;
+  }
+
+  public function setPaymentMode(?SalePaymentMode $paymentMode): static {
+    $this->paymentMode = $paymentMode;
     return $this;
   }
 
