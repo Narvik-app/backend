@@ -25,7 +25,7 @@ class SalePaymentTerminalCheckout extends AbstractClubDependentController {
     #[MapEntity(mapping: ['uuid' => 'uuid'])] SalePaymentTerminal $salePaymentTerminal,
   ): JsonResponse {
     if (!$salePaymentTerminal->isUsable()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce terminal de paiement n\'est pas disponible ou n\'est pas configuré.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'This payment terminal is not available or not configured.');
     }
 
     $payload = $this->checkAndGetJsonValues($request, ['amount']);

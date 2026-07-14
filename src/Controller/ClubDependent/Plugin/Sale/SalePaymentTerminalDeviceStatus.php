@@ -31,7 +31,7 @@ class SalePaymentTerminalDeviceStatus extends AbstractClubDependentController {
   ): JsonResponse {
     $connection = $salePaymentTerminal->getConnection();
     if (!$connection->isConfigured()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'La connexion de ce terminal n\'est pas configurée.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'This terminal\'s connection is not configured.');
     }
 
     $providerImpl = $this->terminalManager->forConnection($connection);
