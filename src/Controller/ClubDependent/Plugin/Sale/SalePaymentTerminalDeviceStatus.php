@@ -14,8 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
- * "Test connection" for an existing terminal: returns the live status of the
- * configured device using the terminal's stored credentials.
+ * "Test connection" for an existing device: returns its live status using the
+ * owning connection's stored credentials merged with this device's id.
  */
 class SalePaymentTerminalDeviceStatus extends AbstractClubDependentController {
   public function __construct(
@@ -29,14 +29,15 @@ class SalePaymentTerminalDeviceStatus extends AbstractClubDependentController {
     Request $request,
     #[MapEntity(mapping: ['uuid' => 'uuid'])] SalePaymentTerminal $salePaymentTerminal,
   ): JsonResponse {
-    if (!$salePaymentTerminal->isConfigured()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce terminal de paiement n\'est pas configuré.');
+    $connection = $salePaymentTerminal->getConnection();
+    if (!$connection->isConfigured()) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'La connexion de ce terminal n\'est pas configurée.');
     }
 
-    $providerImpl = $this->terminalManager->forTerminal($salePaymentTerminal);
+    $providerImpl = $this->terminalManager->forConnection($connection);
 
     try {
-      $credentials = $providerImpl->credentialsFromArray($salePaymentTerminal->getCredentials());
+      $credentials = $providerImpl->credentialsForDevice($connection, $salePaymentTerminal->getExternalDeviceId());
       $device = $providerImpl->getDeviceStatus($credentials);
     }
     catch (\InvalidArgumentException $e) {

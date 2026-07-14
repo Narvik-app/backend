@@ -5,6 +5,7 @@ namespace App\Entity\ClubDependent\Plugin\Sale;
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -127,6 +128,7 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
 
   /** @var Collection<int, SalePaymentTerminal> */
   #[ORM\OneToMany(targetEntity: SalePaymentTerminal::class, mappedBy: 'paymentMode')]
+  #[ApiProperty(readableLink: true)]
   #[Groups(['sale-payment-mode', 'sale-read'])]
   private Collection $paymentTerminals;
 
