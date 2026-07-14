@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\OpenApi\Model;
+use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCancelCheckout;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckout;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckoutStatus;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalDeviceStatus;
@@ -96,6 +97,21 @@ use Symfony\Component\Validator\Constraints as Assert;
         summary: 'Get the live status of the device (test connection)',
       ),
       security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_ACCESS->value."', request)",
+      read: false,
+    ),
+
+    // Abort a checkout the device is still waiting on (cashier cancelled in the UI)
+    new Post(
+      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/cancel-checkout',
+      uriVariables: [
+        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
+        'uuid' => new Link(fromClass: self::class),
+      ],
+      controller: SalePaymentTerminalCancelCheckout::class,
+      openapi: new Model\Operation(
+        summary: 'Abort the checkout this device is currently waiting on',
+      ),
+      security: "is_granted('".Permission::SALE_NEW->value."', request)",
       read: false,
     ),
 
