@@ -27,11 +27,11 @@ use SumUp\Services\TransactionsGetParams;
  *  - getCheckoutStatus() → poll the Transactions API by client_transaction_id
  */
 class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
-  private const CURRENCY = 'EUR';
-  private const MINOR_UNIT = 2;
+  private const string CURRENCY = 'EUR';
+  private const int MINOR_UNIT = 2;
 
   // Map SumUp transaction status strings to our internal enum
-  private const STATUS_MAP = [
+  private const array STATUS_MAP = [
     'SUCCESSFUL' => SalePaymentTerminalCheckoutStatus::successful,
     'FAILED' => SalePaymentTerminalCheckoutStatus::failed,
     'CANCELLED' => SalePaymentTerminalCheckoutStatus::cancelled,
@@ -52,6 +52,7 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     SumUpCredentials::fromArray($data)->assertComplete();
   }
 
+  #[\Override]
   public function canListDevices(): bool {
     return true;
   }

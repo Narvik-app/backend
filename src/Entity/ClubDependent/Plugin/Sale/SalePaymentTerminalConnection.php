@@ -137,6 +137,18 @@ class SalePaymentTerminalConnection extends UuidEntity implements ClubLinkedEnti
   private ?bool $available = true;
 
   /**
+   * When false (default), the terminal picker is skipped and the sole usable
+   * device under this connection is used automatically for its payment mode.
+   * When true, the cashier is always asked to pick a terminal, even if there's
+   * only one — useful for providers where a connection may cover several
+   * distinct payment modes rather than a single dedicated one.
+   */
+  #[ORM\Column(options: ['default' => false])]
+  #[Groups(['sale-payment-terminal-connection'])]
+  #[Assert\NotNull]
+  private ?bool $forceTerminalSelection = false;
+
+  /**
    * Provider credentials stored as encrypted JSON (e.g. {apiKey, merchantCode} for SumUp).
    * Write-only: accepted in POST/PATCH body but never returned in responses.
    * Use isConfigured() to check if credentials have been set.
@@ -182,6 +194,15 @@ class SalePaymentTerminalConnection extends UuidEntity implements ClubLinkedEnti
 
   public function setAvailable(bool $available): static {
     $this->available = $available;
+    return $this;
+  }
+
+  public function isForceTerminalSelection(): ?bool {
+    return $this->forceTerminalSelection;
+  }
+
+  public function setForceTerminalSelection(bool $forceTerminalSelection): static {
+    $this->forceTerminalSelection = $forceTerminalSelection;
     return $this;
   }
 

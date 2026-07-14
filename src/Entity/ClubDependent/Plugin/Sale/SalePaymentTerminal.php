@@ -285,4 +285,15 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
       && $this->connection->isAvailable() === true
       && $this->connection->isConfigured();
   }
+
+  /**
+   * Whether the checkout flow must always show the terminal picker for this
+   * device, even if it's the only usable one for its payment mode. Delegated
+   * to the connection: a connection whose devices span several payment modes
+   * shouldn't have checkout silently pick one at random.
+   */
+  #[Groups(['sale-payment-terminal-read', 'sale-read', 'sale-payment-mode-read'])]
+  public function isForceTerminalSelection(): bool {
+    return $this->connection?->isForceTerminalSelection() ?? false;
+  }
 }
