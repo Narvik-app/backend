@@ -47,6 +47,11 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     return SumUpCredentials::fromArray($data);
   }
 
+  protected function withDeviceId(array $credentials, string $deviceId): array {
+    $credentials['readerId'] = $deviceId;
+    return $credentials;
+  }
+
   public function validateCredentials(array $data): void {
     // A saved terminal must be complete enough to charge (reader selected)
     SumUpCredentials::fromArray($data)->assertComplete();
