@@ -25,6 +25,7 @@ class EncryptedJsonType extends Type {
     return 'TEXT';
   }
 
+  #[\Override]
   public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string {
     if ($value === null) {
       return null;
@@ -34,6 +35,7 @@ class EncryptedJsonType extends Type {
     return $this->getEncryptor()->encrypt($json);
   }
 
+  #[\Override]
   public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array {
     if ($value === null || $value === '') {
       return null;
