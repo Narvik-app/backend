@@ -37,7 +37,7 @@ class SalePaymentTerminalConnectionListDevices extends AbstractClubDependentCont
 
     $credentialsData = $payload['credentials'];
     if (!is_array($credentialsData)) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Le champ "credentials" doit être un objet.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'The "credentials" field must be an object.');
     }
 
     $providerImpl = $this->terminalManager->forProvider($provider);

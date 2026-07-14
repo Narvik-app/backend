@@ -38,7 +38,7 @@ class SalePaymentTerminalConnectionSyncDevices extends AbstractClubDependentCont
     #[MapEntity(mapping: ['uuid' => 'uuid'])] SalePaymentTerminalConnection $salePaymentTerminalConnection,
   ): JsonResponse {
     if (!$salePaymentTerminalConnection->isConfigured()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Cette connexion n\'est pas configurée.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'This connection is not configured.');
     }
 
     $providerImpl = $this->terminalManager->forConnection($salePaymentTerminalConnection);

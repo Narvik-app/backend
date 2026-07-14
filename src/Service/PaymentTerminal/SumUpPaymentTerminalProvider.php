@@ -65,7 +65,7 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
       $response = $sumup->readers()->list($credentials->merchantCode);
     }
     catch (SDKException $e) {
-      throw $this->wrapException('Échec de la récupération des terminaux', $e);
+      throw $this->wrapException('Failed to retrieve terminals', $e);
     }
 
     $devices = [];
@@ -84,7 +84,7 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
       $reader = $sumup->readers()->get($credentials->merchantCode, $credentials->readerId);
     }
     catch (SDKException $e) {
-      throw $this->wrapException('Échec de la récupération du statut du terminal', $e);
+      throw $this->wrapException('Failed to retrieve terminal status', $e);
     }
 
     return $this->mapReaderToDevice($sumup, $credentials, $reader);
@@ -117,7 +117,7 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
       );
     }
     catch (SDKException $e) {
-      throw $this->wrapException('Échec de la création du paiement sur le terminal', $e);
+      throw $this->wrapException('Failed to create payment on the terminal', $e);
     }
 
     $clientTransactionId = $response->data->clientTransactionId ?? null;
@@ -144,10 +144,10 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
       if ($e->getStatusCode() === 404) {
         return new TerminalCheckoutStatusResult(status: SalePaymentTerminalCheckoutStatus::pending);
       }
-      throw $this->wrapException('Échec de la récupération du statut du paiement', $e);
+      throw $this->wrapException('Failed to retrieve payment status', $e);
     }
     catch (SDKException $e) {
-      throw $this->wrapException('Échec de la récupération du statut du paiement', $e);
+      throw $this->wrapException('Failed to retrieve payment status', $e);
     }
 
     $rawStatus = strtoupper((string) ($transaction->status ?? 'PENDING'));
