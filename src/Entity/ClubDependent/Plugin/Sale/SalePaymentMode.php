@@ -23,6 +23,8 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\Permission;
 use App\Enum\SalePaymentModeKind;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -123,10 +125,15 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   #[Assert\NotNull]
   private SalePaymentModeKind $kind = SalePaymentModeKind::payment;
 
-  #[ORM\ManyToOne(targetEntity: SalePaymentTerminal::class)]
-  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  /** @var Collection<int, SalePaymentTerminal> */
+  #[ORM\OneToMany(targetEntity: SalePaymentTerminal::class, mappedBy: 'paymentMode')]
   #[Groups(['sale-payment-mode', 'sale-read'])]
-  private ?SalePaymentTerminal $paymentTerminal = null;
+  private Collection $paymentTerminals;
+
+  public function __construct() {
+    parent::__construct();
+    $this->paymentTerminals = new ArrayCollection();
+  }
 
   public function getName(): ?string {
     return $this->name;
@@ -173,12 +180,8 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
     return $this;
   }
 
-  public function getPaymentTerminal(): ?SalePaymentTerminal {
-    return $this->paymentTerminal;
-  }
-
-  public function setPaymentTerminal(?SalePaymentTerminal $paymentTerminal): static {
-    $this->paymentTerminal = $paymentTerminal;
-    return $this;
+  /** @return Collection<int, SalePaymentTerminal> */
+  public function getPaymentTerminals(): Collection {
+    return $this->paymentTerminals;
   }
 }
