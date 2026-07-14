@@ -72,4 +72,12 @@ interface PaymentTerminalProviderInterface {
    * @throws PaymentTerminalException
    */
   public function getCheckoutStatus(SalePaymentTerminalConnection $connection, string $clientTransactionId): TerminalCheckoutStatusResult;
+
+  /**
+   * Abort whatever checkout the given device is currently waiting on (e.g. the
+   * cashier cancelled in the UI while the terminal was still waiting for a card).
+   *
+   * @throws PaymentTerminalException
+   */
+  public function cancelCheckout(SalePaymentTerminalConnection $connection, string $deviceId): void;
 }

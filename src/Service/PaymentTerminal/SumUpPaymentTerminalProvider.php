@@ -159,6 +159,27 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     );
   }
 
+  public function cancelCheckout(SalePaymentTerminalConnection $connection, string $deviceId): void {
+    /** @var SumUpCredentials $credentials */
+    $credentials = $this->credentialsOf($connection, $deviceId);
+    $credentials->assertComplete();
+    $sumup = $this->clientFor($credentials);
+
+    try {
+      $sumup->readers()->terminateCheckout($credentials->merchantCode, $credentials->readerId);
+    }
+    catch (ApiException $e) {
+      // 404 = nothing pending on the reader anymore (e.g. it already finished) — not an error
+      if ($e->getStatusCode() === 404) {
+        return;
+      }
+      throw $this->wrapException('Failed to cancel the payment on the terminal', $e);
+    }
+    catch (SDKException $e) {
+      throw $this->wrapException('Failed to cancel the payment on the terminal', $e);
+    }
+  }
+
   private function clientFor(SumUpCredentials $credentials): SumUp {
     return new SumUp($credentials->apiKey);
   }
