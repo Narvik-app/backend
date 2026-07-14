@@ -32,7 +32,7 @@ class SalePaymentTerminalConnectionListDevices extends AbstractClubDependentCont
 
     $provider = SalePaymentTerminalProvider::tryFrom((string) $payload['provider']);
     if ($provider === null) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Fournisseur de terminal inconnu.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Terminal provider not supported.');
     }
 
     $credentialsData = $payload['credentials'];
