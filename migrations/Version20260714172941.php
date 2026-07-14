@@ -14,7 +14,7 @@ final class Version20260714172941 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add sale_payment_terminal_connection (shared provider credentials) and sale_payment_terminal (TPE) entities, with description/icon and a payment_mode link (a payment mode can own multiple terminals), plus forceTerminalSelection on the connection';
+        return 'Add sale_payment_terminal_connection (shared provider credentials) and sale_payment_terminal (TPE) entities';
     }
 
     public function up(Schema $schema): void
