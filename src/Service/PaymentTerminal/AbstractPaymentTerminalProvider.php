@@ -14,7 +14,7 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
 
   /**
    * Decode and validate credentials from the connection entity, optionally merging
-   * in a specific device id (e.g. SumUp's readerId) for calls that target one device.
+   * in a specific device id for calls that target one device.
    */
   protected function credentialsOf(SalePaymentTerminalConnection $connection, ?string $deviceId = null): TerminalCredentialsInterface {
     $raw = $connection->getCredentials();
@@ -32,13 +32,10 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
   }
 
   /**
-   * Merge a device id into a raw credentials map under the provider-specific key
-   * (e.g. `readerId` for SumUp). Overridden by providers whose device id key differs.
+   * Merge a device id into a raw credentials map under this provider's own
+   * device id key (e.g. `readerId` for SumUp).
    */
-  protected function withDeviceId(array $credentials, string $deviceId): array {
-    $credentials['readerId'] = $deviceId;
-    return $credentials;
-  }
+  abstract protected function withDeviceId(array $credentials, string $deviceId): array;
 
   /**
    * Convert a decimal amount string (e.g. "15.00") to integer minor units (e.g. 1500 for EUR cents).
