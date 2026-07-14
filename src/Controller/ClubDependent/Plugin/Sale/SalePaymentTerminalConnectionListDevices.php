@@ -2,11 +2,8 @@
 
 namespace App\Controller\ClubDependent\Plugin\Sale;
 
-use App\Controller\Abstract\AbstractClubDependentController;
+use App\Controller\Abstract\AbstractSalePaymentTerminalController;
 use App\Enum\SalePaymentTerminalProvider;
-use App\Service\PaymentTerminal\PaymentTerminalException;
-use App\Service\PaymentTerminal\PaymentTerminalManager;
-use App\Service\RequestService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,14 +16,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * attached to the account, and returns each device with its live online status.
  * Doubles as the credential check (a successful list means valid credentials).
  */
-class SalePaymentTerminalConnectionListDevices extends AbstractClubDependentController {
-  public function __construct(
-    RequestService $requestService,
-    private readonly PaymentTerminalManager $terminalManager,
-  ) {
-    parent::__construct($requestService);
-  }
-
+class SalePaymentTerminalConnectionListDevices extends AbstractSalePaymentTerminalController {
   public function __invoke(Request $request): JsonResponse {
     $payload = $this->checkAndGetJsonValues($request, ['provider', 'credentials']);
 
@@ -46,20 +36,10 @@ class SalePaymentTerminalConnectionListDevices extends AbstractClubDependentCont
       return new JsonResponse(['canList' => false, 'devices' => []]);
     }
 
-    try {
+    $devices = $this->callTerminal(function () use ($providerImpl, $credentialsData) {
       $credentials = $providerImpl->credentialsFromArray($credentialsData);
-    }
-    catch (\InvalidArgumentException $e) {
-      throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage(), $e);
-    }
-
-    try {
-      $devices = $providerImpl->listDevices($credentials);
-    }
-    catch (PaymentTerminalException $e) {
-      // Invalid credentials / provider unreachable
-      throw new HttpException(Response::HTTP_BAD_GATEWAY, $e->getMessage(), $e);
-    }
+      return $providerImpl->listDevices($credentials);
+    });
 
     return new JsonResponse([
       'canList' => true,

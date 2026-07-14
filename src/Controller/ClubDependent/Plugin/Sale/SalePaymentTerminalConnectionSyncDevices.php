@@ -2,10 +2,9 @@
 
 namespace App\Controller\ClubDependent\Plugin\Sale;
 
-use App\Controller\Abstract\AbstractClubDependentController;
+use App\Controller\Abstract\AbstractSalePaymentTerminalController;
 use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
 use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminalConnection;
-use App\Service\PaymentTerminal\PaymentTerminalException;
 use App\Service\PaymentTerminal\PaymentTerminalManager;
 use App\Service\RequestService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,13 +23,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * payment mode) are never silently lost; the frontend flags them as stale by
  * comparing lastSeenAt to the connection's lastSyncedAt (stamped either way).
  */
-class SalePaymentTerminalConnectionSyncDevices extends AbstractClubDependentController {
+class SalePaymentTerminalConnectionSyncDevices extends AbstractSalePaymentTerminalController {
   public function __construct(
     RequestService $requestService,
-    private readonly PaymentTerminalManager $terminalManager,
+    PaymentTerminalManager $terminalManager,
     private readonly EntityManagerInterface $entityManager,
   ) {
-    parent::__construct($requestService);
+    parent::__construct($requestService, $terminalManager);
   }
 
   public function __invoke(
@@ -50,21 +49,21 @@ class SalePaymentTerminalConnectionSyncDevices extends AbstractClubDependentCont
     $now = new \DateTimeImmutable();
 
     try {
-      $credentials = $providerImpl->credentialsFromArray($salePaymentTerminalConnection->getCredentials());
-      $devices = $providerImpl->listDevices($credentials);
+      $devices = $this->callTerminal(function () use ($providerImpl, $salePaymentTerminalConnection) {
+        $credentials = $providerImpl->credentialsFromArray($salePaymentTerminalConnection->getCredentials());
+        return $providerImpl->listDevices($credentials);
+      });
     }
-    catch (\InvalidArgumentException $e) {
-      throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage(), $e);
-    }
-    catch (PaymentTerminalException $e) {
-      throw new HttpException(Response::HTTP_BAD_GATEWAY, $e->getMessage(), $e);
-    }
-    finally {
-      // Stamped whether the sync succeeded or failed, so stale-device flagging
-      // always reflects the most recent attempt.
+    catch (\Throwable $e) {
+      // Stamped on failure too (and flushed here, since we won't reach the
+      // flush below), so stale-device flagging always reflects the most
+      // recent attempt.
       $salePaymentTerminalConnection->setLastSyncedAt($now);
       $this->entityManager->flush();
+      throw $e;
     }
+
+    $salePaymentTerminalConnection->setLastSyncedAt($now);
 
     /** @var array<string, SalePaymentTerminal> $existingByExternalId */
     $existingByExternalId = [];

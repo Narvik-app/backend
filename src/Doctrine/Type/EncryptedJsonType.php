@@ -2,6 +2,7 @@
 
 namespace App\Doctrine\Type;
 
+use App\Crypto\SecretBoxCipher;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 
@@ -32,7 +33,7 @@ class EncryptedJsonType extends Type {
     }
 
     $json = json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-    return $this->getEncryptor()->encrypt($json);
+    return SecretBoxCipher::encrypt($json, $this->getKey());
   }
 
   #[\Override]
@@ -41,7 +42,7 @@ class EncryptedJsonType extends Type {
       return null;
     }
 
-    $json = $this->getEncryptor()->decrypt((string) $value);
+    $json = SecretBoxCipher::decrypt((string) $value, $this->getKey());
     return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
   }
 
@@ -49,10 +50,15 @@ class EncryptedJsonType extends Type {
     return true;
   }
 
-  private function getEncryptor(): Encryptor {
-    /** @var Encryptor|null $encryptor */
-    static $encryptor = null;
-    if ($encryptor === null) {
+  /**
+   * DBAL types are instantiated by the type registry without constructor
+   * arguments, so the key is read from the environment directly instead of
+   * being injected like in EncryptionService.
+   */
+  private function getKey(): string {
+    /** @var string|null $key */
+    static $key = null;
+    if ($key === null) {
       $encodedKey = (string) (getenv('ENCRYPTION_KEY') ?: ($_ENV['ENCRYPTION_KEY'] ?? $_SERVER['ENCRYPTION_KEY'] ?? ''));
       if (empty($encodedKey)) {
         throw new \RuntimeException(
@@ -60,44 +66,8 @@ class EncryptedJsonType extends Type {
           'Generate one with: php -r \'echo base64_encode(sodium_crypto_secretbox_keygen());\'',
         );
       }
-      $encryptor = new Encryptor($encodedKey);
+      $key = SecretBoxCipher::decodeKey($encodedKey);
     }
-    return $encryptor;
-  }
-}
-
-/**
- * Minimal encryptor for use inside the DBAL type (no DI available at this layer).
- * Uses the same algorithm as EncryptionService for cross-service compatibility.
- *
- * @internal
- */
-class Encryptor {
-  private readonly string $key;
-
-  public function __construct(string $encodedKey) {
-    $key = base64_decode($encodedKey, true);
-    if ($key === false || strlen($key) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
-      throw new \RuntimeException('ENCRYPTION_KEY must be a valid base64-encoded '.SODIUM_CRYPTO_SECRETBOX_KEYBYTES.'-byte key.');
-    }
-    $this->key = $key;
-  }
-
-  public function encrypt(string $plaintext): string {
-    $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-    return base64_encode($nonce.sodium_crypto_secretbox($plaintext, $nonce, $this->key));
-  }
-
-  public function decrypt(string $encrypted): string {
-    $decoded = base64_decode($encrypted, true);
-    if ($decoded === false || strlen($decoded) < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES) {
-      throw new \RuntimeException('Invalid encrypted data.');
-    }
-    $nonce = substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-    $plaintext = sodium_crypto_secretbox_open(substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES), $nonce, $this->key);
-    if ($plaintext === false) {
-      throw new \RuntimeException('Decryption failed. ENCRYPTION_KEY may be incorrect.');
-    }
-    return $plaintext;
+    return $key;
   }
 }
