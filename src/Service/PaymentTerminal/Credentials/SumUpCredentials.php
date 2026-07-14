@@ -9,7 +9,6 @@ final readonly class SumUpCredentials implements TerminalCredentialsInterface {
     public string $apiKey,
     public string $merchantCode,
     public ?string $readerId = null,
-    public ?string $affiliateKey = null,
   ) {
   }
 
@@ -29,7 +28,6 @@ final readonly class SumUpCredentials implements TerminalCredentialsInterface {
       apiKey: (string) $data['apiKey'],
       merchantCode: (string) $data['merchantCode'],
       readerId: isset($data['readerId']) && $data['readerId'] !== '' ? (string) $data['readerId'] : null,
-      affiliateKey: isset($data['affiliateKey']) && $data['affiliateKey'] !== '' ? (string) $data['affiliateKey'] : null,
     );
   }
 
@@ -53,7 +51,6 @@ final readonly class SumUpCredentials implements TerminalCredentialsInterface {
       'apiKey' => $this->apiKey,
       'merchantCode' => $this->merchantCode,
       'readerId' => $this->readerId,
-      'affiliateKey' => $this->affiliateKey,
     ], fn($v) => $v !== null);
   }
 }

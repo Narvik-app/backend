@@ -2,7 +2,7 @@
 
 namespace App\Service\PaymentTerminal;
 
-use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminalConnection;
 use App\Enum\SalePaymentTerminalCheckoutStatus;
 use App\Enum\SalePaymentTerminalProvider;
 use App\Service\PaymentTerminal\Credentials\SumUpCredentials;
@@ -74,11 +74,6 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     return $devices;
   }
 
-  public function withDevice(array $credentials, string $deviceId): array {
-    $credentials['readerId'] = $deviceId;
-    return $credentials;
-  }
-
   public function getDeviceStatus(TerminalCredentialsInterface $credentials): TerminalDevice {
     /** @var SumUpCredentials $credentials */
     $credentials->assertComplete();
@@ -94,15 +89,14 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     return $this->mapReaderToDevice($sumup, $credentials, $reader);
   }
 
-  public function createCheckout(SalePaymentTerminal $terminal, string $amount, string $description): TerminalCheckoutResult {
+  public function createCheckout(SalePaymentTerminalConnection $connection, string $deviceId, string $amount, string $description): TerminalCheckoutResult {
     /** @var SumUpCredentials $credentials */
-    $credentials = $this->credentialsOf($terminal);
+    $credentials = $this->credentialsOf($connection, $deviceId);
     $credentials->assertComplete();
     $sumup = $this->clientFor($credentials);
 
     // Array form (canonical per the SumUp PHP SDK docs). Only total_amount and
-    // description are sent — affiliate metadata requires a registered app_id and
-    // is intentionally omitted.
+    // description are sent.
     $body = [
       'total_amount' => [
         'currency' => self::CURRENCY,
@@ -133,9 +127,9 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
     return new TerminalCheckoutResult(clientTransactionId: $clientTransactionId);
   }
 
-  public function getCheckoutStatus(SalePaymentTerminal $terminal, string $clientTransactionId): TerminalCheckoutStatusResult {
+  public function getCheckoutStatus(SalePaymentTerminalConnection $connection, string $clientTransactionId): TerminalCheckoutStatusResult {
     /** @var SumUpCredentials $credentials */
-    $credentials = $this->credentialsOf($terminal);
+    $credentials = $this->credentialsOf($connection);
     $sumup = $this->clientFor($credentials);
 
     $params = new TransactionsGetParams();

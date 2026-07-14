@@ -29,9 +29,11 @@ class SalePaymentTerminalCheckoutStatus extends AbstractClubDependentController 
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Missing required query parameter: clientTransactionId');
     }
 
+    $connection = $salePaymentTerminal->getConnection();
+
     try {
-      $result = $this->terminalManager->forTerminal($salePaymentTerminal)->getCheckoutStatus(
-        $salePaymentTerminal,
+      $result = $this->terminalManager->forConnection($connection)->getCheckoutStatus(
+        $connection,
         (string) $clientTransactionId,
       );
     }

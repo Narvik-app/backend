@@ -24,21 +24,20 @@ class SalePaymentTerminalCheckout extends AbstractClubDependentController {
     Request $request,
     #[MapEntity(mapping: ['uuid' => 'uuid'])] SalePaymentTerminal $salePaymentTerminal,
   ): JsonResponse {
-    if (!$salePaymentTerminal->isAvailable()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce terminal de paiement n\'est pas disponible.');
-    }
-
-    if (!$salePaymentTerminal->isConfigured()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce terminal de paiement n\'est pas configuré.');
+    if (!$salePaymentTerminal->isUsable()) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce terminal de paiement n\'est pas disponible ou n\'est pas configuré.');
     }
 
     $payload = $this->checkAndGetJsonValues($request, ['amount']);
     $amount = (string) $payload['amount'];
     $description = isset($payload['description']) ? (string) $payload['description'] : 'Vente';
 
+    $connection = $salePaymentTerminal->getConnection();
+
     try {
-      $result = $this->terminalManager->forTerminal($salePaymentTerminal)->createCheckout(
-        $salePaymentTerminal,
+      $result = $this->terminalManager->forConnection($connection)->createCheckout(
+        $connection,
+        $salePaymentTerminal->getExternalDeviceId(),
         $amount,
         $description,
       );

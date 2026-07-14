@@ -2,7 +2,7 @@
 
 namespace App\Service\PaymentTerminal;
 
-use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminalConnection;
 use App\Enum\SalePaymentTerminalProvider;
 use App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface;
 use App\Service\PaymentTerminal\Dto\TerminalCheckoutResult;
@@ -50,26 +50,26 @@ interface PaymentTerminalProviderInterface {
   public function getDeviceStatus(TerminalCredentialsInterface $credentials): TerminalDevice;
 
   /**
-   * Return a new raw credentials map with the chosen device selected
-   * (e.g. set `readerId` for SumUp). Used when re-selecting a device during
-   * reconfiguration, preserving the other stored (secret) credentials.
+   * Build device-scoped credentials for a connection + device id (merges the device
+   * id into the connection's stored credentials under the provider-specific key,
+   * e.g. `readerId` for SumUp), for callers that need to call getDeviceStatus().
    *
-   * @param array $credentials existing raw credentials map
-   * @return array updated raw credentials map
+   * @throws PaymentTerminalException if the connection has no credentials configured
    */
-  public function withDevice(array $credentials, string $deviceId): array;
+  public function credentialsForDevice(SalePaymentTerminalConnection $connection, string $deviceId): TerminalCredentialsInterface;
 
   /**
-   * Initiate a payment on the terminal for the given amount (decimal string, e.g. "15.00").
+   * Initiate a payment on the given device (identified by its provider-side id,
+   * e.g. SumUp's readerId) for the given amount (decimal string, e.g. "15.00").
    *
    * @throws PaymentTerminalException
    */
-  public function createCheckout(SalePaymentTerminal $terminal, string $amount, string $description): TerminalCheckoutResult;
+  public function createCheckout(SalePaymentTerminalConnection $connection, string $deviceId, string $amount, string $description): TerminalCheckoutResult;
 
   /**
    * Poll the status of a previously initiated checkout.
    *
    * @throws PaymentTerminalException
    */
-  public function getCheckoutStatus(SalePaymentTerminal $terminal, string $clientTransactionId): TerminalCheckoutStatusResult;
+  public function getCheckoutStatus(SalePaymentTerminalConnection $connection, string $clientTransactionId): TerminalCheckoutStatusResult;
 }

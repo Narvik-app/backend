@@ -12,26 +12,29 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\OpenApi\Model;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckout;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalCheckoutStatus;
-use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalDevices;
 use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalDeviceStatus;
-use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalListDevices;
-use App\Controller\ClubDependent\Plugin\Sale\SalePaymentTerminalSetDevice;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\Permission;
-use App\Enum\SalePaymentTerminalProvider;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentTerminalRepository;
-use App\Entity\ClubDependent\Plugin\Sale\SalePaymentMode;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * A physical payment terminal device (e.g. a SumUp reader), discovered under a
+ * SalePaymentTerminalConnection via sync-devices. Local overrides (name, icon,
+ * description, payment mode, available) live here; credentials live on the connection.
+ */
 #[ORM\Entity(repositoryClass: SalePaymentTerminalRepository::class)]
+#[ORM\UniqueConstraint(name: 'sale_payment_terminal_connection_device_unique', fields: ['connection', 'externalDeviceId'])]
 #[UniqueEntity(fields: ['name', 'club'], ignoreNull: true)]
+#[UniqueEntity(fields: ['connection', 'externalDeviceId'], ignoreNull: true)]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}',
   operations: [
@@ -41,43 +44,6 @@ use Symfony\Component\Validator\Constraints as Assert;
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
       security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_ACCESS->value."', request)",
-    ),
-    new Post(
-      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals.{_format}',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-      ],
-      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
-      read: false,
-    ),
-
-    // Provider-agnostic device discovery used during setup (validates credentials + lists devices)
-    new Post(
-      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/-/list-devices',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-      ],
-      controller: SalePaymentTerminalListDevices::class,
-      openapi: new Model\Operation(
-        summary: 'List the devices available for a provider + credentials',
-        requestBody: new Model\RequestBody(
-          content: new \ArrayObject([
-            'application/json' => [
-              'schema' => [
-                'type' => 'object',
-                'required' => ['provider', 'credentials'],
-                'properties' => [
-                  'provider' => ['type' => 'string', 'example' => 'sumup'],
-                  'credentials' => ['type' => 'object'],
-                ],
-              ],
-            ],
-          ]),
-        ),
-      ),
-      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
-      read: false,
-      deserialize: false,
     ),
     new Get(
       security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_ACCESS->value."', object)",
@@ -118,49 +84,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       read: false,
     ),
 
-    // List devices for an existing terminal using its stored credentials (reconfiguration)
-    new Get(
-      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/devices',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-        'uuid' => new Link(fromClass: self::class),
-      ],
-      controller: SalePaymentTerminalDevices::class,
-      openapi: new Model\Operation(
-        summary: 'List devices using the terminal\'s stored credentials',
-      ),
-      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
-      read: false,
-    ),
-
-    // Re-select the device for an existing terminal (merges into stored credentials)
-    new Post(
-      uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/device',
-      uriVariables: [
-        'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
-        'uuid' => new Link(fromClass: self::class),
-      ],
-      controller: SalePaymentTerminalSetDevice::class,
-      openapi: new Model\Operation(
-        summary: 'Select the active device for this terminal',
-        requestBody: new Model\RequestBody(
-          content: new \ArrayObject([
-            'application/json' => [
-              'schema' => [
-                'type' => 'object',
-                'required' => ['deviceId'],
-                'properties' => ['deviceId' => ['type' => 'string']],
-              ],
-            ],
-          ]),
-        ),
-      ),
-      security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_EDIT->value."', request)",
-      read: false,
-      deserialize: false,
-    ),
-
-    // Test connection: live status of the configured device
+    // Test connection: live status of the device
     new Get(
       uriTemplate: '/clubs/{clubUuid}/sale-payment-terminals/{uuid}/device-status',
       uriVariables: [
@@ -169,7 +93,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       ],
       controller: SalePaymentTerminalDeviceStatus::class,
       openapi: new Model\Operation(
-        summary: 'Get the live status of the configured device (test connection)',
+        summary: 'Get the live status of the device (test connection)',
       ),
       security: "is_granted('".Permission::SALE_PAYMENT_TERMINALS_ACCESS->value."', request)",
       read: false,
@@ -213,16 +137,16 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
   use SelfClubLinkedEntityTrait;
 
   #[ORM\Column(length: 255)]
-  #[Groups(['sale-payment-terminal', 'sale-read'])]
+  #[Groups(['sale-payment-terminal', 'sale-read', 'sale-payment-mode-read'])]
   #[Assert\NotBlank]
   private ?string $name = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['sale-payment-terminal', 'sale-read'])]
+  #[Groups(['sale-payment-terminal', 'sale-read', 'sale-payment-mode-read'])]
   private ?string $description = null;
 
   #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['sale-payment-terminal', 'sale-read'])]
+  #[Groups(['sale-payment-terminal', 'sale-read', 'sale-payment-mode-read'])]
   private ?string $icon = null;
 
   #[ORM\ManyToOne(targetEntity: SalePaymentMode::class, inversedBy: 'paymentTerminals')]
@@ -230,24 +154,37 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
   #[Groups(['sale-payment-terminal', 'sale-payment-terminal-write'])]
   private ?SalePaymentMode $paymentMode = null;
 
-  #[ORM\Column(type: Types::STRING, enumType: SalePaymentTerminalProvider::class, options: ['default' => 'sumup'])]
+  /**
+   * The provider connection (shared credentials) this device belongs to.
+   * A device cannot exist without its connection.
+   */
+  #[ORM\ManyToOne(targetEntity: SalePaymentTerminalConnection::class, inversedBy: 'devices')]
+  #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['sale-payment-terminal', 'sale-read'])]
-  #[Assert\NotNull]
-  private SalePaymentTerminalProvider $provider = SalePaymentTerminalProvider::sumup;
-
-  #[ORM\Column]
-  #[Groups(['sale-payment-terminal'])]
-  #[Assert\NotNull]
-  private ?bool $available = true;
+  private ?SalePaymentTerminalConnection $connection = null;
 
   /**
-   * Provider credentials stored as encrypted JSON.
-   * Write-only: accepted in POST/PATCH body but never returned in responses.
-   * Use isConfigured() to check if credentials have been set.
+   * The provider's own device/reader id (e.g. SumUp's readerId). Fixed at
+   * discovery time by sync-devices; not a secret, so stored in the clear.
    */
-  #[ORM\Column(type: 'encrypted_json', nullable: true)]
-  #[Groups(['sale-payment-terminal-write'])]
-  private ?array $credentials = null;
+  #[ORM\Column(length: 255)]
+  #[Groups(['sale-payment-terminal'])]
+  #[Assert\NotBlank]
+  private ?string $externalDeviceId = null;
+
+  /**
+   * Stamped by sync-devices whenever this device is still returned by the
+   * provider. Compared against the connection's lastSyncedAt to flag a device
+   * that went missing from the most recent sync, without deleting it.
+   */
+  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+  #[Groups(['sale-payment-terminal-read'])]
+  private ?\DateTimeImmutable $lastSeenAt = null;
+
+  #[ORM\Column]
+  #[Groups(['sale-payment-terminal', 'sale-read', 'sale-payment-mode-read'])]
+  #[Assert\NotNull]
+  private ?bool $available = true;
 
   public function getName(): ?string {
     return $this->name;
@@ -285,12 +222,30 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
     return $this;
   }
 
-  public function getProvider(): SalePaymentTerminalProvider {
-    return $this->provider;
+  public function getConnection(): ?SalePaymentTerminalConnection {
+    return $this->connection;
   }
 
-  public function setProvider(SalePaymentTerminalProvider $provider): static {
-    $this->provider = $provider;
+  public function setConnection(SalePaymentTerminalConnection $connection): static {
+    $this->connection = $connection;
+    return $this;
+  }
+
+  public function getExternalDeviceId(): ?string {
+    return $this->externalDeviceId;
+  }
+
+  public function setExternalDeviceId(string $externalDeviceId): static {
+    $this->externalDeviceId = $externalDeviceId;
+    return $this;
+  }
+
+  public function getLastSeenAt(): ?\DateTimeImmutable {
+    return $this->lastSeenAt;
+  }
+
+  public function setLastSeenAt(?\DateTimeImmutable $lastSeenAt): static {
+    $this->lastSeenAt = $lastSeenAt;
     return $this;
   }
 
@@ -304,24 +259,14 @@ class SalePaymentTerminal extends UuidEntity implements ClubLinkedEntityInterfac
   }
 
   /**
-   * Raw credentials array (for application code / service layer only).
-   * Not exposed via API — use setCredentials() to update, isConfigured() to check.
+   * Whether this device is actually usable to initiate a checkout: enabled itself,
+   * and its connection is enabled and configured.
    */
-  public function getCredentials(): ?array {
-    return $this->credentials;
-  }
-
-  public function setCredentials(?array $credentials): static {
-    $this->credentials = $credentials;
-    return $this;
-  }
-
-  /**
-   * Returns true if credentials have been configured for this terminal.
-   * Exposed in API read responses instead of the raw credentials.
-   */
-  #[Groups(['sale-payment-terminal-read'])]
-  public function isConfigured(): bool {
-    return !empty($this->credentials);
+  #[Groups(['sale-payment-terminal-read', 'sale-read', 'sale-payment-mode-read'])]
+  public function isUsable(): bool {
+    return $this->available === true
+      && $this->connection !== null
+      && $this->connection->isAvailable() === true
+      && $this->connection->isConfigured();
   }
 }
