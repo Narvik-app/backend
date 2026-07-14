@@ -16,7 +16,7 @@ use SumUp\SumUp;
 use SumUp\Types\Reader;
 use SumUp\Types\ReaderStatus;
 use SumUp\Types\StatusResponseDataStatus;
-use SumUp\Types\TransactionsGetParams;
+use SumUp\Services\TransactionsGetParams;
 
 /**
  * Payment terminal provider for SumUp Solo readers, backed by the official
