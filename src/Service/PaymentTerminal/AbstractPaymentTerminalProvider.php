@@ -59,6 +59,6 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
   }
 
   public function getDeviceStatus(\App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface $credentials): \App\Service\PaymentTerminal\Dto\TerminalDevice {
-    throw new PaymentTerminalException('Ce fournisseur ne permet pas de vérifier le statut du terminal.');
+    throw new PaymentTerminalException('This provider does not support checking the terminal status.');
   }
 }
