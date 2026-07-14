@@ -13,13 +13,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
- * Provider-agnostic device discovery used during terminal setup.
+ * Provider-agnostic device discovery used while adding/editing a connection.
  *
  * Accepts a provider + raw credentials, validates them by listing the devices
  * attached to the account, and returns each device with its live online status.
- * Doubles as the step-1 credential check (a successful list means valid credentials).
+ * Doubles as the credential check (a successful list means valid credentials).
  */
-class SalePaymentTerminalListDevices extends AbstractClubDependentController {
+class SalePaymentTerminalConnectionListDevices extends AbstractClubDependentController {
   public function __construct(
     RequestService $requestService,
     private readonly PaymentTerminalManager $terminalManager,

@@ -2,7 +2,7 @@
 
 namespace App\Service\PaymentTerminal;
 
-use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminalConnection;
 use App\Enum\SalePaymentTerminalProvider;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
@@ -30,12 +30,12 @@ class PaymentTerminalManager {
   }
 
   /**
-   * Resolve the provider implementation for a given terminal.
+   * Resolve the provider implementation for a given connection.
    *
-   * @throws \InvalidArgumentException if no provider is registered for the terminal's provider type
+   * @throws \InvalidArgumentException if no provider is registered for the connection's provider type
    */
-  public function forTerminal(SalePaymentTerminal $terminal): PaymentTerminalProviderInterface {
-    return $this->forProvider($terminal->getProvider());
+  public function forConnection(SalePaymentTerminalConnection $connection): PaymentTerminalProviderInterface {
+    return $this->forProvider($connection->getProvider());
   }
 
   /**

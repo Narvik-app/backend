@@ -2,7 +2,7 @@
 
 namespace App\Service\PaymentTerminal;
 
-use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminalConnection;
 use App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface;
 use Psr\Log\LoggerInterface;
 
@@ -13,14 +13,31 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
   }
 
   /**
-   * Decode and validate credentials from the terminal entity.
+   * Decode and validate credentials from the connection entity, optionally merging
+   * in a specific device id (e.g. SumUp's readerId) for calls that target one device.
    */
-  protected function credentialsOf(SalePaymentTerminal $terminal): TerminalCredentialsInterface {
-    $raw = $terminal->getCredentials();
+  protected function credentialsOf(SalePaymentTerminalConnection $connection, ?string $deviceId = null): TerminalCredentialsInterface {
+    $raw = $connection->getCredentials();
     if (empty($raw)) {
-      throw new PaymentTerminalException('Terminal "'.$terminal->getName().'" has no credentials configured.');
+      throw new PaymentTerminalException('Connection "'.$connection->getName().'" has no credentials configured.');
+    }
+    if ($deviceId !== null) {
+      $raw = $this->withDeviceId($raw, $deviceId);
     }
     return $this->credentialsFromArray($raw);
+  }
+
+  public function credentialsForDevice(SalePaymentTerminalConnection $connection, string $deviceId): TerminalCredentialsInterface {
+    return $this->credentialsOf($connection, $deviceId);
+  }
+
+  /**
+   * Merge a device id into a raw credentials map under the provider-specific key
+   * (e.g. `readerId` for SumUp). Overridden by providers whose device id key differs.
+   */
+  protected function withDeviceId(array $credentials, string $deviceId): array {
+    $credentials['readerId'] = $deviceId;
+    return $credentials;
   }
 
   /**
@@ -43,9 +60,5 @@ abstract class AbstractPaymentTerminalProvider implements PaymentTerminalProvide
 
   public function getDeviceStatus(\App\Service\PaymentTerminal\Credentials\TerminalCredentialsInterface $credentials): \App\Service\PaymentTerminal\Dto\TerminalDevice {
     throw new PaymentTerminalException('Ce fournisseur ne permet pas de vérifier le statut du terminal.');
-  }
-
-  public function withDevice(array $credentials, string $deviceId): array {
-    throw new PaymentTerminalException('Ce fournisseur ne permet pas de sélectionner un terminal.');
   }
 }
