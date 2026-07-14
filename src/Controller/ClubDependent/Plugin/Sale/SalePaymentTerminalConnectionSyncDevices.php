@@ -44,7 +44,7 @@ class SalePaymentTerminalConnectionSyncDevices extends AbstractClubDependentCont
     $providerImpl = $this->terminalManager->forConnection($salePaymentTerminalConnection);
 
     if (!$providerImpl->canListDevices()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Ce fournisseur ne permet pas de synchroniser les terminaux.');
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'This provider does not support device listing.');
     }
 
     $now = new \DateTimeImmutable();
