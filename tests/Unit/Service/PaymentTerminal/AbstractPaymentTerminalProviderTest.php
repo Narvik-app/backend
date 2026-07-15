@@ -20,8 +20,8 @@ class AbstractPaymentTerminalProviderTest extends TestCase {
       }
 
       public function credentialsFromArray(array $data): TerminalCredentialsInterface {
-        return new class($data) implements TerminalCredentialsInterface {
-          public function __construct(private readonly array $data) {
+        return new readonly class($data) implements TerminalCredentialsInterface {
+          public function __construct(private array $data) {
           }
 
           public function assertComplete(): void {

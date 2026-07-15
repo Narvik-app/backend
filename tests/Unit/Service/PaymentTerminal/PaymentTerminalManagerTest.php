@@ -14,8 +14,8 @@ use PHPUnit\Framework\TestCase;
 
 class PaymentTerminalManagerTest extends TestCase {
   private function fakeProvider(SalePaymentTerminalProvider $provider): PaymentTerminalProviderInterface {
-    return new class($provider) implements PaymentTerminalProviderInterface {
-      public function __construct(private readonly SalePaymentTerminalProvider $provider) {
+    return new readonly class($provider) implements PaymentTerminalProviderInterface {
+      public function __construct(private SalePaymentTerminalProvider $provider) {
       }
 
       public function getProvider(): SalePaymentTerminalProvider {
