@@ -229,8 +229,12 @@ class SumUpPaymentTerminalProvider extends AbstractPaymentTerminalProvider {
   private function wrapException(string $context, SDKException $e): PaymentTerminalException {
     $detail = $e->getMessage();
 
-    // SumUp returns RFC-7807 problem bodies (e.g. 422 { title, detail }) — surface them
+    // SumUp returns RFC-7807 problem bodies (e.g. 422 { title, detail }) — surface them.
+    // The SDK hydrates these into SumUp\Types\Problem objects (not arrays) for most endpoints.
     $body = method_exists($e, 'getResponseBody') ? $e->getResponseBody() : null;
+    if (is_object($body)) {
+      $body = get_object_vars($body);
+    }
     if (is_array($body)) {
       $title = $body['title'] ?? null;
       $problemDetail = $body['detail'] ?? $body['message'] ?? $body['error_message'] ?? null;
