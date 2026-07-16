@@ -113,6 +113,11 @@ enum Permission: string {
       $implied[] = self::SALE_PAYMENT_MODES_ACCESS;
     }
 
+    // LOAN_EDIT implies LOAN_ITEMS_ACCESS (needed to browse/select items when recording a loan)
+    if ($this === self::LOAN_EDIT) {
+      $implied[] = self::LOAN_ITEMS_ACCESS;
+    }
+
     return $implied;
   }
 }
