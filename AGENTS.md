@@ -321,6 +321,29 @@ enum Permission: string {
 - Backend: `Member.hasPermission()` and `PermissionVoter`
 - Frontend: `useSelfUser.can()`
 
+### Cross-Feature Implied Permissions
+
+Beyond the generic EDIT→ACCESS rule, some permissions imply *other features'* ACCESS permissions because one feature's UI/workflow depends on another (e.g. making a sale needs to browse inventory; recording a loan needs to browse loan items). These special cases live in `Permission::getImpliedPermissions()` (`src/Enum/Permission.php`):
+
+```php
+if ($this === self::SALE_NEW) {
+  $implied[] = self::SALE_HISTORY_ACCESS;
+  $implied[] = self::SALE_INVENTORY_ACCESS;
+  $implied[] = self::SALE_CATEGORIES_ACCESS;
+  $implied[] = self::SALE_PAYMENT_MODES_ACCESS;
+}
+
+if ($this === self::LOAN_EDIT) {
+  $implied[] = self::LOAN_ITEMS_ACCESS;
+}
+```
+
+Enforcement is fully generic and needs no per-case wiring beyond the enum:
+- **`MemberPermissionSubscriber::onPostWrite`** - when a `MemberPermission` is granted, auto-persists every permission returned by `getImpliedPermissions()` that isn't already explicitly granted.
+- **`MemberPermissionSubscriber::onPreWrite`** - on delete, blocks removing a permission that is still implied by another permission the member/template currently holds.
+
+**When a new permission's feature depends on another feature's read access, add a case to `getImpliedPermissions()`** rather than special-casing it in controllers/voters — the subscriber picks it up automatically for both grant and delete-protection. Keep the frontend `Permission` enum comment (`app/types/api/permissions.ts`) in sync for discoverability, since the frontend has no implication logic of its own — it just reloads permissions from the backend after each toggle to reflect auto-grants.
+
 ### Permission Templates
 
 Permission Templates allow defining reusable sets of permissions that can be assigned to multiple members. This simplifies permission management.
