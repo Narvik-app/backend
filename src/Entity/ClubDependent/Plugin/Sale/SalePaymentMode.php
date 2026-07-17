@@ -5,6 +5,7 @@ namespace App\Entity\ClubDependent\Plugin\Sale;
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -23,11 +24,14 @@ use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Enum\Permission;
 use App\Enum\SalePaymentModeKind;
 use App\Repository\ClubDependent\Plugin\Sale\SalePaymentModeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\ClubDependent\Plugin\Sale\SalePaymentTerminal;
 
 #[ORM\Entity(repositoryClass: SalePaymentModeRepository::class)]
 #[UniqueEntity(fields: ['weight', 'club'], ignoreNull: true)]
@@ -122,6 +126,17 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   #[Assert\NotNull]
   private SalePaymentModeKind $kind = SalePaymentModeKind::payment;
 
+  /** @var Collection<int, SalePaymentTerminal> */
+  #[ORM\OneToMany(targetEntity: SalePaymentTerminal::class, mappedBy: 'paymentMode')]
+  #[ApiProperty(readableLink: true)]
+  #[Groups(['sale-payment-mode', 'sale-read'])]
+  private Collection $paymentTerminals;
+
+  public function __construct() {
+    parent::__construct();
+    $this->paymentTerminals = new ArrayCollection();
+  }
+
   public function getName(): ?string {
     return $this->name;
   }
@@ -165,5 +180,10 @@ class SalePaymentMode extends UuidEntity implements SortableEntityInterface, Clu
   public function setKind(SalePaymentModeKind $kind): static {
     $this->kind = $kind;
     return $this;
+  }
+
+  /** @return Collection<int, SalePaymentTerminal> */
+  public function getPaymentTerminals(): Collection {
+    return $this->paymentTerminals;
   }
 }
