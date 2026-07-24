@@ -44,9 +44,9 @@ class LoanRecordingVoterTest extends TestCase {
   }
 
   #[DataProvider('provideAttributes')]
-  public function testGrantsForRecordingLoggedToday(string $attribute): void {
+  public function testGrantsForRecordingCreatedToday(string $attribute): void {
     $recording = new LoanRecording();
-    $recording->setDate(new \DateTimeImmutable());
+    $recording->setCreatedAt(new \DateTimeImmutable());
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([
@@ -60,9 +60,9 @@ class LoanRecordingVoterTest extends TestCase {
   }
 
   #[DataProvider('provideAttributes')]
-  public function testDeniesForRecordingLoggedYesterday(string $attribute): void {
+  public function testDeniesForRecordingCreatedYesterday(string $attribute): void {
     $recording = new LoanRecording();
-    $recording->setDate(new \DateTimeImmutable('-1 day'));
+    $recording->setCreatedAt(new \DateTimeImmutable('-1 day'));
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([
@@ -76,12 +76,33 @@ class LoanRecordingVoterTest extends TestCase {
   }
 
   /**
-   * Admins can update/delete a recording regardless of how long ago it was logged.
+   * A backdated recording (date in the past) that was created today must still be editable
+   * by its creator — isEditableToday() keys on createdAt, not date.
    */
   #[DataProvider('provideAttributes')]
-  public function testGrantsForAdminRegardlessOfDate(string $attribute): void {
+  public function testGrantsForBackdatedRecordingCreatedToday(string $attribute): void {
     $recording = new LoanRecording();
-    $recording->setDate(new \DateTimeImmutable('-1 year'));
+    $recording->setCreatedAt(new \DateTimeImmutable());
+    $recording->setDate(new \DateTimeImmutable('-1 week'));
+
+    $security = $this->createStub(Security::class);
+    $security->method('isGranted')->willReturnMap([
+      [ClubRole::admin->value, $recording, false],
+      [Permission::LOAN_RECORDINGS_EDIT->value, $recording, true],
+    ]);
+
+    $voter = new LoanRecordingVoter($security);
+    $result = $voter->vote($this->tokenFor(new User()), $recording, [$attribute]);
+    $this->assertSame(Voter::ACCESS_GRANTED, $result);
+  }
+
+  /**
+   * Admins can update/delete a recording regardless of when it was created.
+   */
+  #[DataProvider('provideAttributes')]
+  public function testGrantsForAdminRegardlessOfCreatedAt(string $attribute): void {
+    $recording = new LoanRecording();
+    $recording->setCreatedAt(new \DateTimeImmutable('-1 year'));
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([

@@ -35,10 +35,22 @@ class LoanEditableTodayValidatorTest extends AbstractTestCase {
   }
 
   /**
-   * Returning a loan (endDate change) must work at any time, even on loans started long ago.
+   * isEditableToday() keys on createdAt, not startDate — a loan backdated to look like it started
+   * long ago must remain freely editable on the day it was actually created, so mistakes can be undone.
+   */
+  public function testAnyFieldChangeIsValidWhenLoanCreatedTodayEvenIfBackdated(): void {
+    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'createdAt' => new \DateTimeImmutable()]);
+    $loan->setComment('Fixing a typo on a backdated loan');
+
+    $violations = $this->validator->validate($loan, new LoanEditableToday());
+    $this->assertCount(0, $violations);
+  }
+
+  /**
+   * Returning a loan (endDate change) must work at any time, even on loans created long ago.
    */
   public function testReturningAnOldLoanIsValid(): void {
-    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null]);
+    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'createdAt' => new \DateTimeImmutable('-1 year')]);
     $loan->setEndDate(new \DateTimeImmutable());
 
     $violations = $this->validator->validate($loan, new LoanEditableToday());
@@ -46,14 +58,14 @@ class LoanEditableTodayValidatorTest extends AbstractTestCase {
   }
 
   public function testResubmittingUnchangedValuesOnAnOldLoanIsValid(): void {
-    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null]);
+    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'createdAt' => new \DateTimeImmutable('-1 year')]);
 
     $violations = $this->validator->validate($loan, new LoanEditableToday());
     $this->assertCount(0, $violations);
   }
 
   public function testEditingCommentOnAnOldLoanIsInvalid(): void {
-    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null]);
+    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'createdAt' => new \DateTimeImmutable('-1 year')]);
     $loan->setComment('Trying to fix a mistake after the fact');
 
     $violations = $this->validator->validate($loan, new LoanEditableToday());
@@ -66,7 +78,7 @@ class LoanEditableTodayValidatorTest extends AbstractTestCase {
 
   public function testEditingBorrowerOnAnOldLoanIsInvalid(): void {
     $member = MemberFactory::createOne();
-    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'member' => null]);
+    $loan = LoanFactory::createOne(['startDate' => new \DateTimeImmutable('-1 year'), 'endDate' => null, 'member' => null, 'createdAt' => new \DateTimeImmutable('-1 year')]);
     $loan->setMember($member);
 
     $violations = $this->validator->validate($loan, new LoanEditableToday());

@@ -25,12 +25,14 @@ use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRecordingRepository;
 use App\Security\Voter\LoanRecordingVoter;
 use App\Service\UtilsService;
+use App\Validator\Constraints\LoanBackdateAllowed;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LoanRecordingRepository::class)]
+#[LoanBackdateAllowed]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loan-recordings/{uuid}',
   operations: [
@@ -65,7 +67,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'uuid' => new Link(fromClass: self::class),
   ],
   normalizationContext: [
-    'groups' => ['loan-recording', 'loan-recording-read', 'autocomplete']
+    'groups' => ['loan-recording', 'loan-recording-read', 'autocomplete', 'timestamp']
   ],
   denormalizationContext: [
     'groups' => ['loan-recording', 'loan-recording-write', 'timestamp-write-create']
@@ -159,8 +161,8 @@ class LoanRecording extends UuidEntity implements TimestampEntityInterface, Club
     return $this;
   }
 
-  /** Whether this recording was logged today, i.e. still correctable in case of a mistake */
+  /** Whether this recording was created today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return UtilsService::isToday($this->date);
+    return UtilsService::isToday($this->createdAt);
   }
 }

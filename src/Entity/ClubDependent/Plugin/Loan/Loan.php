@@ -26,6 +26,7 @@ use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
 use App\Security\Voter\LoanVoter;
 use App\Service\UtilsService;
+use App\Validator\Constraints\LoanBackdateAllowed;
 use App\Validator\Constraints\LoanEditableToday;
 use App\Validator\Constraints\LoanItemMustBeAvailable;
 use App\Validator\Constraints\LoanItemNotAlreadyLoaned;
@@ -38,6 +39,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[LoanItemNotAlreadyLoaned]
 #[LoanItemMustBeAvailable]
 #[LoanEditableToday]
+#[LoanBackdateAllowed]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loans/{uuid}',
   operations: [
@@ -72,7 +74,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'uuid' => new Link(fromClass: self::class),
   ],
   normalizationContext: [
-    'groups' => ['loan', 'loan-read', 'autocomplete']
+    'groups' => ['loan', 'loan-read', 'autocomplete', 'timestamp']
   ],
   denormalizationContext: [
     'groups' => ['loan', 'loan-write', 'timestamp-write-create']
@@ -195,8 +197,8 @@ class Loan extends UuidEntity implements TimestampEntityInterface, ClubLinkedEnt
     return $this;
   }
 
-  /** Whether this loan was started today, i.e. still correctable in case of a mistake */
+  /** Whether this loan was created today, i.e. still correctable in case of a mistake */
   public function isEditableToday(): bool {
-    return UtilsService::isToday($this->startDate);
+    return UtilsService::isToday($this->createdAt);
   }
 }
