@@ -55,6 +55,8 @@ enum Permission: string {
   case LOAN_RECORDINGS_ACCESS = 'LOAN_RECORDINGS_ACCESS';
   case LOAN_RECORDINGS_EDIT = 'LOAN_RECORDINGS_EDIT';
 
+  case LOAN_BACKDATE = 'LOAN_BACKDATE'; // Allows setting a loan/recording date in the past
+
   /**
    * Returns all available permissions as an array of values
    * @return string[]

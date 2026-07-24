@@ -42,9 +42,9 @@ class LoanVoterTest extends TestCase {
     $this->assertSame(Voter::ACCESS_DENIED, $result);
   }
 
-  public function testGrantsForLoanStartedToday(): void {
+  public function testGrantsForLoanCreatedToday(): void {
     $loan = new Loan();
-    $loan->setStartDate(new \DateTimeImmutable());
+    $loan->setCreatedAt(new \DateTimeImmutable());
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([
@@ -57,9 +57,9 @@ class LoanVoterTest extends TestCase {
     $this->assertSame(Voter::ACCESS_GRANTED, $result);
   }
 
-  public function testDeniesForLoanStartedYesterday(): void {
+  public function testDeniesForLoanCreatedYesterday(): void {
     $loan = new Loan();
-    $loan->setStartDate(new \DateTimeImmutable('-1 day'));
+    $loan->setCreatedAt(new \DateTimeImmutable('-1 day'));
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([
@@ -73,11 +73,31 @@ class LoanVoterTest extends TestCase {
   }
 
   /**
-   * Admins can delete a loan regardless of how long ago it was started.
+   * A backdated loan (startDate in the past) that was created today must still be deletable
+   * by its creator — isEditableToday() keys on createdAt, not startDate.
    */
-  public function testGrantsForAdminRegardlessOfStartDate(): void {
+  public function testGrantsForBackdatedLoanCreatedToday(): void {
     $loan = new Loan();
-    $loan->setStartDate(new \DateTimeImmutable('-1 year'));
+    $loan->setCreatedAt(new \DateTimeImmutable());
+    $loan->setStartDate(new \DateTimeImmutable('-1 week'));
+
+    $security = $this->createStub(Security::class);
+    $security->method('isGranted')->willReturnMap([
+      [ClubRole::admin->value, $loan, false],
+      [Permission::LOAN_EDIT->value, $loan, true],
+    ]);
+
+    $voter = new LoanVoter($security);
+    $result = $voter->vote($this->tokenFor(new User()), $loan, [LoanVoter::DELETE]);
+    $this->assertSame(Voter::ACCESS_GRANTED, $result);
+  }
+
+  /**
+   * Admins can delete a loan regardless of when it was created.
+   */
+  public function testGrantsForAdminRegardlessOfCreatedAt(): void {
+    $loan = new Loan();
+    $loan->setCreatedAt(new \DateTimeImmutable('-1 year'));
 
     $security = $this->createStub(Security::class);
     $security->method('isGranted')->willReturnMap([
