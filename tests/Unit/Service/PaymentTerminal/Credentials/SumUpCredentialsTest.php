@@ -39,13 +39,13 @@ class SumUpCredentialsTest extends TestCase {
 
   public function testFromArrayMissingApiKeyThrows(): void {
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("'apiKey'");
+    $this->expectExceptionMessageIsOrContains("'apiKey'");
     SumUpCredentials::fromArray(['merchantCode' => 'MC123']);
   }
 
   public function testFromArrayMissingMerchantCodeThrows(): void {
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("'merchantCode'");
+    $this->expectExceptionMessageIsOrContains("'merchantCode'");
     SumUpCredentials::fromArray(['apiKey' => 'sk_test_123']);
   }
 
@@ -67,7 +67,7 @@ class SumUpCredentialsTest extends TestCase {
     ]);
 
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("'readerId'");
+    $this->expectExceptionMessageIsOrContains("'readerId'");
     $credentials->assertComplete();
   }
 

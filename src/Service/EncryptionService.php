@@ -18,7 +18,7 @@ class EncryptionService {
   private readonly string $key;
 
   public function __construct(
-    #[Autowire('%env(ENCRYPTION_KEY)%')] string $encodedKey,
+    #[Autowire(env: 'ENCRYPTION_KEY')] string $encodedKey,
   ) {
     if (empty($encodedKey)) {
       throw new \RuntimeException('ENCRYPTION_KEY is not configured. Generate one with: php -r \'echo base64_encode(sodium_crypto_secretbox_keygen());\'');

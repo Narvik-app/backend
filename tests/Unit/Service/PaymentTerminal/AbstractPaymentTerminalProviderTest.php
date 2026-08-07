@@ -87,7 +87,7 @@ class AbstractPaymentTerminalProviderTest extends TestCase {
     $connection->setCredentials(null);
 
     $this->expectException(PaymentTerminalException::class);
-    $this->expectExceptionMessage('has no credentials configured');
+    $this->expectExceptionMessageIsOrContains('has no credentials configured');
     $this->provider()->callCredentialsOf($connection);
   }
 
@@ -158,7 +158,7 @@ class AbstractPaymentTerminalProviderTest extends TestCase {
     };
 
     $this->expectException(PaymentTerminalException::class);
-    $this->expectExceptionMessage('does not support listing devices');
+    $this->expectExceptionMessageIsOrContains('does not support listing devices');
     $provider->listDevices($credentials);
   }
 }

@@ -6,11 +6,9 @@ use Rector\Config\RectorConfig;
 use Rector\Php74\Rector\Closure\ClosureToArrowFunctionRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Doctrine\Set\DoctrineSetList;
-use Rector\Symfony\Symfony73\Rector\Class_\InvokableCommandInputAttributeRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
 use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
-use Rector\CodeQuality\Rector\Foreach_\UnusedForeachValueToArrayKeysRector;
-use Zenstruck\Foundry\Utils\Rector\FoundrySetList;
+use Rector\Symfony\Symfony34\Rector\Closure\ContainerGetNameToTypeInTestsRector;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -36,10 +34,11 @@ return RectorConfig::configure()
         AddVoidReturnTypeWhereNoReturnRector::class,
         // Code quality improvements
         InlineConstructorDefaultToPropertyRector::class,
-        UnusedForeachValueToArrayKeysRector::class,
     ])
     ->withSkip([
         // Skip rector on migrations as they should remain as-is
         '*/migrations/*',
         ClosureToArrowFunctionRector::class,
+        // Rewrites getContainer()->get('doctrine') to a non-public FQCN, breaking tests
+        ContainerGetNameToTypeInTestsRector::class,
     ]);
