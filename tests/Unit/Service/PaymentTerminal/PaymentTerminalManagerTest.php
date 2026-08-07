@@ -79,7 +79,7 @@ class PaymentTerminalManagerTest extends TestCase {
     $manager = new PaymentTerminalManager([]);
 
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("No payment terminal provider registered for 'sumup'");
+    $this->expectExceptionMessageIsOrContains("No payment terminal provider registered for 'sumup'");
     $manager->forProvider(SalePaymentTerminalProvider::sumup);
   }
 

@@ -31,7 +31,7 @@ class SecretBoxCipherTest extends TestCase {
     $encrypted = SecretBoxCipher::encrypt('sk_test_secret', $this->key());
 
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('Decryption failed');
+    $this->expectExceptionMessageIsOrContains('Decryption failed');
     SecretBoxCipher::decrypt($encrypted, $this->key());
   }
 
@@ -47,19 +47,19 @@ class SecretBoxCipherTest extends TestCase {
 
   public function testDecryptInvalidBase64Throws(): void {
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('base64 decoding failed');
+    $this->expectExceptionMessageIsOrContains('base64 decoding failed');
     SecretBoxCipher::decrypt('not-valid-base64-!!!', $this->key());
   }
 
   public function testDecryptTooShortThrows(): void {
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('too short');
+    $this->expectExceptionMessageIsOrContains('too short');
     SecretBoxCipher::decrypt(base64_encode('short'), $this->key());
   }
 
   public function testDecodeKeyRejectsInvalidLength(): void {
     $this->expectException(\RuntimeException::class);
-    $this->expectExceptionMessage('ENCRYPTION_KEY must be a valid base64-encoded');
+    $this->expectExceptionMessageIsOrContains('ENCRYPTION_KEY must be a valid base64-encoded');
     SecretBoxCipher::decodeKey(base64_encode('too-short'));
   }
 

@@ -25,7 +25,7 @@ abstract class AbstractTestCase extends ApiTestCase {
 
   #[Before]
   public static function _setupPostgreSQLExtensions(): void {
-    $registry = self::getContainer()->get('doctrine');
+    $registry = self::getContainer()->get(\Doctrine\Bundle\DoctrineBundle\Registry::class);
     /** @var Connection $connection */
     $connection = $registry->getConnection();
     $connection->executeQuery('CREATE EXTENSION IF NOT EXISTS unaccent;');
