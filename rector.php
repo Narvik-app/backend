@@ -8,6 +8,7 @@ use Rector\Set\ValueObject\LevelSetList;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
 use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
+use Rector\Symfony\Symfony34\Rector\Closure\ContainerGetNameToTypeInTestsRector;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -38,4 +39,6 @@ return RectorConfig::configure()
         // Skip rector on migrations as they should remain as-is
         '*/migrations/*',
         ClosureToArrowFunctionRector::class,
+        // Rewrites getContainer()->get('doctrine') to a non-public FQCN, breaking tests
+        ContainerGetNameToTypeInTestsRector::class,
     ]);

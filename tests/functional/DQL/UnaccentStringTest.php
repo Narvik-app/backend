@@ -9,7 +9,7 @@ class UnaccentStringTest extends AbstractTestCase
 {
   public function testUnaccentString(): void
   {
-    $entityManager = self::getContainer()->get(\Doctrine\ORM\EntityManager::class);
+    $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
 
     $club = new Club();
     $club->setName('éàç');

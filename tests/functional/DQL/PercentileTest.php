@@ -10,7 +10,7 @@ class PercentileTest extends AbstractTestCase
 {
   public function testPercentile(): void
   {
-    $entityManager = self::getContainer()->get(\Doctrine\ORM\EntityManager::class);
+    $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
     $query = $entityManager->createQuery("SELECT PERCENTILE(0.5, c.id) FROM App\Entity\Club c");
     $result = $query->getResult(AbstractQuery::HYDRATE_SCALAR);
     $this->assertIsNumeric($result[0][1]);
