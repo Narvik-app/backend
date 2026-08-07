@@ -432,6 +432,9 @@ For detailed development guidelines, see the [Contributing Guide](CONTRIBUTING.m
 ### Code Quality
 - Conventional commit messages recommended
 
+### LLM
+- Never commit automatically, an human should always review and approve changes.
+- Do not create any PR or github action yourself. (e.g: `git push -f`, `gh pr create`)
 
 ## License
 
