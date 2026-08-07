@@ -20,6 +20,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 class SecurityController extends AbstractController {
@@ -33,15 +35,26 @@ class SecurityController extends AbstractController {
     AccessTokenRepositoryInterface $accessTokenRepository,
     RefreshTokenRepositoryInterface $refreshTokenRepository,
     ClubRepository $clubRepository,
-    ClubService $clubService
+    ClubService $clubService,
+    RateLimiterFactoryInterface $badgerLoginLimiter
   ): Response {
     $json = $this->checkAndGetJsonValues($request, ['token', 'club']);
 
-    $club = $clubRepository->findOneByUuid($json['club']);
+    $limiter = $badgerLoginLimiter->create("{$json['club']}/{$request->getClientIp()}");
+    try {
+      $limiter->consume(1)->ensureAccepted();
+    } catch (RateLimitExceededException) {
+      throw new HttpException(Response::HTTP_TOO_MANY_REQUESTS);
+    }
 
-    if (!$club || $club->getBadgerToken() !== $json['token']) {
+    $club = $clubRepository->findOneByUuid($json['club']);
+    $badgerToken = $club?->getBadgerToken();
+
+    if (!$badgerToken || !hash_equals($badgerToken, $json['token'])) {
       throw new HttpException(Response::HTTP_BAD_REQUEST);
     }
+
+    $limiter->reset();
 
     $user = $clubService->getBadger($club);
     if (!$user) {
