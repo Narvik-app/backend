@@ -52,4 +52,36 @@ class InstallOAuthCommandTest extends AbstractTestCase {
       array_map(strval(...), $stillReconciled->getGrants()),
     );
   }
+
+  public function testCreatesTheFrontClientRestrictedToItsActualGrants(): void {
+    $clientManager = self::getContainer()->get(ClientManagerInterface::class);
+    $this->assertNull($clientManager->find('front'), 'precondition: no front client yet');
+
+    $this->runInstallOAuth();
+
+    $front = $clientManager->find('front');
+    $this->assertNotNull($front);
+    $this->assertTrue($front->isConfidential(), 'the front client authenticates unauthenticated calls, it must keep a secret');
+    $this->assertSame(['password', 'refresh_token'], array_map(strval(...), $front->getGrants()));
+    $this->assertSame(['all'], array_map(strval(...), $front->getScopes()));
+  }
+
+  public function testDoesNotTouchAnAlreadyProvisionedFrontClient(): void {
+    $clientManager = self::getContainer()->get(ClientManagerInterface::class);
+
+    $application = new Application(self::$kernel);
+    new CommandTester($application->find('league:oauth2-server:create-client'))->execute([
+      'name' => 'Narvik front',
+      'identifier' => 'front',
+      'secret' => 'a-custom-secret-set-by-the-operator',
+    ]);
+
+    $this->runInstallOAuth();
+
+    $front = $clientManager->find('front');
+    $this->assertTrue($front->isConfidential());
+    // Unlike badger, an existing front client is never reconciled - there's no known-bad
+    // legacy shape to repair, and the stored secret is hashed so it can't be re-displayed.
+    $this->assertSame([], $front->getGrants(), 'grants should be left as originally created, unrestricted');
+  }
 }

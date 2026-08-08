@@ -35,6 +35,14 @@ class InstallOAuthCommand extends Command {
   private const array BADGER_GRANTS = ['refresh_token'];
   private const array BADGER_SCOPES = ['badger'];
 
+  /**
+   * The frontend only ever uses the password grant (initial login) and refresh_token
+   * (session renewal) - see narvik-front's app/composables/api/api.ts. Other grants
+   * (client_credentials, authorization_code, implicit) are pointless to allow here.
+   */
+  private const array FRONT_GRANTS = ['password', 'refresh_token'];
+  private const array FRONT_SCOPES = ['all'];
+
   private SymfonyStyle $io;
 
   public function __construct(
@@ -100,6 +108,11 @@ class InstallOAuthCommand extends Command {
 
 
   private function generateClients(): void {
+    $this->generateBadgerClient();
+    $this->generateFrontClient();
+  }
+
+  private function generateBadgerClient(): void {
     $this->io->section("Création du client badger");
 
     $client = $this->clientManager->find('badger');
@@ -117,6 +130,31 @@ class InstallOAuthCommand extends Command {
       '--scope' => self::BADGER_SCOPES,
     ]);
     $this->getApplication()->doRun($command, $this->io);
+  }
+
+  /**
+   * Unlike badger, this client has no known-bad legacy shape to repair, so an existing
+   * client is simply left untouched - there's no way to recover its already-hashed secret
+   * to display it again, and no need to guess whether an operator deliberately customised
+   * its grants/scopes since.
+   */
+  private function generateFrontClient(): void {
+    $this->io->section("Création du client frontend");
+
+    if ($this->clientManager->find('front')) {
+      $this->io->info("Client déjà enregistré");
+      return;
+    }
+
+    $command = new ArrayInput([
+      'command' => 'league:oauth2-server:create-client',
+      'name' => 'Narvik front',
+      'identifier' => 'front',
+      '--grant-type' => self::FRONT_GRANTS,
+      '--scope' => self::FRONT_SCOPES,
+    ]);
+    $this->getApplication()->doRun($command, $this->io);
+    $this->io->warning("Le secret ci-dessus ne sera plus jamais affiché : reportez-le dans NUXT_OAUTH_CLIENT_ID / NUXT_OAUTH_CLIENT_SECRET côté frontend avant de continuer.");
   }
 
   /**
