@@ -15,7 +15,7 @@ runs:
 
         - name: Build images and populate cache
           if: inputs.build-only == 'true'
-          uses: docker/bake-action@v6
+          uses: docker/bake-action@v7
           with:
             files: |
               compose.yaml
@@ -29,7 +29,7 @@ runs:
 
         - name: Load images from cache
           if: inputs.build-only == 'false'
-          uses: docker/bake-action@v6
+          uses: docker/bake-action@v7
           with:
             files: |
               compose.yaml
