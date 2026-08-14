@@ -71,3 +71,27 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  # GitHub Actions dependencies used inside composite actions
+  # (Dependabot's github-actions ecosystem does not scan .github/actions/**
+  # automatically, each composite action directory must be listed explicitly)
+  - package-ecosystem: "github-actions"
+    directory: "/.github/actions/setup-docker"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "03:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
