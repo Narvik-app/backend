@@ -6,7 +6,10 @@ use App\Enum\UserRole;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Service\GlobalSettingService;
 use Doctrine\ORM\EntityManagerInterface;
-use League\Bundle\OAuth2ServerBundle\Repository\ClientRepository;
+use League\Bundle\OAuth2ServerBundle\Manager\ClientManagerInterface;
+use League\Bundle\OAuth2ServerBundle\Model\ClientInterface as OAuth2ClientInterface;
+use League\Bundle\OAuth2ServerBundle\ValueObject\Grant;
+use League\Bundle\OAuth2ServerBundle\ValueObject\Scope;
 use phpDocumentor\Reflection\PseudoTypes\IntegerRange;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -24,11 +27,27 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[AsCommand(name: 'install:oauth', description: 'Install oauth and his minimum require client')]
 class InstallOAuthCommand extends Command {
+  /**
+   * The badger client is a kiosk/device client (see App\Controller\SecurityController::loginBadger).
+   * It never authenticates with a client secret (/auth/bdg checks the club's badger token instead),
+   * so it must be a public client restricted to the refresh_token grant.
+   */
+  private const array BADGER_GRANTS = ['refresh_token'];
+  private const array BADGER_SCOPES = ['badger'];
+
+  /**
+   * The frontend only ever uses the password grant (initial login) and refresh_token
+   * (session renewal) - see narvik-front's app/composables/api/api.ts. Other grants
+   * (client_credentials, authorization_code, implicit) are pointless to allow here.
+   */
+  private const array FRONT_GRANTS = ['password', 'refresh_token'];
+  private const array FRONT_SCOPES = ['all'];
+
   private SymfonyStyle $io;
 
   public function __construct(
     private readonly ParameterBagInterface $params,
-    private readonly ClientRepository $clientRepository,
+    private readonly ClientManagerInterface $clientManager,
     private readonly KernelInterface $kernel,
     private readonly Filesystem $fs,
   ) {
@@ -89,21 +108,91 @@ class InstallOAuthCommand extends Command {
 
 
   private function generateClients(): void {
+    $this->generateBadgerClient();
+    $this->generateFrontClient();
+  }
+
+  private function generateBadgerClient(): void {
     $this->io->section("Création du client badger");
-    if ($this->clientRepository->getClientEntity('badger')) {
-      $this->io->info("Client déjà enregistré");
+
+    $client = $this->clientManager->find('badger');
+    if ($client) {
+      $this->reconcileBadgerClient($client);
       return;
     }
-
-    $secret = $this->params->get('league.oauth2_server.encryption_key');
 
     $command = new ArrayInput([
       'command' => 'league:oauth2-server:create-client',
       'name' => 'badger',
       'identifier' => 'badger',
-      'secret' => $secret,
-      '--scope' => ['badger']
+      '--public' => true,
+      '--grant-type' => self::BADGER_GRANTS,
+      '--scope' => self::BADGER_SCOPES,
     ]);
     $this->getApplication()->doRun($command, $this->io);
+  }
+
+  /**
+   * Unlike badger, this client has no known-bad legacy shape to repair, so an existing
+   * client is simply left untouched - there's no way to recover its already-hashed secret
+   * to display it again, and no need to guess whether an operator deliberately customised
+   * its grants/scopes since.
+   */
+  private function generateFrontClient(): void {
+    $this->io->section("Création du client frontend");
+
+    if ($this->clientManager->find('front')) {
+      $this->io->info("Client déjà enregistré");
+      return;
+    }
+
+    $command = new ArrayInput([
+      'command' => 'league:oauth2-server:create-client',
+      'name' => 'Narvik front',
+      'identifier' => 'front',
+      '--grant-type' => self::FRONT_GRANTS,
+      '--scope' => self::FRONT_SCOPES,
+    ]);
+    $this->getApplication()->doRun($command, $this->io);
+    $this->io->warning("Le secret ci-dessus ne sera plus jamais affiché : reportez-le dans NUXT_OAUTH_CLIENT_ID / NUXT_OAUTH_CLIENT_SECRET côté frontend avant de continuer.");
+  }
+
+  /**
+   * Repairs an already-provisioned badger client.
+   * Demotes it to public and restricts it to the refresh_token grant + badger scope.
+   * Safe to re-run: a no-op once the client is already correct.
+   */
+  private function reconcileBadgerClient(OAuth2ClientInterface $client): void {
+    $this->io->info("Client déjà enregistré");
+
+    $changes = [];
+
+    if ($client->isConfidential()) {
+      $client->setSecret('');
+      $changes[] = 'secret retiré (client rendu public)';
+    }
+
+    $currentGrants = array_map(strval(...), $client->getGrants());
+    if ($currentGrants !== self::BADGER_GRANTS) {
+      $client->setGrants(...array_map(fn (string $grant) => new Grant($grant), self::BADGER_GRANTS));
+      $changes[] = 'grants restreints à ' . implode(', ', self::BADGER_GRANTS);
+    }
+
+    $currentScopes = array_map(strval(...), $client->getScopes());
+    if ($currentScopes !== self::BADGER_SCOPES) {
+      $client->setScopes(...array_map(fn (string $scope) => new Scope($scope), self::BADGER_SCOPES));
+      $changes[] = 'scopes réglés sur ' . implode(', ', self::BADGER_SCOPES);
+    }
+
+    if (empty($changes)) {
+      $this->io->info("Client badger déjà conforme, aucune modification");
+      return;
+    }
+
+    $this->clientManager->save($client);
+    $this->io->success("Client badger corrigé : " . implode(' ; ', $changes));
+    if (!$client->isActive()) {
+      $this->io->warning("Le client badger est inactif, mais étant public, la désactivation ne bloque pas le renouvellement de jeton (isActive() n'est vérifié que pour les clients confidentiels). Pour révoquer l'accès badger, supprimez le client ou révoquez ses jetons.");
+    }
   }
 }

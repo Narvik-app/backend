@@ -63,7 +63,7 @@ final class InventoryItemFactory extends \Zenstruck\Foundry\Persistence\Persiste
   protected function defaults(): array {
     return [
       'club'            => _InitStory::club_1(),
-      'name'            => self::faker()->text(10),
+      'name'            => self::faker()->unique()->text(10),
       'description'     => self::faker()->boolean(40) ? self::faker()->words(self::faker()->numberBetween(4, 8), true) : null,
       'canBeSold'       => self::faker()->boolean(75),
       'category'        => InventoryCategoryStory::getRandom('default'),

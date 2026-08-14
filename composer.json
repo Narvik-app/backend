@@ -159,6 +159,7 @@
             "php bin/console --env=test doctrine:fixtures:load -q"
         ],
         "test": [
+            "Composer\\Config::disableProcessTimeout",
             "bin/phpunit"
         ],
         "ci-test": [
