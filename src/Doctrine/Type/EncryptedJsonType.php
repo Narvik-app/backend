@@ -2,6 +2,7 @@
 
 namespace App\Doctrine\Type;
 
+use App\Crypto\EncryptionKeyProvider;
 use App\Crypto\SecretBoxCipher;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
@@ -10,8 +11,10 @@ use Doctrine\DBAL\Types\Type;
  * Custom Doctrine DBAL type that stores a PHP array as encrypted JSON text.
  *
  * Encryption is transparent: entity getters/setters work with plain PHP arrays;
- * the ciphertext is only visible at the DB level. Key is read from the ENCRYPTION_KEY
- * environment variable (base64-encoded 32-byte libsodium secretbox key).
+ * the ciphertext is only visible at the DB level. The key is resolved through
+ * EncryptionKeyProvider — DBAL types are instantiated by the type registry
+ * without DI, so it can't be injected like in EncryptionService, but both
+ * read the same env var through the same validation.
  *
  * Register in config/packages/doctrine.yaml:
  *   doctrine:
@@ -33,7 +36,7 @@ class EncryptedJsonType extends Type {
     }
 
     $json = json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-    return SecretBoxCipher::encrypt($json, $this->getKey());
+    return SecretBoxCipher::encrypt($json, EncryptionKeyProvider::getKey());
   }
 
   #[\Override]
@@ -42,32 +45,11 @@ class EncryptedJsonType extends Type {
       return null;
     }
 
-    $json = SecretBoxCipher::decrypt((string) $value, $this->getKey());
+    $json = SecretBoxCipher::decrypt((string) $value, EncryptionKeyProvider::getKey());
     return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
   }
 
   public function requiresSQLCommentHint(AbstractPlatform $platform): bool {
     return true;
-  }
-
-  /**
-   * DBAL types are instantiated by the type registry without constructor
-   * arguments, so the key is read from the environment directly instead of
-   * being injected like in EncryptionService.
-   */
-  private function getKey(): string {
-    /** @var string|null $key */
-    static $key = null;
-    if ($key === null) {
-      $encodedKey = (string) (getenv('ENCRYPTION_KEY') ?: ($_ENV['ENCRYPTION_KEY'] ?? $_SERVER['ENCRYPTION_KEY'] ?? ''));
-      if (empty($encodedKey)) {
-        throw new \RuntimeException(
-          'ENCRYPTION_KEY environment variable is required for encrypted fields. '.
-          'Generate one with: php -r \'echo base64_encode(sodium_crypto_secretbox_keygen());\'',
-        );
-      }
-      $key = SecretBoxCipher::decodeKey($encodedKey);
-    }
-    return $key;
   }
 }

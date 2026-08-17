@@ -5,6 +5,7 @@ namespace App\Tests\e2e\Entity;
 use App\Controller\GlobalSettingGetPublic;
 use App\Entity\GlobalSetting;
 use App\Enum\GlobalSetting as GlobalSettingEnum;
+use App\Repository\GlobalSettingRepository;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityApiTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\FixtureFileManager;
@@ -96,6 +97,43 @@ class GlobalSettingTest extends AbstractEntityApiTestCase {
         $this->makeDeleteRequest($iri);
       },
     );
+  }
+
+  public function testSmtpCredentialsAreEncryptedAtRestAndUsernameIsReturnedDecrypted(): void {
+    $this->loggedAsSuperAdmin();
+
+    $this->makePostRequest($this->getRootUrl() . '/-/smtp', [
+      'on' => '1',
+      'host' => 'smtp.example.com',
+      'port' => '587',
+      'username' => 'plain-username',
+      'password' => 'plain-password',
+      'sender' => 'narvik@example.com',
+      'senderName' => 'Narvik',
+    ]);
+    $this->assertResponseIsSuccessful();
+
+    // Stored ciphertext, not plaintext.
+    /** @var GlobalSettingRepository $repository */
+    $repository = static::getContainer()->get(GlobalSettingRepository::class);
+    $this->assertNotSame('plain-username', $repository->findOneByName(GlobalSettingEnum::SMTP_USERNAME->name)?->getValue());
+    $this->assertNotSame('plain-password', $repository->findOneByName(GlobalSettingEnum::SMTP_PASSWORD->name)?->getValue());
+
+    // Username is encrypted but not secret: the API decrypts it back.
+    $this->makeGetRequest($this->getRootUrl() . '/' . GlobalSettingEnum::SMTP_USERNAME->name);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      'value' => 'plain-username',
+      'hasValue' => true,
+    ]);
+
+    // Password is secret: the API never returns it, encrypted or not.
+    $response = $this->makeGetRequest($this->getRootUrl() . '/' . GlobalSettingEnum::SMTP_PASSWORD->name);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains([
+      'hasValue' => true,
+    ]);
+    $this->assertArrayNotHasKey('value', $response->toArray());
   }
 
   public function testUpdatingLegalsDate(): void {

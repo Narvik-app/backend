@@ -18,6 +18,8 @@ use App\Controller\GlobalSettingSmtp;
 use App\Controller\GlobalSettingTestEmail;
 use App\Enum\UserRole;
 use App\Repository\GlobalSettingRepository;
+use App\State\GlobalSettingProcessor;
+use App\State\GlobalSettingProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 
@@ -128,7 +130,9 @@ use Doctrine\ORM\Mapping as ORM;
       security: "is_granted('".UserRole::super_admin->value."')",
       deserialize: false,
     ),
-  ]
+  ],
+  provider: GlobalSettingProvider::class,
+  processor: GlobalSettingProcessor::class,
 )]
 class GlobalSetting {
   #[ORM\Id]
@@ -141,8 +145,15 @@ class GlobalSetting {
   #[ApiProperty(identifier: true)]
   private string $name;
 
-  #[ORM\Column(length: 255, nullable: true)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::TEXT, nullable: true)]
   private string|null $value = null;
+
+  /**
+   * Not persisted: set explicitly by GlobalSettingProvider so the API can
+   * tell "a value is configured" apart from "no value" even when isSecret()
+   * masks $value to null on read.
+   */
+  private ?bool $hasValue = null;
 
   public function getId(): ?int {
     return $this->id;
@@ -163,6 +174,15 @@ class GlobalSetting {
 
   public function setValue(?string $value): static {
     $this->value = $value;
+    return $this;
+  }
+
+  public function getHasValue(): bool {
+    return $this->hasValue ?? ($this->value !== null);
+  }
+
+  public function setHasValue(bool $hasValue): static {
+    $this->hasValue = $hasValue;
     return $this;
   }
 }
