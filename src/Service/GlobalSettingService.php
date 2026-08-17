@@ -6,11 +6,14 @@ use App\Entity\GlobalSetting as GlobalSettingEntity;
 use App\Enum\GlobalSetting;
 use App\Repository\GlobalSettingRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class GlobalSettingService {
   public function __construct(
     private readonly EntityManagerInterface $em,
     private readonly GlobalSettingRepository $globalSettingRepository,
+    private readonly EncryptionService $encryptionService,
+    private readonly LoggerInterface $logger,
   ) {
 
   }
@@ -27,7 +30,20 @@ class GlobalSettingService {
       return null;
     }
 
-    return $dbSetting->getValue();
+    $value = $dbSetting->getValue();
+
+    if ($value !== null && $setting->isEncrypted()) {
+      try {
+        $value = $this->encryptionService->decrypt($value);
+      } catch (\Throwable $e) {
+        $this->logger->warning('Failed to decrypt GlobalSetting "{name}", returning raw value.', [
+          'name' => $setting->name,
+          'exception' => $e,
+        ]);
+      }
+    }
+
+    return $value;
   }
 
   public function getRequiredSettingValue(GlobalSetting $setting): string {
@@ -45,6 +61,10 @@ class GlobalSettingService {
     if (!$dbSetting) {
       $dbSetting = new GlobalSettingEntity();
       $dbSetting->setName($setting->name);
+    }
+
+    if ($value !== null && $value !== '' && $setting->isEncrypted()) {
+      $value = $this->encryptionService->encrypt($value);
     }
 
     $dbSetting->setValue($value);
