@@ -7,13 +7,14 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\GlobalSetting;
 use App\Enum\GlobalSetting as GlobalSettingEnum;
+use App\Service\GlobalSettingService;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Decorates the default Doctrine provider for GlobalSetting so that settings
- * flagged GlobalSetting::isSecret() (see the enum) never leak their value
- * through the API, even encrypted. hasValue is set explicitly so clients can
- * still tell "configured" apart from "not configured".
+ * Decorates the default Doctrine provider for GlobalSetting: settings
+ * flagged GlobalSetting::isSecret() never return their value through the API
+ * (hasValue is set explicitly instead, so clients can tell "configured"
+ * apart from "not configured").
  */
 class GlobalSettingProvider implements ProviderInterface {
   public function __construct(
@@ -21,6 +22,7 @@ class GlobalSettingProvider implements ProviderInterface {
     private readonly ProviderInterface $itemProvider,
     #[Autowire(service: 'api_platform.doctrine.orm.state.collection_provider')]
     private readonly ProviderInterface $collectionProvider,
+    private readonly GlobalSettingService $globalSettingService,
   ) {
   }
 
@@ -30,7 +32,7 @@ class GlobalSettingProvider implements ProviderInterface {
 
       if (is_iterable($result)) {
         foreach ($result as $item) {
-          $this->maskIfSecret($item);
+          $this->applyEncryptionVisibility($item);
         }
       }
 
@@ -38,23 +40,31 @@ class GlobalSettingProvider implements ProviderInterface {
     }
 
     $item = $this->itemProvider->provide($operation, $uriVariables, $context);
-    $this->maskIfSecret($item);
+    $this->applyEncryptionVisibility($item);
 
     return $item;
   }
 
-  private function maskIfSecret(mixed $item): void {
+  private function applyEncryptionVisibility(mixed $item): void {
     if (!$item instanceof GlobalSetting) {
       return;
     }
 
     $setting = $this->tryFromName($item->getName());
-    $isSecret = $setting?->isSecret() ?? false;
 
     $item->setHasValue($item->getValue() !== null);
 
-    if ($isSecret) {
+    if ($setting === null) {
+      return;
+    }
+
+    if ($setting->isSecret()) {
       $item->setValue(null);
+      return;
+    }
+
+    if ($setting->isEncrypted()) {
+      $item->setValue($this->globalSettingService->decryptValue($setting, $item->getValue()));
     }
   }
 

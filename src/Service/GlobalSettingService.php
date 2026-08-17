@@ -30,20 +30,24 @@ class GlobalSettingService {
       return null;
     }
 
-    $value = $dbSetting->getValue();
+    return $this->decryptValue($setting, $dbSetting->getValue());
+  }
 
-    if ($value !== null && $setting->isEncrypted()) {
-      try {
-        $value = $this->encryptionService->decrypt($value);
-      } catch (\Throwable $e) {
-        $this->logger->warning('Failed to decrypt GlobalSetting "{name}", returning raw value.', [
-          'name' => $setting->name,
-          'exception' => $e,
-        ]);
-      }
+  public function decryptValue(GlobalSetting $setting, ?string $value): ?string {
+    if ($value === null || !$setting->isEncrypted()) {
+      return $value;
     }
 
-    return $value;
+    try {
+      return $this->encryptionService->decrypt($value);
+    } catch (\Throwable $e) {
+      $this->logger->warning('Failed to decrypt GlobalSetting "{name}", returning raw value.', [
+        'name' => $setting->name,
+        'exception' => $e,
+      ]);
+
+      return $value;
+    }
   }
 
   public function getRequiredSettingValue(GlobalSetting $setting): string {
