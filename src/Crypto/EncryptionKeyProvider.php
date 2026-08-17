@@ -17,7 +17,7 @@ namespace App\Crypto;
  * across requests in long-running workers (PHP-FPM, Messenger, Swoole/RoadRunner).
  */
 final class EncryptionKeyProvider {
-  private const ENV_VAR = 'ENCRYPTION_KEY';
+  private const string ENV_VAR = 'ENCRYPTION_KEY';
 
   /** @var string|null */
   private static $key = null;
