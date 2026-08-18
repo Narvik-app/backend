@@ -93,11 +93,6 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
   private string $seasonEnd = "08-31";
 
-  #[ORM\OneToOne(targetEntity: Activity::class)]
-  #[ORM\JoinColumn(name: 'control_activity_id', nullable: true, onDelete: 'SET NULL')]
-  #[Groups(['club-setting'])]
-  private ?Activity $controlActivity = null;
-
   /**
    * @var Collection<int, Activity>
    */
@@ -150,15 +145,6 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setClub(?Club $club): static {
     $this->club = $club;
-    return $this;
-  }
-
-  public function getControlActivity(): ?Activity {
-    return $this->controlActivity;
-  }
-
-  public function setControlActivity(?Activity $controlActivity): ClubSetting {
-    $this->controlActivity = $controlActivity;
     return $this;
   }
 

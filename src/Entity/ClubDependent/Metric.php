@@ -50,7 +50,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[QueryParameter(key: 'previous-season', schema: ['type' => 'boolean'], description: 'Filter for the previous season instead of the current one.', required: false)]
 #[QueryParameter(key: 'start', schema: ['type' => 'string', 'format' => 'date'], description: '`end` filter must also be defined to work. Otherwise fallback to the current season filtering.', required: false)]
 #[QueryParameter(key: 'end', schema: ['type' => 'string', 'format' => 'date'], description: 'Fallback to the current season filtering if not defined.', required: false)]
-#[QueryParameter(key: 'order', schema: ['type' => 'object'], description: 'API Platform-style ordering for member-presence-stats, e.g. order[presenceCount]=DESC. Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, lastControlActivity.', required: false)]
+#[QueryParameter(key: 'order', schema: ['type' => 'object'], description: 'API Platform-style ordering for member-presence-stats, e.g. order[presenceCount]=DESC. Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, plus one `control_<uuid>` per club MemberControlType.', required: false)]
 #[QueryParameter(key: 'page', schema: ['type' => 'integer', 'minimum' => 1], description: 'Page number for member-presence-stats pagination. Default: 1', required: false)]
 #[QueryParameter(key: 'itemsPerPage', schema: ['type' => 'integer', 'minimum' => 1, 'maximum' => 100], description: 'Number of items per page for member-presence-stats. Default: 30, Max: 100', required: false)]
 #[Get]

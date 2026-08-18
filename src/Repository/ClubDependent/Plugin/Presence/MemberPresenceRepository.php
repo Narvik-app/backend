@@ -5,6 +5,8 @@ namespace App\Repository\ClubDependent\Plugin\Presence;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
+use App\Entity\ClubDependent\MemberControl;
+use App\Entity\ClubDependent\MemberControlType;
 use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Entity\Season;
 use App\Repository\Interface\ClubLinkedInterface;
@@ -77,11 +79,12 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
    * @param \DateTimeImmutable $endDate
    * @param \DateTimeImmutable|null $startDate
    * @param array $orderBy Associative array of field => direction, e.g. ['presenceCount' => 'DESC'].
-   *                       Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration, lastControlActivity.
+   *                       Allowed fields: presenceCount, lastPresenceDate, medicalCertificateExpiration,
+   *                       plus one `control_<uuid>` per club MemberControlType.
    * @param int $page Page number (1-based)
    * @param int $itemsPerPage Number of items per page
    * @param Season|null $currentSeason
-   * @param Activity|null $controlActivity When set, computes lastControlActivity per member
+   * @param MemberControlType[] $controlTypes Club's control types; one `control_<uuid>` column/alias is added per type
    * @return array Array of statistics with member info, presence count, and last presence date
    */
   public function getMemberPresenceStats(
@@ -92,7 +95,7 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
     int $page = 1,
     int $itemsPerPage = 30,
     ?Season $currentSeason = null,
-    ?Activity $controlActivity = null
+    array $controlTypes = []
   ): array {
     $dateRange = SeasonService::calculateStartEndDate($club, $endDate, $startDate);
 
@@ -115,15 +118,18 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       ->setParameter('from', $dateRange['start'])
       ->setParameter('to', $dateRange['end']);
 
-    if ($controlActivity) {
+    $controlAliases = [];
+    foreach ($controlTypes as $controlType) {
+      $alias = 'control_' . str_replace('-', '_', (string) $controlType->getUuid());
+      $controlAliases[$controlType->getUuid()->toString()] = $alias;
+
       $subQb = $this->getEntityManager()->createQueryBuilder();
-      $subQb->select('MAX(mpcs.date)')
-        ->from(MemberPresence::class, 'mpcs')
-        ->join('mpcs.activities', 'acss')
-        ->where('mpcs.member = mem')
-        ->andWhere('acss.id = :controlActivityId');
-      $qb->addSelect('(' . $subQb->getDQL() . ') as lastControlActivity')
-         ->setParameter('controlActivityId', $controlActivity->getId());
+      $subQb->select("MAX({$alias}_c.date)")
+        ->from(MemberControl::class, "{$alias}_c")
+        ->where("{$alias}_c.member = mem")
+        ->andWhere("{$alias}_c.type = :{$alias}Type");
+      $qb->addSelect('(' . $subQb->getDQL() . ") as {$alias}")
+         ->setParameter("{$alias}Type", $controlType);
     }
 
     if ($club) {
@@ -142,8 +148,10 @@ class MemberPresenceRepository extends ServiceEntityRepository implements Presen
       'presenceCount'              => 'presenceCount',
       'lastPresenceDate'           => 'lastPresenceDate',
       'medicalCertificateExpiration' => 'mem.medicalCertificateExpiration',
-      'lastControlActivity'        => 'lastControlActivity',
     ];
+    foreach ($controlAliases as $alias) {
+      $allowedFields[$alias] = $alias;
+    }
 
     foreach ($orderBy as $field => $direction) {
       if (!isset($allowedFields[$field])) {

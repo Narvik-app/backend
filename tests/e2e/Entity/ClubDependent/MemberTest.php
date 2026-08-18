@@ -669,26 +669,28 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseIsSuccessful();
   }
 
-  public function testControlActivityAlertDisabled(): void {
+  public function testControlsAreEmbeddedInMemberPayload(): void {
     $member = _InitStory::MEMBER_member_club_1();
-    $memberIri = $this->getIriFromResource($member);
+    $type = \App\Tests\Factory\MemberControlTypeFactory::createOne(['name' => 'QCM', 'icon' => 'i-heroicons-shield-check']);
 
-    // Supervisor can set the flag
     $this->loggedAsSupervisorClub1();
-    $this->makePatchRequest($memberIri, ['controlActivityAlertDisabled' => true]);
+    $this->makePostRequest($this->getIriFromResource(_InitStory::club_1()) . '/member-controls', [
+      'member' => $this->getIriFromResource($member),
+      'type' => $this->getIriFromResource($type),
+      'date' => '2025-01-01',
+    ]);
     $this->assertResponseIsSuccessful();
-    $this->assertJsonContains(['controlActivityAlertDisabled' => true]);
 
-    // Flag round-trips on GET
-    $response = $this->makeGetRequest($memberIri);
+    $response = $this->makeGetRequest($this->getIriFromResource($member));
     $this->assertResponseIsSuccessful();
-    $this->assertJsonContains(['controlActivityAlertDisabled' => true]);
+    $data = $response->toArray();
 
-    // Regular member cannot set the flag (club-supervisor-write group required)
-    $memberIri2 = $this->getIriFromResource(_InitStory::MEMBER_admin_club_1());
-    $this->loggedAsMemberClub1();
-    $this->makePatchRequest($memberIri2, ['controlActivityAlertDisabled' => true]);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+    $this->assertArrayHasKey('controls', $data);
+    $this->assertCount(1, $data['controls']);
+    $this->assertEquals('QCM', $data['controls'][0]['type']['name']);
+    $this->assertEquals('i-heroicons-shield-check', $data['controls'][0]['type']['icon']);
+    $this->assertEquals('2025-01-01T00:00:00+00:00', $data['controls'][0]['date']);
+    $this->assertArrayHasKey('status', $data['controls'][0]);
   }
 
   public function testCustomFilters(): void {

@@ -2,13 +2,11 @@
 
 namespace App\Service;
 
-use App\Entity\ClubDependent\Activity;
 use App\Entity\ClubDependent\Member;
 use App\Entity\User;
 use App\Entity\UserMember;
 use App\Enum\ClubRole;
 use App\Repository\ClubDependent\MemberRepository;
-use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use App\Repository\SeasonRepository;
 use App\Repository\UserMemberRepository;
 use App\Repository\UserRepository;
@@ -16,7 +14,6 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class MemberService {
   public function __construct(
-    private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly SeasonRepository $seasonRepository,
     private readonly MemberRepository $memberRepository,
     private readonly UserRepository $userRepository,
@@ -34,17 +31,6 @@ class MemberService {
         $member->setCurrentSeason($season);
         break;
       }
-    }
-  }
-
-  public function setLastControlActivity(Member $member, ?Activity $controlActivity = null): void {
-    if (!$controlActivity) {
-      return;
-    }
-
-    $presence = $this->memberPresenceRepository->findLastOneByActivity($member, $controlActivity);
-    if ($presence) {
-      $member->setLastControlActivity($presence->getDate());
     }
   }
 
