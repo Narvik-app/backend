@@ -11,6 +11,11 @@ use Doctrine\ORM\Event\PostUpdateEventArgs;
 /**
  * When a type is created (or its linked activity changes) with an activity already set,
  * backfill every member's control from their existing presence history.
+ *
+ * This dispatches a background job (see MemberControlService::dispatchSyncForType) rather than
+ * syncing inline: syncing every member of the club synchronously inside this postPersist/postUpdate
+ * — i.e. inside the POST/PATCH request's own flush — does not scale (O(N members) queries/writes in
+ * the request, plus a nested flush inside an in-progress one).
  */
 #[AsEntityListener(event: 'postPersist', entity: MemberControlType::class)]
 #[AsEntityListener(event: 'postUpdate', entity: MemberControlType::class)]
@@ -22,13 +27,13 @@ class MemberControlTypeSubscriber extends AbstractEventSubscriber {
 
   public function postPersist(MemberControlType $type, PostPersistEventArgs $args): void {
     if ($type->isAutomatic()) {
-      $this->memberControlService->syncForType($type);
+      $this->memberControlService->dispatchSyncForType($type);
     }
   }
 
   public function postUpdate(MemberControlType $type, PostUpdateEventArgs $args): void {
     if ($this->isPropertyChanged($args->getObjectManager(), $type, 'activity') && $type->isAutomatic()) {
-      $this->memberControlService->syncForType($type);
+      $this->memberControlService->dispatchSyncForType($type);
     }
   }
 }

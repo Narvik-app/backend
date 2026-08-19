@@ -2,11 +2,12 @@
 
 namespace App\Message;
 
+use App\Enum\ClubJobKey;
 use App\Message\Abstract\ClubLinkedMessage;
 
 class CerberePresencesDateMessage extends ClubLinkedMessage {
-  public function getClubSettingRemainingField(): string {
-    return "cerbereImportRemaining";
+  public function getJobKey(): ClubJobKey {
+    return ClubJobKey::cerbere_import;
   }
 
 

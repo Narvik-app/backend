@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Club;
 use App\Entity\ClubDependent\Activity;
+use App\Enum\ClubJobKey;
 use App\Message\CerberePresencesDateMessage;
 use App\Repository\ClubDependent\ActivityRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,7 +38,7 @@ class ImportCerbereService {
     // We save the activities
     $this->saveCsvActivities($club);
 
-    $this->clubService->setCerbereImport($club, count($presences));
+    $this->clubService->startJob($club, ClubJobKey::cerbere_import, count($presences));
     foreach ($presences as $k => $presence) {
       /** @var \DateTimeImmutable $date */
       $date = $presence['date'];

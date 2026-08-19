@@ -2,12 +2,13 @@
 
 namespace App\Message;
 
+use App\Enum\ClubJobKey;
 use App\Message\Abstract\ClubLinkedMessage;
 
 class ItacMembersMessage extends ClubLinkedMessage {
 
-  public function getClubSettingRemainingField(): string {
-    return "itacImportRemaining";
+  public function getJobKey(): ClubJobKey {
+    return ClubJobKey::itac_import;
   }
 
   public function __construct(

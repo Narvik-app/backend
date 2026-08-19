@@ -72,7 +72,9 @@ class MemberControl extends UuidEntity implements ClubLinkedEntityInterface, Tim
   #[Groups(['member-control'])]
   private ?Member $member = null;
 
-  #[ORM\ManyToOne(targetEntity: MemberControlType::class, inversedBy: 'controls')]
+  // fetch: EAGER joins `type` into the same query as the (also EAGER) `controls` collection load
+  // on Member, instead of a lazy proxy per distinct type per request.
+  #[ORM\ManyToOne(targetEntity: MemberControlType::class, inversedBy: 'controls', fetch: 'EAGER')]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['member-control', 'member-read', 'member-presence-read'])]
   private ?MemberControlType $type = null;

@@ -3,7 +3,6 @@
 namespace App\EventSubscriber\Kernel;
 
 use App\Message\Abstract\ClubLinkedMessage;
-use App\Message\ItacMembersMessage;
 use App\Service\ClubService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
@@ -29,22 +28,22 @@ final readonly class MessengerSubscriber implements EventSubscriberInterface {
 
   public function messageHandled(WorkerMessageHandledEvent $event): void {
     $message = $event->getEnvelope()->getMessage();
-    $this->consumeMessage($message);
+    $this->recordJobResult($message, true);
   }
 
   public function messageFailed(WorkerMessageFailedEvent $event): void {
-    // We only update the count for failed message
+    // We only update the count for a message that's truly done retrying
     if ($event->willRetry()) {
       return;
     }
 
     $message = $event->getEnvelope()->getMessage();
-    $this->consumeMessage($message);
+    $this->recordJobResult($message, false);
   }
 
-  private function consumeMessage(object $message): void {
+  private function recordJobResult(object $message, bool $success): void {
     if ($message instanceof ClubLinkedMessage) {
-      $this->clubService->consumeMessage($message->getClubUuid(), $message->getClubSettingRemainingField());
+      $this->clubService->recordJobResult($message->getClubUuid(), $message->getJobKey(), $success);
     }
   }
 }

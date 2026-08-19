@@ -5,11 +5,14 @@ namespace App\Service;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\MemberControl;
 use App\Entity\ClubDependent\MemberControlType;
+use App\Enum\ClubJobKey;
+use App\Message\MemberControlSyncMessage;
 use App\Repository\ClubDependent\MemberControlRepository;
 use App\Repository\ClubDependent\MemberControlTypeRepository;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Keeps automatic (activity-linked) MemberControl rows in sync with member presences,
@@ -22,7 +25,38 @@ class MemberControlService {
     private readonly MemberControlTypeRepository $memberControlTypeRepository,
     private readonly MemberRepository $memberRepository,
     private readonly EntityManagerInterface $entityManager,
+    private readonly ClubService $clubService,
+    private readonly MessageBusInterface $bus,
   ) {
+  }
+
+  /**
+   * Fan out a club-wide resync of one automatic type into chunked background-job messages,
+   * instead of walking every member synchronously inside the request that created/edited the
+   * type — see MemberControlTypeSubscriber. Chunk size matches ImportItacCsvService's.
+   */
+  public function dispatchSyncForType(MemberControlType $type): void {
+    if (!$type->isAutomatic()) {
+      return;
+    }
+
+    $club = $type->getClub();
+    if (!$club) {
+      return;
+    }
+
+    $memberUuids = $this->memberRepository->findAllUuidsByClub($club);
+    if (empty($memberUuids)) {
+      return;
+    }
+
+    $chunks = array_chunk($memberUuids, 100);
+    $this->clubService->startJob($club, ClubJobKey::member_control_sync, count($chunks));
+
+    $typeUuid = $type->getUuid()->toString();
+    foreach ($chunks as $chunk) {
+      $this->bus->dispatch(new MemberControlSyncMessage($club->getUuid()->toString(), $typeUuid, $chunk));
+    }
   }
 
   /**
@@ -67,7 +101,11 @@ class MemberControlService {
     }
   }
 
-  private function syncMemberForType(Member $member, MemberControlType $type): bool {
+  /**
+   * Sync one member's control for one automatic type. Persists but does not flush — callers own
+   * the flush (once per request/message, not once per member).
+   */
+  public function syncMemberForType(Member $member, MemberControlType $type): bool {
     $activity = $type->getActivity();
     if (!$activity) {
       return false;

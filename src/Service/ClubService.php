@@ -3,16 +3,20 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\ClubJob;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Emailing\Email;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\UserMember;
+use App\Enum\ClubJobKey;
+use App\Enum\ClubJobStatus;
 use App\Enum\ClubRole;
 use App\Enum\EmailStatus;
 use App\Enum\GlobalSetting;
 use App\Enum\UserRole;
 use App\Mailer\EmailService;
+use App\Repository\ClubDependent\ClubJobRepository;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubRepository;
 use App\Repository\FileRepository;
@@ -32,6 +36,7 @@ class ClubService {
     private readonly FileService $fileService,
     private readonly FileRepository $fileRepository,
     private readonly MemberRepository $memberRepository,
+    private readonly ClubJobRepository $clubJobRepository,
   ) {
   }
 
@@ -91,49 +96,46 @@ class ClubService {
     return $user;
   }
 
-  public function setItacImport(Club $club, int $numberOfBatches): void {
-    $clubSettings = $club->getSettings();
-    $clubSettings
-      ->setItacImportRemaining($numberOfBatches)
-      ->setItacImportDate(new \DateTimeImmutable());
+  /**
+   * Start (or restart) tracking a background job for this club: find-or-create the (club, key)
+   * `ClubJob` row, reset it to `$total` remaining, status `in_progress`.
+   */
+  public function startJob(Club $club, ClubJobKey $key, int $total): void {
+    $job = $this->clubJobRepository->findOneByClubAndKey($club, $key) ?? new ClubJob()->setClub($club)->setKey($key);
+    $job
+      ->setTotal($total)
+      ->setRemaining($total)
+      ->setStatus(ClubJobStatus::in_progress);
 
-    $this->entityManager->persist($clubSettings);
+    $this->entityManager->persist($job);
     $this->entityManager->flush();
   }
 
-  public function setItacSecondaryImport(Club $club, int $numberOfBatches): void {
-    $clubSettings = $club->getSettings();
-    $clubSettings
-      ->setItacSecondaryImportRemaining($numberOfBatches)
-      ->setItacSecondaryImportDate(new \DateTimeImmutable());
-
-    $this->entityManager->persist($clubSettings);
-    $this->entityManager->flush();
-  }
-
-  public function setCerbereImport(Club $club, int $numberOfBatches): void {
-    $clubSettings = $club->getSettings();
-    $clubSettings
-      ->setCerbereImportRemaining($numberOfBatches);
-
-    $this->entityManager->persist($clubSettings);
-    $this->entityManager->flush();
-  }
-
-  public function consumeMessage(string $clubUuid, string $clubSettingRemainingField): void {
+  /**
+   * Record one chunk of a background job finishing (successfully or, after all retries, not).
+   * `status` sticks at `failed` once set — a later successful chunk must not flip it back to
+   * `finished`, so a job that had any permanent failure never silently reads as fully done.
+   */
+  public function recordJobResult(string $clubUuid, ClubJobKey $key, bool $success): void {
     $club = $this->clubRepository->findOneByUuid($clubUuid);
     if (!$club instanceof Club) {
       return;
     }
 
-    $getter = "get" . $clubSettingRemainingField;
-    $setter = "set" . $clubSettingRemainingField;
+    $job = $this->clubJobRepository->findOneByClubAndKey($club, $key);
+    if (!$job) {
+      return;
+    }
 
-    $clubSettings = $club->getSettings();
-    $clubSettings
-      ->$setter($clubSettings->$getter() - 1);
+    $job->setRemaining($job->getRemaining() - 1);
 
-    $this->entityManager->persist($clubSettings);
+    if (!$success) {
+      $job->setStatus(ClubJobStatus::failed);
+    } elseif ($job->getStatus() !== ClubJobStatus::failed && $job->getRemaining() <= 0) {
+      $job->setStatus(ClubJobStatus::finished);
+    }
+
+    $this->entityManager->persist($job);
     $this->entityManager->flush();
   }
 

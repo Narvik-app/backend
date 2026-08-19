@@ -41,6 +41,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: MemberPresenceRepository::class)]
+#[ORM\Index(name: 'idx_member_presence_member_date', columns: ['member_id', 'date'])]
 #[UniqueEntity(fields: ['member', 'club', 'date'], message: 'Member already registered for that day')]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/member-presences/{uuid}',

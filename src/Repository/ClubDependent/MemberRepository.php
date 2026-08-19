@@ -183,6 +183,31 @@ class MemberRepository extends ServiceEntityRepository implements ClubLinkedInte
     return $qb->getQuery()->getResult();
   }
 
+  /**
+   * Lightweight projection of every member's uuid for a club — used to fan out background jobs
+   * without hydrating full Member entities just to read their uuid.
+   *
+   * @return string[]
+   */
+  public function findAllUuidsByClub(Club $club): array {
+    $qb = $this->createQueryBuilder('m');
+    $this->applyClubRestriction($qb, $club);
+
+    return array_column(
+      $qb->select('m.uuid')->getQuery()->getScalarResult(),
+      'uuid'
+    );
+  }
+
+  /**
+   * @param Club $club
+   * @param string[] $uuids
+   * @return Member[]
+   */
+  public function findAllByUuids(Club $club, array $uuids): array {
+    return $this->qbByUuids($club, $uuids)->getQuery()->getResult();
+  }
+
   private function qbByUuids(Club $club, array $uuids): QueryBuilder {
     $qb = $this->createQueryBuilder("m");
     $this->applyClubRestriction($qb, $club);

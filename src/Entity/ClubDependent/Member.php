@@ -312,7 +312,10 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   /**
    * @var Collection<int, MemberControl>
    */
-  #[ORM\OneToMany(mappedBy: 'member', targetEntity: MemberControl::class, orphanRemoval: true)]
+  // fetch: EAGER turns "one lazy load per member in the page" into "one extra batched query for
+  // the whole page" (Doctrine issues a single `WHERE member_id IN (...)` for the collection),
+  // since `controls` is always serialized whenever a Member is (member-read/member-presence-read).
+  #[ORM\OneToMany(mappedBy: 'member', targetEntity: MemberControl::class, orphanRemoval: true, fetch: 'EAGER')]
   #[Groups(['member-read', 'member-presence-read'])]
   private Collection $controls;
 
