@@ -12,8 +12,8 @@ use Doctrine\ORM\Event\PostUpdateEventArgs;
  * When a type is created (or its linked activity changes) with an activity already set,
  * backfill every member's control from their existing presence history.
  */
-#[AsEntityListener(entity: MemberControlType::class, event: 'postPersist')]
-#[AsEntityListener(entity: MemberControlType::class, event: 'postUpdate')]
+#[AsEntityListener(event: 'postPersist', entity: MemberControlType::class)]
+#[AsEntityListener(event: 'postUpdate', entity: MemberControlType::class)]
 class MemberControlTypeSubscriber extends AbstractEventSubscriber {
   public function __construct(
     private readonly MemberControlService $memberControlService,

@@ -8,14 +8,8 @@ use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 
-/**
- * For automatic (activity-linked) control types, the date is owned by presence sync
- * (see MemberControlService) — any client-submitted date is silently overwritten with the
- * real computed value rather than rejected, so unrelated edits (e.g. toggling alertDisabled)
- * on an already-dated automatic control never fail validation.
- */
-#[AsEntityListener(entity: MemberControl::class, event: 'prePersist')]
-#[AsEntityListener(entity: MemberControl::class, event: 'preUpdate')]
+#[AsEntityListener(event: 'prePersist', entity: MemberControl::class)]
+#[AsEntityListener(event: 'preUpdate', entity: MemberControl::class)]
 class MemberControlSubscriber extends AbstractEventSubscriber {
   public function __construct(
     private readonly MemberPresenceRepository $memberPresenceRepository,

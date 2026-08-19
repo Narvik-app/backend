@@ -101,10 +101,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 class MemberControlType extends UuidEntity implements ClubLinkedEntityInterface, SortableEntityInterface {
   use SelfClubLinkedEntityTrait;
 
-  // NOTE: 'member-read'/'member-presence-read' are included here (not just 'member-control-read')
-  // so this data still appears when a MemberControlType is nested inside a Member payload via
-  // Member::$controls — API Platform requires the nested object's own property groups to match
-  // the parent's normalization context, it doesn't inherit it. See Activity for the same pattern.
   #[ORM\Column(length: 255)]
   #[Groups(['member-control-type', 'member-control-read', 'member-read', 'member-presence-read'])]
   #[Assert\NotBlank]

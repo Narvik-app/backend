@@ -13,9 +13,12 @@ use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
 
-#[AsEntityListener(entity: MemberPresence::class, event: 'postPersist')]
-#[AsEntityListener(entity: MemberPresence::class, event: 'postUpdate')]
-#[AsEntityListener(entity: MemberPresence::class, event: 'postRemove')]
+/**
+ * When a member's presence is updated, sync the member's auto-controls.
+ */
+#[AsEntityListener(event: 'postPersist', entity: MemberPresence::class)]
+#[AsEntityListener(event: 'postUpdate', entity: MemberPresence::class)]
+#[AsEntityListener(event: 'postRemove', entity: MemberPresence::class)]
 #[AsDoctrineListener(event: Events::postFlush)]
 class MemberPresenceSubscriber extends AbstractEventSubscriber {
   /** @var array<int, Member> */

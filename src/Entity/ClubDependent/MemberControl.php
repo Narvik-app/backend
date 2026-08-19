@@ -66,19 +66,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 class MemberControl extends UuidEntity implements ClubLinkedEntityInterface, TimestampEntityInterface {
   use TimestampTrait;
-  // Denormalized `club` FK (own column, not a join through `member`) — mirrors MemberPresence,
-  // because API Platform's own join-collection detection (PaginationExtension/QueryChecker)
-  // can't resolve a dotted getClubSqlPath() across more than one hop.
   use SelfClubLinkedEntityTrait;
-
-  // NOTE: 'member' is intentionally NOT tagged with 'member-read' — it would otherwise recurse
-  // back into the owning Member when this control is nested under Member::$controls.
   #[ORM\ManyToOne(targetEntity: Member::class, inversedBy: 'controls')]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['member-control'])]
   private ?Member $member = null;
 
-  // See MemberControlType for why 'member-read'/'member-presence-read' are needed here too.
   #[ORM\ManyToOne(targetEntity: MemberControlType::class, inversedBy: 'controls')]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['member-control', 'member-read', 'member-presence-read'])]
