@@ -134,7 +134,7 @@ class MemberControlType extends UuidEntity implements ClubLinkedEntityInterface,
   private bool $displayOnPresenceCard = true;
 
   #[ORM\Column(nullable: true)]
-  #[Groups(['member-control-type'])]
+  #[Groups(['member-control-type', 'member-read', 'member-presence-read'])]
   private ?int $weight = null;
 
   /**
