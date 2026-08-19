@@ -40,6 +40,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
         'memberUuid' => new Link(toProperty: 'member', fromClass: Member::class),
       ],
       security: "is_granted('".ClubRole::supervisor->value."', request)",
+      paginationEnabled: false,
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/permissions',
@@ -59,6 +60,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
         'templateUuid' => new Link(toProperty: 'template', fromClass: PermissionTemplate::class),
       ],
       security: "is_granted('".ClubRole::supervisor->value."', request)",
+      paginationEnabled: false,
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/permission-templates/{templateUuid}/permissions',
