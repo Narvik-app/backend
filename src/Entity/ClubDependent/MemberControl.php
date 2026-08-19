@@ -154,7 +154,7 @@ class MemberControl extends UuidEntity implements ClubLinkedEntityInterface, Tim
       return null;
     }
 
-    $daysSince = (new \DateTimeImmutable())->diff($this->date)->days;
+    $daysSince = new \DateTimeImmutable()->diff($this->date)->days;
 
     $alertDays = $this->type->getAlertDays();
     if ($alertDays !== null && $daysSince >= $alertDays) {

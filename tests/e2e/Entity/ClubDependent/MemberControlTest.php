@@ -164,7 +164,7 @@ class MemberControlTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makePostRequest($this->getRootWClubUrl(_InitStory::club_1()), [
       'member' => $this->getIriFromResource($member),
       'type' => $this->getIriFromResource($type),
-      'date' => (new \DateTimeImmutable('-400 days'))->format('Y-m-d'),
+      'date' => new \DateTimeImmutable('-400 days')->format('Y-m-d'),
     ]);
     $this->assertResponseIsSuccessful();
     $this->assertJsonContains(['status' => 'expired']);
@@ -208,15 +208,15 @@ class MemberControlTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makePostRequest($this->getRootWClubUrl(_InitStory::club_1()), [
       'member' => $this->getIriFromResource($member),
       'type' => $this->getIriFromResource($type),
-      'date' => (new \DateTimeImmutable('-100 days'))->format('Y-m-d'),
+      'date' => new \DateTimeImmutable('-100 days')->format('Y-m-d'),
     ]);
     $this->assertJsonContains(['status' => 'valid']);
 
     $controlIri = $response->toArray()['@id'];
-    $this->makePatchRequest($controlIri, ['date' => (new \DateTimeImmutable('-350 days'))->format('Y-m-d')]);
+    $this->makePatchRequest($controlIri, ['date' => new \DateTimeImmutable('-350 days')->format('Y-m-d')]);
     $this->assertJsonContains(['status' => 'warning']);
 
-    $this->makePatchRequest($controlIri, ['date' => (new \DateTimeImmutable('-400 days'))->format('Y-m-d')]);
+    $this->makePatchRequest($controlIri, ['date' => new \DateTimeImmutable('-400 days')->format('Y-m-d')]);
     $this->assertJsonContains(['status' => 'expired']);
   }
 }
