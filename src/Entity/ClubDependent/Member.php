@@ -309,12 +309,15 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['member-read', 'self-read', 'member-presence-read'])]
   private ?File $profileImage = null;
 
+  /**
+   * @var Collection<int, MemberControl>
+   */
+  // fetch: EAGER turns "one lazy load per member in the page" into "one extra batched query for
+  // the whole page" (Doctrine issues a single `WHERE member_id IN (...)` for the collection),
+  // since `controls` is always serialized whenever a Member is (member-read/member-presence-read).
+  #[ORM\OneToMany(mappedBy: 'member', targetEntity: MemberControl::class, orphanRemoval: true, fetch: 'EAGER')]
   #[Groups(['member-read', 'member-presence-read'])]
-  private ?\DateTimeImmutable $lastControlActivity = null;
-
-  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ['default' => false])]
-  #[Groups(['member-read', 'member-presence-read', 'club-supervisor-write'])]
-  private bool $controlActivityAlertDisabled = false;
+  private Collection $controls;
 
   #[Groups(['member-read', 'member-presence-read'])]
   private ?MemberSeason $currentSeason = null;
@@ -422,6 +425,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     $this->memberSeasons = new ArrayCollection();
     $this->sales = new ArrayCollection();
     $this->permissions = new ArrayCollection();
+    $this->controls = new ArrayCollection();
   }
 
   public function getMedicalCertificateStatus(): string {
@@ -656,20 +660,27 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
     return $this;
   }
 
-  public function getLastControlActivity(): ?\DateTimeImmutable {
-    return $this->lastControlActivity;
+  /**
+   * @return Collection<int, MemberControl>
+   */
+  public function getControls(): Collection {
+    return $this->controls;
   }
 
-  public function setLastControlActivity(?\DateTimeImmutable $lastControlActivity): void {
-    $this->lastControlActivity = $lastControlActivity;
+  public function addControl(MemberControl $control): static {
+    if (!$this->controls->contains($control)) {
+      $this->controls->add($control);
+      $control->setMember($this);
+    }
+    return $this;
   }
 
-  public function getControlActivityAlertDisabled(): bool {
-    return $this->controlActivityAlertDisabled;
-  }
-
-  public function setControlActivityAlertDisabled(bool $controlActivityAlertDisabled): self {
-    $this->controlActivityAlertDisabled = $controlActivityAlertDisabled;
+  public function removeControl(MemberControl $control): static {
+    if ($this->controls->removeElement($control)) {
+      if ($control->getMember() === $this) {
+        $control->setMember(null);
+      }
+    }
     return $this;
   }
 

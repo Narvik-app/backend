@@ -8,6 +8,7 @@ use ApiPlatform\State\ProviderInterface;
 use App\Dto\MetricPagination;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Metric;
+use App\Repository\ClubDependent\MemberControlTypeRepository;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
@@ -54,6 +55,7 @@ class MetricProvider implements ProviderInterface {
 
     private readonly MemberRepository $memberRepository,
     private readonly MemberSeasonRepository $memberSeasonRepository,
+    private readonly MemberControlTypeRepository $memberControlTypeRepository,
     private readonly MemberPresenceRepository $memberPresenceRepository,
     private readonly ExternalPresenceRepository $externalPresenceRepository,
     private readonly SeasonRepository $seasonRepository,
@@ -248,8 +250,14 @@ class MetricProvider implements ProviderInterface {
     $page = $request->query->getInt('page', 1);
     $itemsPerPage = $request->query->getInt('itemsPerPage', 30);
 
+    // Club's control types drive the extra `control_<uuid>` sortable columns
+    $controlTypes = $this->club ? $this->memberControlTypeRepository->findAllByClub($this->club) : [];
+
     // Parse API Platform-style order[field]=direction query params
-    $allowedFields = ['presenceCount', 'lastPresenceDate', 'medicalCertificateExpiration', 'lastControlActivity'];
+    $allowedFields = ['presenceCount', 'lastPresenceDate', 'medicalCertificateExpiration'];
+    foreach ($controlTypes as $controlType) {
+      $allowedFields[] = 'control_' . str_replace('-', '_', (string) $controlType->getUuid());
+    }
     $orderParam = $request->query->all('order');
     $orderBy = [];
     if (!empty($orderParam) && is_array($orderParam)) {
@@ -264,16 +272,6 @@ class MetricProvider implements ProviderInterface {
       $orderBy = ['presenceCount' => 'DESC'];
     }
 
-    $controlActivity = $this->club?->getSettings()?->getControlActivity();
-
-    // lastControlActivity is only sortable when the alias exists (requires control activity)
-    if (!$controlActivity) {
-      unset($orderBy['lastControlActivity']);
-      if (empty($orderBy)) {
-        $orderBy = ['presenceCount' => 'DESC'];
-      }
-    }
-
     // Get current season to enforce filter
     $currentSeason = $this->seasonRepository->findCurrentSeason($this->club);
     $values = $this->memberPresenceRepository->getMemberPresenceStats(
@@ -284,7 +282,7 @@ class MetricProvider implements ProviderInterface {
       $page,
       $itemsPerPage,
       $currentSeason,
-      $controlActivity
+      $controlTypes
     );
 
     // Get total count for pagination metadata

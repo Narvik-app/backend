@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Club;
+use App\Enum\ClubJobKey;
 use App\Message\ItacMembersMessage;
 use App\Message\ItacSecondaryClubMembersMessage;
 use League\Csv\Reader;
@@ -28,7 +29,7 @@ class ImportItacCsvService extends AbstractCsvService {
     $records = $reader->getRecords();
     $array = iterator_to_array($records);
     $recordsChunks = array_chunk($array, 100);
-    $this->clubService->setItacImport($club, count($recordsChunks));
+    $this->clubService->startJob($club, ClubJobKey::IMPORT_ITAC, count($recordsChunks));
 
     foreach ($recordsChunks as $recordsChunk) {
       $chunk = [];
@@ -55,7 +56,7 @@ class ImportItacCsvService extends AbstractCsvService {
     $records = $reader->getRecords();
     $array = iterator_to_array($records);
     $recordsChunks = array_chunk($array, 100);
-    $this->clubService->setItacSecondaryImport($club, count($recordsChunks));
+    $this->clubService->startJob($club, ClubJobKey::IMPORT_ITAC_SECONDARY, count($recordsChunks));
 
     foreach ($recordsChunks as $recordsChunk) {
       $chunk = [];
@@ -64,7 +65,10 @@ class ImportItacCsvService extends AbstractCsvService {
           $chunk[$key][$this->convert($k)] = $this->convert($v);
         }
       }
-      $this->bus->dispatch(new ItacSecondaryClubMembersMessage($club->getUuid(), $chunk));
+      // Was passing $club->getUuid() (a Uuid object) here instead of ->toString() like every
+      // other dispatch site — ItacSecondaryClubMembersMessage's ctor types it as string, so this
+      // only worked by (Stringable) coercion; made explicit for consistency.
+      $this->bus->dispatch(new ItacSecondaryClubMembersMessage($club->getUuid()->toString(), $chunk));
     }
 
     return count($array);

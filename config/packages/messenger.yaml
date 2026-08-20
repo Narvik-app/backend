@@ -34,6 +34,7 @@ framework:
             App\Message\ItacSecondaryClubMembersMessage: async_low
             App\Message\CerberePresencesDateMessage: async_low
             App\Message\MemberPresencesCsvMessage: async_low
+            App\Message\MemberControlSyncMessage: async_low
             
     
 when@test:

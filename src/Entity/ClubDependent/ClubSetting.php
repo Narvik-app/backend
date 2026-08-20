@@ -2,7 +2,6 @@
 
 namespace App\Entity\ClubDependent;
 
-use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Link;
@@ -20,7 +19,6 @@ use App\Enum\ClubRole;
 use App\Repository\ClubDependent\ClubSettingRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -93,11 +91,6 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Assert\Regex(pattern: '/^(0[1-9]|1[012])-[0-3][0-9]$/m')]
   private string $seasonEnd = "08-31";
 
-  #[ORM\OneToOne(targetEntity: Activity::class)]
-  #[ORM\JoinColumn(name: 'control_activity_id', nullable: true, onDelete: 'SET NULL')]
-  #[Groups(['club-setting'])]
-  private ?Activity $controlActivity = null;
-
   /**
    * @var Collection<int, Activity>
    */
@@ -107,34 +100,6 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   )]
   #[Groups(['club-setting'])]
   private Collection $excludedActivitiesFromOpeningDays;
-
-  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-  #[Groups(['club-setting-read'])]
-  #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
-  private ?\DateTimeImmutable $itacImportDate = null;
-
-  #[ORM\Column(options: ['default' => 0])]
-  #[Groups(['club-setting-read'])]
-  #[Assert\NotBlank]
-  #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
-  private int $itacImportRemaining = 0;
-
-  #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-  #[Groups(['club-setting-read'])]
-  #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
-  private ?\DateTimeImmutable $itacSecondaryImportDate = null;
-
-  #[ORM\Column(options: ['default' => 0])]
-  #[Groups(['club-setting-read'])]
-  #[Assert\NotBlank]
-  #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
-  private int $itacSecondaryImportRemaining = 0;
-
-  #[ORM\Column(options: ['default' => 0])]
-  #[Groups(['club-setting-read'])]
-  #[Assert\NotBlank]
-  #[ApiProperty(security: "is_granted('".ClubRole::admin->value."', object)")] // Property can be read by club admin
-  private int $cerbereImportRemaining = 0;
 
   #[Groups(['common-read', 'club-setting-read'])]
   private ?Season $currentSeason = null;
@@ -150,69 +115,6 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setClub(?Club $club): static {
     $this->club = $club;
-    return $this;
-  }
-
-  public function getControlActivity(): ?Activity {
-    return $this->controlActivity;
-  }
-
-  public function setControlActivity(?Activity $controlActivity): ClubSetting {
-    $this->controlActivity = $controlActivity;
-    return $this;
-  }
-
-  public function getItacImportDate(): ?\DateTimeImmutable {
-    return $this->itacImportDate;
-  }
-
-  public function setItacImportDate(?\DateTimeImmutable $itacImportDate): ClubSetting {
-    $this->itacImportDate = $itacImportDate;
-    return $this;
-  }
-
-  public function getItacImportRemaining(): int {
-    return $this->itacImportRemaining;
-  }
-
-  public function setItacImportRemaining(int $itacImportRemaining): ClubSetting {
-    if ($itacImportRemaining < 0) {
-      $itacImportRemaining = 0;
-    }
-    $this->itacImportRemaining = $itacImportRemaining;
-    return $this;
-  }
-
-  public function getItacSecondaryImportDate(): ?\DateTimeImmutable {
-    return $this->itacSecondaryImportDate;
-  }
-
-  public function setItacSecondaryImportDate(?\DateTimeImmutable $itacSecondaryImportDate): ClubSetting {
-    $this->itacSecondaryImportDate = $itacSecondaryImportDate;
-    return $this;
-  }
-
-  public function getItacSecondaryImportRemaining(): int {
-    return $this->itacSecondaryImportRemaining;
-  }
-
-  public function setItacSecondaryImportRemaining(int $itacSecondaryImportRemaining): ClubSetting {
-    if ($itacSecondaryImportRemaining < 0) {
-      $itacSecondaryImportRemaining = 0;
-    }
-    $this->itacSecondaryImportRemaining = $itacSecondaryImportRemaining;
-    return $this;
-  }
-
-  public function getCerbereImportRemaining(): int {
-    return $this->cerbereImportRemaining;
-  }
-
-  public function setCerbereImportRemaining(int $cerbereImportRemaining): ClubSetting {
-    if ($cerbereImportRemaining < 0) {
-      $cerbereImportRemaining = 0;
-    }
-    $this->cerbereImportRemaining = $cerbereImportRemaining;
     return $this;
   }
 

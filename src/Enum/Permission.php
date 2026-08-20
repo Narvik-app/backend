@@ -57,6 +57,10 @@ enum Permission: string {
 
   case LOAN_BACKDATE = 'LOAN_BACKDATE'; // Allows setting a loan/recording date in the past
 
+  // Member control permissions
+  case MEMBER_CONTROL_TYPES_ACCESS = 'MEMBER_CONTROL_TYPES_ACCESS';
+  case MEMBER_CONTROL_TYPES_EDIT = 'MEMBER_CONTROL_TYPES_EDIT';
+
   /**
    * Returns all available permissions as an array of values
    * @return string[]

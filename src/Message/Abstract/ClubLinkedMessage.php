@@ -2,8 +2,10 @@
 
 namespace App\Message\Abstract;
 
+use App\Enum\ClubJobKey;
+
 abstract class ClubLinkedMessage {
-  public abstract function getClubSettingRemainingField(): string;
+  public abstract function getJobKey(): ClubJobKey;
 
   public function __construct(
     private readonly string $clubUuid,

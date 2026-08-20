@@ -330,13 +330,6 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $this->assertEquals(['medicalCertificateExpiration' => 'ASC'], $response->toArray()['pagination']['order']);
 
-    // Note: order[lastControlActivity] is only valid when the club has a control activity
-    // configured. Without it the field is stripped and falls back to default.
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=DESC";
-    $response = $this->makeGetRequest($iri);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
-    $this->assertEquals(['presenceCount' => 'DESC'], $response->toArray()['pagination']['order']);
-
     // Test pagination
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=1&itemsPerPage=2";
     $response = $this->makeGetRequest($iri);
@@ -349,21 +342,29 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $this->assertLessThanOrEqual(2, count($data['values']));
   }
 
-  public function testMemberPresenceStatsWithControlActivity(): void {
+  public function testMemberPresenceStatsWithMemberControlType(): void {
     $member1 = _InitStory::MEMBER_member_club_1();
     $member2 = _InitStory::MEMBER_admin_club_1();
     $member3 = _InitStory::MEMBER_supervisor_club_1();
     $club1 = _InitStory::club_1();
     $controlActivity = ActivityStory::getRandom('activities_club1');
 
-    $settingsIri = $this->getIriFromResource($club1->getSettings());
     $activityIri = $this->getIriFromResource($controlActivity);
 
     $this->loggedAsAdminClub1();
-    $this->makePatchRequest($settingsIri, ['controlActivity' => $activityIri]);
+    $response = $this->makePostRequest($this->getIriFromResource($club1) . '/member-control-types', [
+      'name' => 'Contrôle',
+      'activity' => $activityIri,
+      'warningDays' => 335,
+      'alertDays' => 365,
+    ]);
     $this->assertResponseIsSuccessful();
+    $typeData = $response->toArray();
+    $typeUuid = $typeData['uuid'];
+    $typeIri = $typeData['@id'];
+    $controlAlias = 'control_' . str_replace('-', '_', $typeUuid);
 
-    // member1: 3 control activity presences, latest = most recent
+    // member1: 2 control activity presences, latest = most recent
     MemberPresenceFactory::new([
       'date' => new \DateTimeImmutable('-1 month'),
       'member' => $member1,
@@ -386,49 +387,48 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
 
     $this->loggedAsSupervisorClub1();
 
-    // lastControlActivity is now included in response
+    // The control_<uuid> column is now included in the response
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
     foreach ($data['values'] as $stat) {
-      $this->assertArrayHasKey('lastControlActivity', $stat);
+      $this->assertArrayHasKey($controlAlias, $stat);
     }
 
-    // Sort ASC: member with oldest control activity first (member2), then member1, then member3 (null last)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=ASC";
+    // Sort ASC: member with oldest control date first (member2), then member1, then member3 (null last)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[{$controlAlias}]=ASC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $this->assertEquals(['lastControlActivity' => 'ASC'], $data['pagination']['order']);
+    $this->assertEquals([$controlAlias => 'ASC'], $data['pagination']['order']);
 
-    // Sort DESC: member with most recent control activity first (member1)
-    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[lastControlActivity]=DESC";
+    // Sort DESC: member with most recent control date first (member1)
+    $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?order[{$controlAlias}]=DESC";
     $response = $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
     $data = $response->toArray();
-    $this->assertEquals(['lastControlActivity' => 'DESC'], $data['pagination']['order']);
+    $this->assertEquals([$controlAlias => 'DESC'], $data['pagination']['order']);
     $items = $data['values'];
-    $firstWithActivity = null;
+    $firstWithControl = null;
     foreach ($items as $item) {
-      if ($item['lastControlActivity'] !== null) {
-        $firstWithActivity = $item;
+      if ($item[$controlAlias] !== null) {
+        $firstWithControl = $item;
         break;
       }
     }
-    $this->assertNotNull($firstWithActivity, 'Expected at least one member with a control activity date');
-    $this->assertEquals($member1->getUuid(), $firstWithActivity['memberUuid']);
+    $this->assertNotNull($firstWithControl, 'Expected at least one member with a control date');
+    $this->assertEquals($member1->getUuid(), $firstWithControl['memberUuid']);
 
-    // Remove control activity from settings — lastControlActivity should no longer appear
+    // Remove the type — the control_<uuid> column should no longer appear
     $this->loggedAsAdminClub1();
-    $this->makePatchRequest($settingsIri, ['controlActivity' => null]);
-    $this->assertResponseIsSuccessful();
+    $this->makeDeleteRequest($typeIri);
 
     $this->loggedAsSupervisorClub1();
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats";
     $data = $this->makeGetRequest($iri)->toArray();
     foreach ($data['values'] as $stat) {
-      $this->assertArrayNotHasKey('lastControlActivity', $stat);
+      $this->assertArrayNotHasKey($controlAlias, $stat);
     }
   }
 
