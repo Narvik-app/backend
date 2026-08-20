@@ -52,7 +52,7 @@ class ClubJob extends UuidEntity implements ClubLinkedEntityInterface, Timestamp
   use SelfClubLinkedEntityTrait;
   use TimestampTrait;
 
-  #[ORM\Column(type: 'string', enumType: ClubJobKey::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: ClubJobKey::class)]
   #[Groups(['club-job'])]
   private ClubJobKey $key;
 
@@ -64,7 +64,7 @@ class ClubJob extends UuidEntity implements ClubLinkedEntityInterface, Timestamp
   #[Groups(['club-job'])]
   private int $remaining = 0;
 
-  #[ORM\Column(type: 'string', enumType: ClubJobStatus::class)]
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: ClubJobStatus::class)]
   #[Groups(['club-job'])]
   private ClubJobStatus $status = ClubJobStatus::IN_PROGRESS;
 
