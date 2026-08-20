@@ -21,10 +21,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
- * Generic progress tracker for a per-club background job (ITAC/Cerbère imports, member-control
- * sync, ...). One row per (club, key) — upserted across runs, never one row per run: `updatedAt`
- * (via TimestampTrait) doubles as "when this job last progressed," so there's no separate
- * "last run date" field to keep in sync.
+ * Generic progress tracker for a per-club background job
  */
 #[ORM\Entity(repositoryClass: ClubJobRepository::class)]
 #[ORM\UniqueConstraint(name: 'club_job_club_key_unique', fields: ['club', 'key'])]
@@ -37,10 +34,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".ClubRole::admin->value."', request)",
+      security: "is_granted('".ClubRole::supervisor->value."', request)",
     ),
     new Get(
-      security: "is_granted('".ClubRole::admin->value."', object)"
+      security: "is_granted('".ClubRole::supervisor->value."', object)"
     ),
   ],
   uriVariables: [
@@ -69,7 +66,7 @@ class ClubJob extends UuidEntity implements ClubLinkedEntityInterface, Timestamp
 
   #[ORM\Column(type: 'string', enumType: ClubJobStatus::class)]
   #[Groups(['club-job'])]
-  private ClubJobStatus $status = ClubJobStatus::in_progress;
+  private ClubJobStatus $status = ClubJobStatus::IN_PROGRESS;
 
   public function getKey(): ClubJobKey {
     return $this->key;

@@ -8,7 +8,7 @@ use App\Message\Abstract\ClubLinkedMessage;
 class MemberControlSyncMessage extends ClubLinkedMessage {
 
   public function getJobKey(): ClubJobKey {
-    return ClubJobKey::member_control_sync;
+    return ClubJobKey::MEMBER_CONTROL_SYNC;
   }
 
   /**

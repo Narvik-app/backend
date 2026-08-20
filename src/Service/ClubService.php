@@ -105,7 +105,7 @@ class ClubService {
     $job
       ->setTotal($total)
       ->setRemaining($total)
-      ->setStatus(ClubJobStatus::in_progress);
+      ->setStatus(ClubJobStatus::IN_PROGRESS);
 
     $this->entityManager->persist($job);
     $this->entityManager->flush();
@@ -130,9 +130,9 @@ class ClubService {
     $job->setRemaining($job->getRemaining() - 1);
 
     if (!$success) {
-      $job->setStatus(ClubJobStatus::failed);
-    } elseif ($job->getStatus() !== ClubJobStatus::failed && $job->getRemaining() <= 0) {
-      $job->setStatus(ClubJobStatus::finished);
+      $job->setStatus(ClubJobStatus::FAILED);
+    } elseif ($job->getStatus() !== ClubJobStatus::FAILED && $job->getRemaining() <= 0) {
+      $job->setStatus(ClubJobStatus::FINISHED);
     }
 
     $this->entityManager->persist($job);

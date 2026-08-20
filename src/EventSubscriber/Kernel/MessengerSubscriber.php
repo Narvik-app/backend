@@ -32,7 +32,7 @@ final readonly class MessengerSubscriber implements EventSubscriberInterface {
   }
 
   public function messageFailed(WorkerMessageFailedEvent $event): void {
-    // We only update the count for a message that's truly done retrying
+    // We only update the count for failed message
     if ($event->willRetry()) {
       return;
     }

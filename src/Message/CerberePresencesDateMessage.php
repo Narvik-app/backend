@@ -7,9 +7,8 @@ use App\Message\Abstract\ClubLinkedMessage;
 
 class CerberePresencesDateMessage extends ClubLinkedMessage {
   public function getJobKey(): ClubJobKey {
-    return ClubJobKey::cerbere_import;
+    return ClubJobKey::IMPORT_CERBERE;
   }
-
 
   public function __construct(
     string $clubUuid,

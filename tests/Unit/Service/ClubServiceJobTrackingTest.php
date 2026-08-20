@@ -48,36 +48,36 @@ class ClubServiceJobTrackingTest extends TestCase {
     });
 
     $service = $this->makeService($clubJobRepository, entityManager: $em);
-    $service->startJob($club, ClubJobKey::itac_import, 5);
+    $service->startJob($club, ClubJobKey::IMPORT_ITAC, 5);
 
     $this->assertInstanceOf(ClubJob::class, $persisted);
     $this->assertSame($club, $persisted->getClub());
-    $this->assertSame(ClubJobKey::itac_import, $persisted->getKey());
+    $this->assertSame(ClubJobKey::IMPORT_ITAC, $persisted->getKey());
     $this->assertSame(5, $persisted->getTotal());
     $this->assertSame(5, $persisted->getRemaining());
-    $this->assertSame(ClubJobStatus::in_progress, $persisted->getStatus());
+    $this->assertSame(ClubJobStatus::IN_PROGRESS, $persisted->getStatus());
   }
 
   public function testStartJobResetsAnExistingClubJob(): void {
     $club = new Club();
-    $existing = new ClubJob()->setClub($club)->setKey(ClubJobKey::itac_import);
-    $existing->setTotal(3)->setRemaining(0)->setStatus(ClubJobStatus::failed);
+    $existing = new ClubJob()->setClub($club)->setKey(ClubJobKey::IMPORT_ITAC);
+    $existing->setTotal(3)->setRemaining(0)->setStatus(ClubJobStatus::FAILED);
 
     $clubJobRepository = $this->createStub(ClubJobRepository::class);
     $clubJobRepository->method('findOneByClubAndKey')->willReturn($existing);
 
     $service = $this->makeService($clubJobRepository);
-    $service->startJob($club, ClubJobKey::itac_import, 7);
+    $service->startJob($club, ClubJobKey::IMPORT_ITAC, 7);
 
     $this->assertSame(7, $existing->getTotal());
     $this->assertSame(7, $existing->getRemaining());
-    $this->assertSame(ClubJobStatus::in_progress, $existing->getStatus());
+    $this->assertSame(ClubJobStatus::IN_PROGRESS, $existing->getStatus());
   }
 
   public function testRecordJobResultDecrementsAndFinishesOnLastSuccess(): void {
     $club = new Club();
-    $job = new ClubJob()->setClub($club)->setKey(ClubJobKey::member_control_sync);
-    $job->setTotal(2)->setRemaining(1)->setStatus(ClubJobStatus::in_progress);
+    $job = new ClubJob()->setClub($club)->setKey(ClubJobKey::MEMBER_CONTROL_SYNC);
+    $job->setTotal(2)->setRemaining(1)->setStatus(ClubJobStatus::IN_PROGRESS);
 
     $clubRepository = $this->createStub(ClubRepository::class);
     $clubRepository->method('findOneByUuid')->willReturn($club);
@@ -85,16 +85,16 @@ class ClubServiceJobTrackingTest extends TestCase {
     $clubJobRepository->method('findOneByClubAndKey')->willReturn($job);
 
     $service = $this->makeService($clubJobRepository, $clubRepository);
-    $service->recordJobResult('any-uuid', ClubJobKey::member_control_sync, true);
+    $service->recordJobResult('any-uuid', ClubJobKey::MEMBER_CONTROL_SYNC, true);
 
     $this->assertSame(0, $job->getRemaining());
-    $this->assertSame(ClubJobStatus::finished, $job->getStatus());
+    $this->assertSame(ClubJobStatus::FINISHED, $job->getStatus());
   }
 
   public function testRecordJobResultFailureSticksEvenAfterRemainingReachesZero(): void {
     $club = new Club();
-    $job = new ClubJob()->setClub($club)->setKey(ClubJobKey::member_control_sync);
-    $job->setTotal(2)->setRemaining(2)->setStatus(ClubJobStatus::in_progress);
+    $job = new ClubJob()->setClub($club)->setKey(ClubJobKey::MEMBER_CONTROL_SYNC);
+    $job->setTotal(2)->setRemaining(2)->setStatus(ClubJobStatus::IN_PROGRESS);
 
     $clubRepository = $this->createStub(ClubRepository::class);
     $clubRepository->method('findOneByUuid')->willReturn($club);
@@ -104,14 +104,14 @@ class ClubServiceJobTrackingTest extends TestCase {
     $service = $this->makeService($clubJobRepository, $clubRepository);
 
     // First chunk fails permanently
-    $service->recordJobResult('any-uuid', ClubJobKey::member_control_sync, false);
+    $service->recordJobResult('any-uuid', ClubJobKey::MEMBER_CONTROL_SYNC, false);
     $this->assertSame(1, $job->getRemaining());
-    $this->assertSame(ClubJobStatus::failed, $job->getStatus());
+    $this->assertSame(ClubJobStatus::FAILED, $job->getStatus());
 
     // Second (last) chunk succeeds — status must stay "failed", not flip to "finished"
-    $service->recordJobResult('any-uuid', ClubJobKey::member_control_sync, true);
+    $service->recordJobResult('any-uuid', ClubJobKey::MEMBER_CONTROL_SYNC, true);
     $this->assertSame(0, $job->getRemaining());
-    $this->assertSame(ClubJobStatus::failed, $job->getStatus());
+    $this->assertSame(ClubJobStatus::FAILED, $job->getStatus());
   }
 
   public function testRecordJobResultIsANoOpWhenJobIsGone(): void {
@@ -122,7 +122,7 @@ class ClubServiceJobTrackingTest extends TestCase {
     $clubJobRepository->method('findOneByClubAndKey')->willReturn(null);
 
     $service = $this->makeService($clubJobRepository, $clubRepository);
-    $service->recordJobResult('any-uuid', ClubJobKey::member_control_sync, true);
+    $service->recordJobResult('any-uuid', ClubJobKey::MEMBER_CONTROL_SYNC, true);
     $this->addToAssertionCount(1); // no exception thrown
   }
 }

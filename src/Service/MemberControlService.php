@@ -51,7 +51,7 @@ class MemberControlService {
     }
 
     $chunks = array_chunk($memberUuids, 100);
-    $this->clubService->startJob($club, ClubJobKey::member_control_sync, count($chunks));
+    $this->clubService->startJob($club, ClubJobKey::MEMBER_CONTROL_SYNC, count($chunks));
 
     $typeUuid = $type->getUuid()->toString();
     foreach ($chunks as $chunk) {

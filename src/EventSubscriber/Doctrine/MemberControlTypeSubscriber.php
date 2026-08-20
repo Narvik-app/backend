@@ -12,10 +12,7 @@ use Doctrine\ORM\Event\PostUpdateEventArgs;
  * When a type is created (or its linked activity changes) with an activity already set,
  * backfill every member's control from their existing presence history.
  *
- * This dispatches a background job (see MemberControlService::dispatchSyncForType) rather than
- * syncing inline: syncing every member of the club synchronously inside this postPersist/postUpdate
- * — i.e. inside the POST/PATCH request's own flush — does not scale (O(N members) queries/writes in
- * the request, plus a nested flush inside an in-progress one).
+ * This dispatches a background job (see MemberControlService::dispatchSyncForType).
  */
 #[AsEntityListener(event: 'postPersist', entity: MemberControlType::class)]
 #[AsEntityListener(event: 'postUpdate', entity: MemberControlType::class)]

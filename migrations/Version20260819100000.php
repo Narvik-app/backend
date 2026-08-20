@@ -9,7 +9,7 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260819100000 extends AbstractMigration {
   public function getDescription(): string {
-    return 'Add generic club_job background-job tracking table (replacing the itac/cerbere ClubSetting counters), and an index on member_presence(member_id, date)';
+    return 'Add generic club_job background-job tracking table and an index on member_presence(member_id, date)';
   }
 
   public function up(Schema $schema): void {
@@ -21,36 +21,14 @@ final class Version20260819100000 extends AbstractMigration {
     $this->addSql('CREATE UNIQUE INDEX club_job_club_key_unique ON club_job (club_id, key)');
     $this->addSql('ALTER TABLE club_job ADD CONSTRAINT FK_CLUB_JOB_CLUB FOREIGN KEY (club_id) REFERENCES club (id) ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE');
 
-    // 2. Backfill any club currently mid-import (best effort: original `total` isn't recoverable,
-    //    so we use the current `remaining` as `total` too; `updated_at` falls back to the old
-    //    itac_import_date/itac_secondary_import_date when present, else now).
-    $this->addSql(<<<'SQL'
-        INSERT INTO club_job (id, uuid, club_id, key, total, remaining, status, created_at, updated_at)
-        SELECT nextval('club_job_id_seq'), gen_random_uuid(), cs.club_id, 'itac_import', cs.itac_import_remaining, cs.itac_import_remaining, 'in_progress', NOW(), COALESCE(cs.itac_import_date, NOW())
-        FROM club_setting cs WHERE cs.itac_import_remaining > 0
-    SQL
-    );
-    $this->addSql(<<<'SQL'
-        INSERT INTO club_job (id, uuid, club_id, key, total, remaining, status, created_at, updated_at)
-        SELECT nextval('club_job_id_seq'), gen_random_uuid(), cs.club_id, 'itac_secondary_import', cs.itac_secondary_import_remaining, cs.itac_secondary_import_remaining, 'in_progress', NOW(), COALESCE(cs.itac_secondary_import_date, NOW())
-        FROM club_setting cs WHERE cs.itac_secondary_import_remaining > 0
-    SQL
-    );
-    $this->addSql(<<<'SQL'
-        INSERT INTO club_job (id, uuid, club_id, key, total, remaining, status, created_at, updated_at)
-        SELECT nextval('club_job_id_seq'), gen_random_uuid(), cs.club_id, 'cerbere_import', cs.cerbere_import_remaining, cs.cerbere_import_remaining, 'in_progress', NOW(), NOW()
-        FROM club_setting cs WHERE cs.cerbere_import_remaining > 0
-    SQL
-    );
-
-    // 3. Drop the old one-off counters now that ClubJob replaces them
+    // 2. Drop the old one-off counters now that ClubJob replaces them
     $this->addSql('ALTER TABLE club_setting DROP itac_import_date');
     $this->addSql('ALTER TABLE club_setting DROP itac_import_remaining');
     $this->addSql('ALTER TABLE club_setting DROP itac_secondary_import_date');
     $this->addSql('ALTER TABLE club_setting DROP itac_secondary_import_remaining');
     $this->addSql('ALTER TABLE club_setting DROP cerbere_import_remaining');
 
-    // 4. findLastOneByActivity() (member-control sync + presence-history modal) sorts
+    // 3. findLastOneByActivity() (member-control sync + presence-history modal) sorts
     //    member_presence by date per member with no supporting index today.
     $this->addSql('CREATE INDEX IDX_MEMBER_PRESENCE_MEMBER_DATE ON member_presence (member_id, date)');
   }

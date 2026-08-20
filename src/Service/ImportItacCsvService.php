@@ -29,7 +29,7 @@ class ImportItacCsvService extends AbstractCsvService {
     $records = $reader->getRecords();
     $array = iterator_to_array($records);
     $recordsChunks = array_chunk($array, 100);
-    $this->clubService->startJob($club, ClubJobKey::itac_import, count($recordsChunks));
+    $this->clubService->startJob($club, ClubJobKey::IMPORT_ITAC, count($recordsChunks));
 
     foreach ($recordsChunks as $recordsChunk) {
       $chunk = [];
@@ -56,7 +56,7 @@ class ImportItacCsvService extends AbstractCsvService {
     $records = $reader->getRecords();
     $array = iterator_to_array($records);
     $recordsChunks = array_chunk($array, 100);
-    $this->clubService->startJob($club, ClubJobKey::itac_secondary_import, count($recordsChunks));
+    $this->clubService->startJob($club, ClubJobKey::IMPORT_ITAC_SECONDARY, count($recordsChunks));
 
     foreach ($recordsChunks as $recordsChunk) {
       $chunk = [];

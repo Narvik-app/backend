@@ -38,7 +38,7 @@ class ImportCerbereService {
     // We save the activities
     $this->saveCsvActivities($club);
 
-    $this->clubService->startJob($club, ClubJobKey::cerbere_import, count($presences));
+    $this->clubService->startJob($club, ClubJobKey::IMPORT_CERBERE, count($presences));
     foreach ($presences as $k => $presence) {
       /** @var \DateTimeImmutable $date */
       $date = $presence['date'];

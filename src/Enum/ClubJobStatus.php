@@ -3,7 +3,7 @@
 namespace App\Enum;
 
 enum ClubJobStatus: string {
-  case in_progress = 'in_progress';
-  case finished = 'finished';
-  case failed = 'failed';
+  case IN_PROGRESS = 'in_progress';
+  case FINISHED = 'finished';
+  case FAILED = 'failed';
 }

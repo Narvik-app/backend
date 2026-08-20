@@ -8,7 +8,7 @@ use App\Message\Abstract\ClubLinkedMessage;
 class ItacMembersMessage extends ClubLinkedMessage {
 
   public function getJobKey(): ClubJobKey {
-    return ClubJobKey::itac_import;
+    return ClubJobKey::IMPORT_ITAC;
   }
 
   public function __construct(

@@ -14,8 +14,9 @@ namespace App\Enum;
  * See CONTRIBUTING.md "Adding a new background job" for the full walkthrough.
  */
 enum ClubJobKey: string {
-  case itac_import = 'itac_import';
-  case itac_secondary_import = 'itac_secondary_import';
-  case cerbere_import = 'cerbere_import';
-  case member_control_sync = 'member_control_sync';
+  case IMPORT_CERBERE = 'import_cerbere';
+  case IMPORT_ITAC = 'import_itac';
+  case IMPORT_ITAC_SECONDARY = 'import_itac_secondary';
+
+  case MEMBER_CONTROL_SYNC = 'member_control_sync';
 }
