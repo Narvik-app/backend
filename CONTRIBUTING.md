@@ -24,17 +24,9 @@ When creating a new entity, you should do the next steps :
 
 # Adding a new background job
 
-Background jobs (member imports, member-control sync, ...) run on Symfony Messenger and their
-progress is tracked per-club in the generic `ClubJob` table (`club_id` + `key` + `total`/`remaining`
-+ `status`) rather than one-off counters — see `src/Entity/ClubDependent/ClubJob.php`.
+Background jobs (member imports, member-control sync, ...) run on Symfony Messenger and their progress is tracked per-club in the generic `ClubJob` table rather than one-off counters — see `src/Entity/ClubDependent/ClubJob.php`.
 
 1. Add a case to `src/Enum/ClubJobKey.php` identifying your job.
-2. Create the `Message` (extending `App\Message\Abstract\ClubLinkedMessage`, carrying primitives
-   only — no entities) and its `#[AsMessageHandler]` handler under `src/MessageHandler/`.
-   `getJobKey()` on your message must return the new `ClubJobKey` case.
-3. Route the message class to a transport in `config/packages/messenger.yaml` — this step can't be
-   automated away, Symfony Messenger routing is explicit by design.
-4. From your producer, chunk the work (`array_chunk(..., 100)` is the existing convention), call
-   `ClubService::startJob($club, ClubJobKey::your_key, count($chunks))` once, then dispatch one
-   message per chunk. `MessengerSubscriber` calls `ClubService::recordJobResult()` automatically as
-   each message succeeds or (after all retries) permanently fails — no extra wiring needed.
+2. Create the `Message` (extending `App\Message\Abstract\ClubLinkedMessage`, carrying primitives only — no entities) and its `#[AsMessageHandler]` handler under `src/MessageHandler/`.
+3. Route the message class to a transport in `config/packages/messenger.yaml`.
+4. From your producer, chunk the work (`array_chunk(..., 100)` is the existing convention), call `ClubService::startJob($club, ClubJobKey::your_key, count($chunks))` once, then dispatch one message per chunk. `MessengerSubscriber` calls `ClubService::recordJobResult()` automatically as each message succeeds or (after all retries) permanently fails — no extra wiring needed.
