@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c0095c6511a9f60180ca740ad9377cc2",
+    "content-hash": "8725d000b5808fe220253b959ecd8bb9",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -5242,16 +5242,16 @@
         },
         {
             "name": "sumup/sumup-php",
-            "version": "0.1.4",
+            "version": "0.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sumup/sumup-php.git",
-                "reference": "00327905c551db050e624ab2b4c926466911cfa4"
+                "reference": "8e2b132fd35b591aa43adb49bba1c586c784c15b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/00327905c551db050e624ab2b4c926466911cfa4",
-                "reference": "00327905c551db050e624ab2b4c926466911cfa4",
+                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/8e2b132fd35b591aa43adb49bba1c586c784c15b",
+                "reference": "8e2b132fd35b591aa43adb49bba1c586c784c15b",
                 "shasum": ""
             },
             "require": {
@@ -5259,9 +5259,8 @@
                 "php": "^8.2"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "3.95.1",
+                "friendsofphp/php-cs-fixer": "3.95.18",
                 "league/oauth2-client": "^2.9",
-                "phpdocumentor/shim": "^3.9",
                 "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^9.6"
             },
@@ -5308,9 +5307,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sumup/sumup-php/issues",
-                "source": "https://github.com/sumup/sumup-php/tree/v0.1.4"
+                "source": "https://github.com/sumup/sumup-php/tree/v0.1.5"
             },
-            "time": "2026-05-14T11:29:25+00:00"
+            "time": "2026-08-12T21:18:31+00:00"
         },
         {
             "name": "symfony/asset",
