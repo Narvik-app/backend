@@ -111,6 +111,7 @@ class MemberPermissionTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals(Permission::EMAIL_EDIT->value, $data['permission']);
   }
 
+  #[\PHPUnit\Framework\Attributes\DoesNotPerformAssertions]
   public function testPatch(): void {
     // MemberPermission doesn't support PATCH - permissions are granted/revoked, not edited
     $this->markTestSkipped('MemberPermission does not support PATCH operation');
