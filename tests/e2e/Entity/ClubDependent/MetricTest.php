@@ -3,20 +3,24 @@
 namespace App\Tests\e2e\Entity\ClubDependent;
 
 use App\Entity\ClubDependent\Metric;
+use App\Enum\Permission;
+use App\Enum\SalePaymentModeKind;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\MemberPresenceFactory;
+use App\Tests\Factory\SaleFactory;
+use App\Tests\Factory\SalePaymentModeFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 
 class MetricTest extends AbstractEntityClubLinkedTestCase {
 
   #[\Override]
-  protected int $TOTAL_SUPER_ADMIN = 6;
+  protected int $TOTAL_SUPER_ADMIN = 8;
   #[\Override]
-  protected int $TOTAL_ADMIN_CLUB_1 = 6;
+  protected int $TOTAL_ADMIN_CLUB_1 = 8;
   #[\Override]
-  protected int $TOTAL_ADMIN_CLUB_2 = 6;
+  protected int $TOTAL_ADMIN_CLUB_2 = 8;
   #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 6;
 
@@ -462,6 +466,142 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
     $iri = $this->getRootWClubUrl($club1) . "/member-presence-stats?page=abc";
     $this->makeGetRequest($iri);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::bad_request->value);
+  }
+
+  public function testSalesStats(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['name' => 'Espèces', 'kind' => SalePaymentModeKind::payment]);
+    $stockRemoval = SalePaymentModeFactory::createOne(['name' => 'Sortie de stock', 'kind' => SalePaymentModeKind::stock_removal]);
+    $unused = SalePaymentModeFactory::createOne(['name' => 'Chèque', 'kind' => SalePaymentModeKind::payment]);
+
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash, 'price' => '10.00']);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash, 'price' => '5.50']);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $stockRemoval, 'price' => '3.00']);
+
+    $this->loggedAsAdminClub1();
+
+    $iri = $this->getRootWClubUrl($club1) . "/sales-stats";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+
+    // Total count includes stock removals, total amount excludes them
+    $this->assertEquals(3, $data['value']);
+    $childMetrics = array_column($data['childMetrics'], 'value', 'name');
+    $this->assertEquals(3, $childMetrics['total-count']);
+    $this->assertEquals(15.5, $childMetrics['total-amount']);
+
+    // One row per payment mode, including ones with zero sales
+    $paymentModesByUuid = array_column($data['values'], null, 'uuid');
+    $cashUuid = (string) $cash->getUuid();
+    $stockRemovalUuid = (string) $stockRemoval->getUuid();
+    $unusedUuid = (string) $unused->getUuid();
+
+    $this->assertArrayHasKey($cashUuid, $paymentModesByUuid);
+    $this->assertArrayHasKey($stockRemovalUuid, $paymentModesByUuid);
+    $this->assertArrayHasKey($unusedUuid, $paymentModesByUuid);
+
+    $this->assertEquals(2, $paymentModesByUuid[$cashUuid]['count']);
+    $this->assertEquals(15.5, $paymentModesByUuid[$cashUuid]['amount']);
+    $this->assertEquals(1, $paymentModesByUuid[$stockRemovalUuid]['count']);
+    $this->assertEquals(0, $paymentModesByUuid[$stockRemovalUuid]['amount']);
+    $this->assertEquals(0, $paymentModesByUuid[$unusedUuid]['count']);
+    $this->assertEquals(0, $paymentModesByUuid[$unusedUuid]['amount']);
+  }
+
+  public function testSalesStatsWithSameDayWindow(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+
+    // A sale today, and one outside of "today"
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash, 'price' => '10.00']);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable('-2 days'), 'paymentMode' => $cash, 'price' => '100.00']);
+
+    $this->loggedAsAdminClub1();
+
+    $today = new \DateTimeImmutable()->format('Y-m-d');
+    $iri = $this->getRootWClubUrl($club1) . "/sales-stats?start={$today}&end={$today}";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+
+    // Regression test: a start=end=<today> window must not silently widen to the whole season
+    $this->assertEquals(1, $response->toArray()['value']);
+  }
+
+  public function testSalesStatsDoesNotLeakStartDateAcrossRequests(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+
+    // One sale safely inside last season, one safely inside the current one.
+    $previousSeasonDate = \App\Service\SeasonService::getPreviousSeasonEndDate($club1)->modify('-10 days');
+    SaleFactory::createOne(['createdAt' => $previousSeasonDate, 'paymentMode' => $cash, 'price' => '50.00']);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash, 'price' => '10.00']);
+
+    $this->loggedAsAdminClub1();
+
+    // Request 1: an explicit recent range (sets a real, recent ?start= on the request) -
+    // only catches this season's sale.
+    $today = new \DateTimeImmutable()->format('Y-m-d');
+    $recentStart = new \DateTimeImmutable('-30 days')->format('Y-m-d');
+    $iri = $this->getRootWClubUrl($club1) . "/sales-stats?start={$recentStart}&end={$today}";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(1, $response->toArray()['value']);
+
+    // Request 2: previous-season=true, with NO start/end params at all. Regression test:
+    // MetricProvider is a long-lived singleton (reused across requests under a persistent
+    // PHP worker) - its filterDates['start'] must be reset every call, not carried over from
+    // request 1's explicit ?start=. A leaked recent start combined with the previous season's
+    // (much older) end would invert the window (start > end) and silently match nothing.
+    $iri = $this->getRootWClubUrl($club1) . "/sales-stats?previous-season=true";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(1, $response->toArray()['value']);
+  }
+
+  public function testSalesStatsRequiresPermission(): void {
+    $club1 = _InitStory::club_1();
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable()]);
+
+    $this->loggedAsSupervisorClub1();
+    $iri = $this->getRootWClubUrl($club1) . "/sales-stats";
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::not_found->value);
+
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $memberIri = $this->getIriFromResource($supervisor);
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($memberIri . '/permissions', [
+      'member' => $memberIri,
+      'permission' => Permission::SALE_HISTORY_ACCESS->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    $this->loggedAsSupervisorClub1();
+    $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+  }
+
+  public function testSalesPerItemStats(): void {
+    $club1 = _InitStory::club_1();
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable()]);
+
+    $this->loggedAsAdminClub1();
+
+    $iri = $this->getRootWClubUrl($club1) . "/sales-per-item-stats";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+
+    $this->assertArrayHasKey('values', $data);
+    $this->assertNotEmpty($data['values']);
+    foreach ($data['values'] as $row) {
+      $this->assertArrayHasKey('category', $row);
+      $this->assertArrayHasKey('itemName', $row);
+      $this->assertArrayHasKey('paymentModeName', $row);
+      $this->assertArrayHasKey('count', $row);
+      $this->assertArrayHasKey('amount', $row);
+    }
   }
 
 }

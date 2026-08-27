@@ -56,6 +56,12 @@ class ImportInventoryItem extends AbstractCsvImporter {
     ];
   }
 
+  #[\Override]
+  protected function resetState(): void {
+    parent::resetState();
+    $this->createdCategories = [];
+  }
+
   protected function callbackAfterRowsParsed(): void {
     $this->em->flush(); // Memory optimisation
   }

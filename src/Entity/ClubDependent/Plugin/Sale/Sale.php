@@ -37,6 +37,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SaleRepository::class)]
+#[ORM\Index(name: 'idx_sale_club_created_at', columns: ['club_id', 'created_at'])]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/sales/{uuid}',
   operations: [

@@ -43,11 +43,26 @@ abstract class AbstractCsvImporter {
   protected function callbackEveryNParsedRows(): void {}
 
   /**
+   * Importers are autowired services (reused across requests under a persistent PHP worker,
+   * e.g. FrankenPHP), so any state carried between rows of ONE import must be reset here at
+   * the start of every import call - otherwise it leaks into the next, unrelated import (e.g.
+   * the first data row silently getting treated as a data row instead of the header row).
+   * Subclasses with their own per-import state (see ImportInventoryItem::$createdCategories)
+   * must override this and call parent::resetState().
+   */
+  protected function resetState(): void {
+    $this->headers = null;
+    $this->currentRow = null;
+  }
+
+  /**
    * @param File $file
    * @param string $delimiter
    * @return array
    */
   public function fromFile(File $file, string $delimiter = ","): array {
+    $this->resetState();
+
     if (!$file->isReadable()) {
       $result["errors"][] = $this->formatError(ImportException::FILE_NOT_READABLE->value);
       return $result;
@@ -69,6 +84,8 @@ abstract class AbstractCsvImporter {
   }
 
   public function fromBody(string $content, string $delimiter = ",") {
+    $this->resetState();
+
     $content = mb_trim($content);
     $rows = str_getcsv($content, "\n", escape: '\\');
 
@@ -80,6 +97,8 @@ abstract class AbstractCsvImporter {
   }
 
   public function fromArrayWKeys(array $rows): array {
+    $this->resetState();
+
     if (empty($rows)) {
       return [];
     }
