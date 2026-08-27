@@ -45,10 +45,7 @@ abstract class AbstractCsvImporter {
   /**
    * Importers are autowired services (reused across requests under a persistent PHP worker,
    * e.g. FrankenPHP), so any state carried between rows of ONE import must be reset here at
-   * the start of every import call - otherwise it leaks into the next, unrelated import (e.g.
-   * the first data row silently getting treated as a data row instead of the header row).
-   * Subclasses with their own per-import state (see ImportInventoryItem::$createdCategories)
-   * must override this and call parent::resetState().
+   * the start of every import call
    */
   protected function resetState(): void {
     $this->headers = null;

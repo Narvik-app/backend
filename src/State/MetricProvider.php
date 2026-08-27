@@ -73,10 +73,7 @@ class MetricProvider implements ProviderInterface {
 
   public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null {
     $this->club = null;
-    // Reset on every call: this provider is a long-lived singleton (Symfony service, reused across
-    // requests under FrankenPHP worker mode), so leftover state from an earlier request's ?start=
-    // would otherwise survive into a request that doesn't send one (e.g. ?previous-season=true).
-    $this->filterDates = ['start' => null, 'end' => null];
+    $this->filterDates = ['start' => null, 'end' => null]; // Reset for frankenPHP long-live singleton
     $request = $this->requestStack->getCurrentRequest();
     if (!$request) {
       return null;
