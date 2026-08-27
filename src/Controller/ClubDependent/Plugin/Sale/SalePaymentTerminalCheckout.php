@@ -21,7 +21,9 @@ class SalePaymentTerminalCheckout extends AbstractSalePaymentTerminalController 
 
     $payload = $this->checkAndGetJsonValues($request, ['amount']);
     $amount = (string) $payload['amount'];
-    $description = isset($payload['description']) ? (string) $payload['description'] : 'Vente';
+    $description = isset($payload['description'])
+      ? (string) $payload['description']
+      : ($salePaymentTerminal->getName() !== null ? sprintf('Vente %s', $salePaymentTerminal->getName()) : 'Vente');
 
     $connection = $salePaymentTerminal->getConnection();
 

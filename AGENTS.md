@@ -408,6 +408,7 @@ security: "is_granted('" . Permission::EMAIL_EDIT->value . "', request)"
 - RESTful API built with API Platform
 - OpenAPI documentation auto-generation
 - Standardized error handling and validation
+- Single source of truth: default values, computed labels, and validation rules belong here, not duplicated in the frontend. Only apply a default when the client omits the field entirely (don't let the frontend send a placeholder value that masks the backend default).
 
 ### 3. **Modular Architecture**
 - Plugin-based feature system
