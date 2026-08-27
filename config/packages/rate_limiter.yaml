@@ -11,8 +11,8 @@ framework:
             limit: 50
             interval: '15 minutes'
 
-        # /auth/bdg is PUBLIC_ACCESS and compares the club's badger token directly,
-        # keyed on club+IP to throttle brute-forcing a given club's token
+        # Shared by /auth/bdg (club+IP key) and /auth/quick-login/bdg (IP key),
+        # both PUBLIC_ACCESS and comparing a badger credential directly
         badger_login:
             policy: token_bucket
             limit: 5
