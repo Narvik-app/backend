@@ -14,8 +14,10 @@ use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
 use App\Repository\ClubDependent\Plugin\Presence\ExternalPresenceRepository;
 use App\Repository\ClubDependent\Plugin\Presence\MemberPresenceRepository;
+use App\Repository\ClubDependent\Plugin\Sale\SaleRepository;
 use App\Repository\Interface\PresenceRepositoryInterface;
 use App\Repository\SeasonRepository;
+use App\Enum\Permission;
 use App\Service\RequestService;
 use App\Service\SeasonService;
 use App\Service\UtilsService;
@@ -23,6 +25,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class MetricProvider implements ProviderInterface {
   public const array METRICS = [
@@ -32,6 +35,8 @@ class MetricProvider implements ProviderInterface {
     "opened-days",
     "member-presence-stats",
     "loans",
+    "sales-stats",
+    "sales-per-item-stats",
 //    "import-batches",
 //    "activities"
   ];
@@ -60,12 +65,15 @@ class MetricProvider implements ProviderInterface {
     private readonly ExternalPresenceRepository $externalPresenceRepository,
     private readonly SeasonRepository $seasonRepository,
     private readonly LoanRepository $loanRepository,
+    private readonly SaleRepository $saleRepository,
+    private readonly AuthorizationCheckerInterface $authorizationChecker,
     private readonly EntityManagerInterface $entityManager,
   ) {
   }
 
   public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null {
     $this->club = null;
+    $this->filterDates = ['start' => null, 'end' => null]; // Reset for frankenPHP long-live singleton
     $request = $this->requestStack->getCurrentRequest();
     if (!$request) {
       return null;
@@ -300,6 +308,43 @@ class MetricProvider implements ProviderInterface {
       $itemsPerPage > 0 ? (int) ceil($totalItems / $itemsPerPage) : 0,
       $orderBy
     ));
+
+    return $metric;
+  }
+
+  protected function getSalesStats(string $identifier): ?Metric {
+    $request = $this->requestStack->getCurrentRequest();
+    if (!$this->authorizationChecker->isGranted(Permission::SALE_HISTORY_ACCESS->value, $request)) {
+      return null;
+    }
+
+    $stats = $this->saleRepository->getSaleStats($this->club, $this->filterDates['end'], $this->filterDates['start']);
+
+    $metric = new Metric();
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValue($stats['totalCount']);
+    $metric->setValues($stats['paymentModes']);
+    $metric->setChildMetrics([
+      new Metric()->setName('total-count')->setValue($stats['totalCount']),
+      new Metric()->setName('total-amount')->setValue($stats['totalAmount']),
+    ]);
+
+    return $metric;
+  }
+
+  protected function getSalesPerItemStats(string $identifier): ?Metric {
+    $request = $this->requestStack->getCurrentRequest();
+    if (!$this->authorizationChecker->isGranted(Permission::SALE_HISTORY_ACCESS->value, $request)) {
+      return null;
+    }
+
+    $values = $this->saleRepository->getSalePerItemStats($this->club, $this->filterDates['end'], $this->filterDates['start']);
+
+    $metric = new Metric();
+    $metric->setClub($this->club);
+    $metric->setName($identifier);
+    $metric->setValues($values);
 
     return $metric;
   }

@@ -36,6 +36,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LoanRepository::class)]
+#[ORM\Index(name: 'idx_loan_club_start_date', columns: ['club_id', 'start_date'])]
 #[LoanItemNotAlreadyLoaned]
 #[LoanItemMustBeAvailable]
 #[LoanEditableToday]
