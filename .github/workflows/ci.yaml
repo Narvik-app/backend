@@ -46,8 +46,8 @@ jobs:
         run: |
           docker compose exec -T php bin/console -e test doctrine:database:create
           # One DB per paratest worker (config/packages/doctrine.yaml suffixes by TEST_TOKEN).
-          # Must match the worker count computed in composer.json's "test"/"ci-test" scripts.
-          p=$(( $(docker compose exec -T php nproc) - 2 ))
+          # Must match the worker count computed in composer.json's "ci-test" script.
+          p=$(( $(docker compose exec -T php nproc) - 1 ))
           [ "$p" -ge 1 ] || p=1
           for i in $(seq 1 "$p"); do
             docker compose exec -T -e TEST_TOKEN=$i php bin/console -e test doctrine:database:create
@@ -56,7 +56,7 @@ jobs:
         name: Run migrations
         run: |
           docker compose exec -T php bin/console -e test doctrine:migrations:migrate --no-interaction
-          p=$(( $(docker compose exec -T php nproc) - 2 ))
+          p=$(( $(docker compose exec -T php nproc) - 1 ))
           [ "$p" -ge 1 ] || p=1
           for i in $(seq 1 "$p"); do
             docker compose exec -T -e TEST_TOKEN=$i php bin/console -e test doctrine:migrations:migrate --no-interaction

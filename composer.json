@@ -165,7 +165,7 @@
         ],
         "ci-test": [
             "Composer\\Config::disableProcessTimeout",
-            "set -o pipefail; p=$(( $(nproc) - 2 )); [ \"$p\" -ge 1 ] || p=1; XDEBUG_MODE=coverage vendor/bin/paratest --processes=$p --coverage-clover coverage.xml --log-junit junit.xml --coverage-html var/coverage 2>&1 | tee var/phpunit-output.log"
+            "set -o pipefail; p=$(( $(nproc) - 1 )); [ \"$p\" -ge 1 ] || p=1; XDEBUG_MODE=coverage vendor/bin/paratest --processes=$p --coverage-clover coverage.xml --log-junit junit.xml --coverage-html var/coverage 2>&1 | tee var/phpunit-output.log"
         ],
         "test-with-coverage": [
             "Composer\\Config::disableProcessTimeout",
