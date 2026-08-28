@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 class UserRegister extends AbstractController {
   public function __construct(
@@ -23,11 +25,19 @@ class UserRegister extends AbstractController {
     private readonly UserService $userService,
     private readonly ClubRepository $clubRepository,
     private readonly ClubService $clubService,
+    private readonly RateLimiterFactoryInterface $ipRegisterLimiter,
   ) {
   }
 
 
   public function __invoke(Request $request): JsonResponse {
+    $limiter = $this->ipRegisterLimiter->create($request->getClientIp());
+    try {
+      $limiter->consume(1)->ensureAccepted();
+    } catch (RateLimitExceededException) {
+      throw new HttpException(Response::HTTP_TOO_MANY_REQUESTS);
+    }
+
     $payload = $this->checkAndGetJsonValues($request, ['accountType', 'email', 'securityCode']);
     $accountType = $payload['accountType'] === 'club' ? 'club' : 'personal'; // We force the account type to be either club or personal
 
@@ -52,6 +62,8 @@ class UserRegister extends AbstractController {
       $this->userService->initiateAccountValidation($user, $accountType, true); // We trigger a new password query
       throw new HttpException(Response::HTTP_BAD_REQUEST, "A new security code has been sent.");
     }
+
+    $limiter->reset();
 
     // We activate the account and check all fields match.
     // The account can be already activated in the case of a club creation (if the user email was already used by another club)

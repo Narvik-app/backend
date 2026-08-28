@@ -2,6 +2,17 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    # Every request to this app arrives via an internal Docker hop (narvik-front's Nuxt
+    # server, which always proxies API calls server-side, and/or Traefik if this app is
+    # exposed to it directly, e.g. for a public/Android API) - never directly from the end
+    # user. Trusting this private-IP range (same list used by TRUSTED_PROXIES elsewhere in
+    # docker/) lets us honor X-Forwarded-For from those internal hops so
+    # Request::getClientIp() returns the real client IP, which our rate limiters key on.
+    # A real external client always has a public IP, so this stays safe regardless of how
+    # many such internal hops are in front of us
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']
+
     # Note that the session will be started ONLY if you read or write from it.
     session: false
 

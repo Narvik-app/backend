@@ -26,15 +26,16 @@ final readonly class LoginSubscriber implements EventSubscriberInterface {
   public function __construct(
     private RequestStack $requestStack,
     private RateLimiterFactoryInterface $userIpLoginLimiter,
-    // private readonly RateLimiterFactory $ipLoginLimiter,
+    private RateLimiterFactoryInterface $ipLoginLimiter,
     private UserProviderInterface $userProvider,
     private UserPasswordHasherInterface $userPasswordHasher,
   ) {
   }
 
   public function onUserResolve(UserResolveEvent $event): void {
-    // $ipLimiter = $this->ipLoginLimiter->create($ip);
-    // $ipLimiter->consume(1)->ensureAccepted();
+    $ip = $this->requestStack->getCurrentRequest()->getClientIp();
+    $ipLimiter = $this->ipLoginLimiter->create($ip);
+    $ipLimiter->consume(1)->ensureAccepted();
 
     try {
       $user = $this->userProvider->loadUserByIdentifier($event->getUsername());

@@ -19,17 +19,27 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 class BadgerQuickLogin extends AbstractController {
   public function __construct(
     private readonly UserSecurityCodeRepository $userSecurityCodeRepository,
     private readonly UserService $userService,
-    private readonly TurnstileService $turnstileService
+    private readonly TurnstileService $turnstileService,
+    private readonly RateLimiterFactoryInterface $badgerLoginLimiter
   ) {
   }
 
 
   public function __invoke(Request $request): JsonResponse {
+    $limiter = $this->badgerLoginLimiter->create($request->getClientIp());
+    try {
+      $limiter->consume(1)->ensureAccepted();
+    } catch (RateLimitExceededException) {
+      throw new HttpException(Response::HTTP_TOO_MANY_REQUESTS);
+    }
+
     $payloadRequiredFields = ['securityCode'];
     if ($this->turnstileService->isEnabled()) {
       $payloadRequiredFields[] = 'cf_token';
@@ -57,6 +67,8 @@ class BadgerQuickLogin extends AbstractController {
     if (!$user || !$club) {
       throw new HttpException(Response::HTTP_BAD_REQUEST, "Invalid security code.");
     }
+
+    $limiter->reset();
 
     // We can now consume the security code
     $this->userService->consumeAllSecurityCodes($user, UserSecurityCodeTrigger::badgerQuickLogin);
