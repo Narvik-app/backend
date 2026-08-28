@@ -245,7 +245,7 @@ class EmailTest extends AbstractEntityClubLinkedTestCase {
         ],
       ],
     ]);
-    FixtureFileManager::removeUploadedFile(FixtureFileManager::PDF);
+    FixtureFileManager::removeUploadedFile($file);
     $this->assertResponseIsSuccessful();
 
     $quotas = $this->getQuotas();
