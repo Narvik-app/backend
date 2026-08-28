@@ -17,3 +17,8 @@ framework:
             policy: token_bucket
             limit: 5
             rate: { interval: '5 minutes' }
+
+        ip_register:
+            policy: token_bucket
+            limit: 5
+            rate: { interval: '5 minutes' }

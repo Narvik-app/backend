@@ -13,10 +13,19 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 class UserInitiateRegister extends AbstractController {
 
-  public function __invoke(Request $request, UserRepository $userRepository, UserService $userService, EntityManagerInterface $em, TurnstileService $turnstileService): JsonResponse {
+  public function __invoke(Request $request, UserRepository $userRepository, UserService $userService, EntityManagerInterface $em, TurnstileService $turnstileService, RateLimiterFactoryInterface $ipRegisterLimiter): JsonResponse {
+    $limiter = $ipRegisterLimiter->create($request->getClientIp());
+    try {
+      $limiter->consume(1)->ensureAccepted();
+    } catch (RateLimitExceededException) {
+      throw new HttpException(Response::HTTP_TOO_MANY_REQUESTS);
+    }
+
     $payloadRequiredFields = ['email', 'accountType'];
 
     if ($turnstileService->isEnabled()) {
