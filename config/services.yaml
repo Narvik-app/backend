@@ -22,7 +22,9 @@ parameters:
 
 when@test:
     parameters:
-        app.files: '%kernel.project_dir%/private/test'
+        # "TEST_TOKEN" is typically set by ParaTest: isolate each worker's uploaded files,
+        # the same way config/packages/doctrine.yaml isolates each worker's database.
+        app.files: '%kernel.project_dir%/private/test%env(default::TEST_TOKEN)%'
 
 services:
     # default configuration for services in *this* file

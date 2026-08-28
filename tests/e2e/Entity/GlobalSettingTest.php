@@ -177,7 +177,7 @@ class GlobalSettingTest extends AbstractEntityApiTestCase {
             ],
           ],
         ]);
-        FixtureFileManager::removeUploadedFile(FixtureFileManager::PDF);
+        FixtureFileManager::removeUploadedFile($file);
       },
     );
 

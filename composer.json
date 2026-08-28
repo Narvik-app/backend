@@ -84,6 +84,7 @@
         "zenstruck/foundry": "^2.8"
     },
     "require-dev": {
+        "brianium/paratest": "^7.24",
         "dama/doctrine-test-bundle": "^8.2",
         "justinrainbow/json-schema": "^6.0",
         "phpstan/phpstan-doctrine": "^2.0",
@@ -160,11 +161,11 @@
         ],
         "test": [
             "Composer\\Config::disableProcessTimeout",
-            "bin/phpunit"
+            "p=$(( $(nproc) - 2 )); [ \"$p\" -ge 1 ] || p=1; vendor/bin/paratest --processes=$p"
         ],
         "ci-test": [
             "Composer\\Config::disableProcessTimeout",
-            "set -o pipefail; XDEBUG_MODE=coverage bin/phpunit --coverage-clover coverage.xml --log-junit junit.xml --coverage-html var/coverage 2>&1 | tee var/phpunit-output.log"
+            "set -o pipefail; p=$(( $(nproc) - 2 )); [ \"$p\" -ge 1 ] || p=1; XDEBUG_MODE=coverage vendor/bin/paratest --processes=$p --coverage-clover coverage.xml --log-junit junit.xml --coverage-html var/coverage 2>&1 | tee var/phpunit-output.log"
         ],
         "test-with-coverage": [
             "Composer\\Config::disableProcessTimeout",

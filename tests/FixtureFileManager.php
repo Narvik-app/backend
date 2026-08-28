@@ -28,17 +28,17 @@ class FixtureFileManager {
     $path = $file->getPathname();
 
     if ($tmpCopy) {
-      $path = sys_get_temp_dir() . '/' . $filename;
+      // Unique per call: parallel test runs (paratest) would otherwise race on the same shared path.
+      $path = sys_get_temp_dir() . '/' . uniqid('', true) . '-' . $filename;
       file_put_contents($path, $file->getContent());
     }
 
     return new UploadedFile($path, $filename);
   }
 
-  public static function removeUploadedFile(string $filename): void {
-    $path = sys_get_temp_dir() . '/' . $filename;
-    if (file_exists($path)) {
-      unlink($path);
+  public static function removeUploadedFile(UploadedFile $file): void {
+    if (file_exists($file->getPathname())) {
+      unlink($file->getPathname());
     }
   }
 }
