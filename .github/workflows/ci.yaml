@@ -42,11 +42,12 @@ jobs:
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
       -
-        name: Create test database
+        name: Create test databases
         run: |
-          docker compose exec -T php bin/console -e test doctrine:database:create
           # One DB per paratest worker (config/packages/doctrine.yaml suffixes by TEST_TOKEN).
           # Must match the worker count computed in composer.json's "ci-test" script.
+          # No unsuffixed DB needed here: paratest always assigns TEST_TOKEN, even with 1 worker,
+          # so the base DB is never touched by this job (see the separate "validate" job for that).
           p=$(( $(docker compose exec -T php nproc) - 1 ))
           [ "$p" -ge 1 ] || p=1
           for i in $(seq 1 "$p"); do
@@ -55,7 +56,6 @@ jobs:
       -
         name: Run migrations
         run: |
-          docker compose exec -T php bin/console -e test doctrine:migrations:migrate --no-interaction
           p=$(( $(docker compose exec -T php nproc) - 1 ))
           [ "$p" -ge 1 ] || p=1
           for i in $(seq 1 "$p"); do
@@ -172,13 +172,30 @@ jobs:
         run: |
           echo "PHPUnit tests failed."
           exit 1
+
+  validate:
+    needs: build
+    name: Validators
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Docker Environment
+        uses: ./.github/actions/setup-docker
+      -
+        name: Create test database
+        run: docker compose exec -T php bin/console -e test doctrine:database:create
+      -
+        name: Run migrations
+        run: docker compose exec -T php bin/console -e test doctrine:migrations:migrate --no-interaction
       -
         name: Custom CSV Validator
         run: docker compose exec -T php bin/console -e test serializer:validate:csv
       -
         name: Doctrine Schema Validator
         run: docker compose exec -T php bin/console -e test doctrine:schema:validate
-        
+
   code-quality:
     needs: build
     name: Code Quality
