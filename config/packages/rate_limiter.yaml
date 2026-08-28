@@ -22,3 +22,29 @@ framework:
             policy: token_bucket
             limit: 5
             rate: { interval: '5 minutes' }
+
+# The e2e suite runs many requests from the same loopback IP, which would otherwise
+# exhaust these buckets after a handful of tests. Raise the limits high enough to be a
+# no-op rather than disabling the limiters outright, so wiring/config mistakes still show up.
+when@test:
+    framework:
+        rate_limiter:
+            user_ip_login:
+                policy: token_bucket
+                limit: 10000
+                rate: { interval: '5 minutes' }
+
+            ip_login:
+                policy: sliding_window
+                limit: 10000
+                interval: '15 minutes'
+
+            badger_login:
+                policy: token_bucket
+                limit: 10000
+                rate: { interval: '5 minutes' }
+
+            ip_register:
+                policy: token_bucket
+                limit: 10000
+                rate: { interval: '5 minutes' }
