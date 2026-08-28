@@ -24,8 +24,12 @@ framework:
             rate: { interval: '5 minutes' }
 
 # The e2e suite runs many requests from the same loopback IP, which would otherwise
-# exhaust these buckets after a handful of tests. Raise the limits high enough to be a
-# no-op rather than disabling the limiters outright, so wiring/config mistakes still show up.
+# exhaust these bare-IP-keyed buckets after a handful of tests. Raise the limits high
+# enough to be a no-op rather than disabling the limiters outright, so wiring mistakes
+# still show up. badger_login is deliberately NOT overridden here:
+# SecurityControllerTest::testRepeatedWrongBadgerTokensAreRateLimited relies on its real
+# threshold, and it stays safe to test even shared across both endpoints, since both
+# reset it on success and existing tests either do that or use an isolated fixture.
 when@test:
     framework:
         rate_limiter:
@@ -38,11 +42,6 @@ when@test:
                 policy: sliding_window
                 limit: 10000
                 interval: '15 minutes'
-
-            badger_login:
-                policy: token_bucket
-                limit: 10000
-                rate: { interval: '5 minutes' }
 
             ip_register:
                 policy: token_bucket
