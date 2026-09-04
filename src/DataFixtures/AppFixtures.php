@@ -97,13 +97,28 @@ class AppFixtures extends Fixture {
     ];
 
     $weight = 0;
+    $loanCategories = [];
     foreach ($loanItemsMapping as $categoryName => $itemNames) {
       $category = LoanCategoryFactory::createOne(['name' => $categoryName, 'weight' => $weight++]);
+      $loanCategories[$categoryName] = $category;
       foreach ($itemNames as $name) {
         $item = LoanItemFactory::createOne(['name' => $name, 'category' => $category]);
         $this->generateLoanHistory($item, $loanRecordingTypes);
       }
     }
+
+    LoanItemFactory::createOne([
+      'name' => 'Carabine de prêt',
+      'category' => $loanCategories['Armes'],
+      'loanPrice' => 15.00,
+      'visibleOnSalePage' => true,
+    ]);
+    LoanItemFactory::createOne([
+      'name' => 'Pistolet de prêt',
+      'category' => $loanCategories['Armes'],
+      'loanPrice' => 10.00,
+      'visibleOnSalePage' => true,
+    ]);
   }
 
   private function generateItemHistory(InventoryItem $item, int $months = 6): void {
