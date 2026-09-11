@@ -5,6 +5,8 @@ namespace App\Tests\e2e\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicle;
 use App\Enum\ClubRole;
 use App\Enum\Permission;
+use App\Enum\VehicleCategory;
+use App\Enum\VehicleEngineType;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
@@ -63,7 +65,6 @@ class MemberVehicleTest extends AbstractEntityClubLinkedTestCase {
           "licensePlate" => "AB-" . substr(bin2hex(random_bytes(3)), 0, 6),
           "engineType" => "petrol",
           "fiscalPower" => 5,
-          "fiscalCoefficient" => "0.5680",
         ];
         $payloadCheck = ["brand" => "Renault"];
         $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
@@ -128,6 +129,38 @@ class MemberVehicleTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals($this->TOTAL_ADMIN_CLUB_1, $response->toArray()['totalItems']);
   }
 
+  public function testSupervisorWithEditPermissionCanCreateVehicleForAnyMember(): void {
+    $club1 = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $supervisorIri = $this->getIriFromResource($supervisor);
+    $member = _InitStory::MEMBER_member_club_1();
+
+    $payload = [
+      'member' => $this->getIriFromResource($member),
+      'brand' => 'Peugeot',
+      'model' => '208',
+      'licensePlate' => 'CD-' . substr(bin2hex(random_bytes(3)), 0, 6),
+      'engineType' => 'diesel',
+      'fiscalPower' => 6,
+    ];
+
+    // Without TIME_TRAVEL_EDIT, a supervisor cannot create a vehicle on behalf of another member
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($supervisorIri . '/permissions', [
+      'member' => $supervisorIri,
+      'permission' => Permission::TIME_TRAVEL_EDIT->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+  }
+
   public function testCannotDeleteVehicleWithDeclarations(): void {
     $vehicle = MemberVehicleFactory::createOne(['member' => _InitStory::MEMBER_member_club_1()]);
     TimeAndTravelDeclarationFactory::createOne([
@@ -138,5 +171,29 @@ class MemberVehicleTest extends AbstractEntityClubLinkedTestCase {
     $this->loggedAsAdminClub1();
     $this->makeDeleteRequest($this->getIriFromResource($vehicle));
     $this->assertResponseStatusCodeSame(409); // HTTP_CONFLICT, not part of ResponseCodeEnum yet
+  }
+
+  public function testVehicleExposesThisYearsApplicableCalculationPreview(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    // 5 CV car, tier 1 (up to 5 000 km): d * 0.636
+    $vehicle = MemberVehicleFactory::createOne([
+      'member' => $member,
+      'category' => VehicleCategory::car,
+      'fiscalPower' => 5,
+      'engineType' => VehicleEngineType::petrol,
+    ]);
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => $vehicle,
+      'kilometers' => 1000,
+      'date' => new \DateTimeImmutable('first day of january this year'),
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getIriFromResource($vehicle))->toArray();
+
+    $this->assertEquals(1000, $response['currentYearKilometers']);
+    $this->assertEquals('636.00', $response['currentYearEstimatedAmount']);
+    $this->assertStringContainsString('0.636', $response['currentYearCalculationDescription']);
   }
 }

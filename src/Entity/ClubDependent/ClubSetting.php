@@ -104,6 +104,9 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['common-read', 'club-setting-read'])]
   private ?Season $currentSeason = null;
 
+  /** Current legal French SMIC hourly rate — update here whenever the regulation changes. */
+  public const string DEFAULT_SMIC_HOURLY_RATE = '12.31';
+
   /** SMIC hourly rate used to value declared time in the time-and-travel plugin */
   #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DECIMAL, precision: 6, scale: 2, nullable: true)]
   #[Groups(['club-setting'])]
@@ -203,7 +206,7 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
   }
 
   public function getSmicHourlyRate(): ?string {
-    return $this->smicHourlyRate;
+    return $this->smicHourlyRate ?? self::DEFAULT_SMIC_HOURLY_RATE;
   }
 
   public function setSmicHourlyRate(?string $smicHourlyRate): static {

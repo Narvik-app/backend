@@ -109,6 +109,15 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   #[Groups(['time-and-travel-export-read'])]
   private TimeAndTravelExportStatus $status = TimeAndTravelExportStatus::draft;
 
+  /**
+   * True while a background job (triggered by a declaration change, or by locking) is
+   * regenerating this draft's PDFs. Purely informational for the frontend to poll on —
+   * see FEATURE_MERCURE.md for turning this into a push-based update later.
+   */
+  #[ORM\Column]
+  #[Groups(['time-and-travel-export-read'])]
+  private bool $isRegenerating = false;
+
   #[ORM\Column(type: Types::DATE_IMMUTABLE)]
   #[Groups(['time-and-travel-export', 'time-and-travel-export-write'])]
   #[Assert\NotNull]
@@ -119,11 +128,6 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   #[Assert\NotNull]
   #[Assert\GreaterThanOrEqual(propertyPath: 'startDate')]
   private ?\DateTimeImmutable $endDate = null;
-
-  #[ORM\Column(length: 255, nullable: true)]
-  #[Groups(['time-and-travel-export', 'time-and-travel-export-write'])]
-  #[Assert\Length(max: 255)]
-  private ?string $label = null;
 
   /** Snapshot of ClubSetting::smicHourlyRate at generation time, so a later rate change never rewrites a locked export */
   #[ORM\Column(type: Types::DECIMAL, precision: 6, scale: 2, nullable: true)]
@@ -190,6 +194,15 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
     return $this;
   }
 
+  public function getIsRegenerating(): bool {
+    return $this->isRegenerating;
+  }
+
+  public function setIsRegenerating(bool $isRegenerating): static {
+    $this->isRegenerating = $isRegenerating;
+    return $this;
+  }
+
   public function getStartDate(): ?\DateTimeImmutable {
     return $this->startDate;
   }
@@ -205,15 +218,6 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
 
   public function setEndDate(\DateTimeImmutable $endDate): static {
     $this->endDate = $endDate;
-    return $this;
-  }
-
-  public function getLabel(): ?string {
-    return $this->label;
-  }
-
-  public function setLabel(?string $label): static {
-    $this->label = $label;
     return $this;
   }
 
@@ -317,6 +321,15 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
     $total = 0.0;
     foreach ($this->attestations as $attestation) {
       $total += $attestation->getTotalAmount();
+    }
+    return $total;
+  }
+
+  #[Groups(['time-and-travel-export-read'])]
+  public function getTotalKilometers(): int {
+    $total = 0;
+    foreach ($this->attestations as $attestation) {
+      $total += $attestation->getTotalKilometers();
     }
     return $total;
   }
