@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      margin: 22mm 15mm 20mm 15mm;
+    }
+    body {
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+    }
+    header {
+      position: fixed;
+      top: -18mm;
+      left: 0;
+      right: 0;
+      height: 16mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+    header img {
+      max-height: 14mm;
+      max-width: 50mm;
+    }
+    header .club-name {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    footer {
+      position: fixed;
+      bottom: -16mm;
+      left: 0;
+      right: 0;
+      height: 12mm;
+      font-size: 9px;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 4px;
+    }
+    h1 {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+    h2 {
+      font-size: 13px;
+      color: #444;
+      margin-top: 0;
+      font-weight: normal;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .text-right {
+      text-align: right;
+    }
+    tfoot td {
+      font-weight: bold;
+      background-color: #f8f8f8;
+    }
+  </style>
+</head>
+<body>
+<header>
+  {% if logoBase64 %}
+    <img src="{{ logoBase64 }}" alt="Logo">
+  {% else %}
+    <span class="club-name">{{ club.name }}</span>
+  {% endif %}
+  <span>{{ 'now'|date('d/m/Y') }}</span>
+</header>
+
+{% block content %}{% endblock %}
+
+<footer>
+  {{ club.name }} — Document généré automatiquement, ne nécessite pas de signature manuscrite pour faire foi.
+</footer>
+</body>
+</html>
