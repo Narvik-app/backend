@@ -3,6 +3,8 @@
 namespace App\DataFixtures;
 
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
+use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
+use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
 use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
 use App\Entity\ClubDependent\Plugin\Loan\LoanRecordingType;
@@ -118,6 +120,30 @@ class AppFixtures extends Fixture {
       'category' => $loanCategories['Armes'],
       'loanPrice' => 10.00,
       'visibleOnSalePage' => true,
+    ]);
+
+    /*******************************************************
+     *              TIME AND TRAVEL DECLARATION            *
+     ******************************************************/
+
+    // A handful of members get a vehicle and a history of declarations, so the boards
+    // (admin and personal) have real data to show for club_1, on which the plugin is enabled.
+    $timeAndTravelMembers = MemberFactory::randomRange(6, 10, ['club' => _InitStory::club_1()]);
+    foreach ($timeAndTravelMembers as $member) {
+      $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
+      TimeAndTravelDeclarationFactory::new()
+        ->many(3, 10)
+        ->create(['member' => $member, 'memberVehicle' => $vehicle]);
+    }
+
+    // A couple of hours-only declarations (no distance, no vehicle needed)
+    TimeAndTravelDeclarationFactory::new()->many(4, 8)->create(fn () => [
+      'member' => faker()->randomElement($timeAndTravelMembers),
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'kilometers' => null,
+      'memberVehicle' => null,
+      'isRoundtrip' => false,
     ]);
   }
 
