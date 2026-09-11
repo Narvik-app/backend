@@ -193,6 +193,36 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
   }
 
+  public function testLocationsAndDescriptionAreBoundedToKeepExportsReadable(): void {
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_member_club_1();
+    $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
+
+    $this->loggedAsAdminClub1();
+
+    $this->makePostRequest($this->getRootWClubUrl($club1), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'departureLocation' => str_repeat('a', TimeAndTravelDeclaration::LOCATION_MAX_LENGTH + 1),
+      'arrivalLocation' => str_repeat('a', TimeAndTravelDeclaration::LOCATION_MAX_LENGTH + 1),
+      'kilometers' => 15,
+      'memberVehicle' => $this->getIriFromResource($vehicle),
+      'description' => str_repeat('a', TimeAndTravelDeclaration::DESCRIPTION_MAX_LENGTH + 1),
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+
+    $response = $this->makePostRequest($this->getRootWClubUrl($club1), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'departureLocation' => str_repeat('a', TimeAndTravelDeclaration::LOCATION_MAX_LENGTH),
+      'arrivalLocation' => str_repeat('a', TimeAndTravelDeclaration::LOCATION_MAX_LENGTH),
+      'kilometers' => 15,
+      'memberVehicle' => $this->getIriFromResource($vehicle),
+      'description' => str_repeat('a', TimeAndTravelDeclaration::DESCRIPTION_MAX_LENGTH),
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+  }
+
   public function testLockedDeclarationIsReadOnlyEvenForAdmin(): void {
     $export = TimeAndTravelExportFactory::createOne([
       'club' => _InitStory::club_1(),
