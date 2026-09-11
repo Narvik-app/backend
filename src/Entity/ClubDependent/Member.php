@@ -328,7 +328,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['member-read'])]
   private ?string $linkedEmail = null;
 
-  #[Groups(['autocomplete', 'self-read', 'member-read', 'member-presence-read', 'sale-read'])]
+  #[Groups(['autocomplete', 'self-read', 'member-read', 'member-presence-read', 'sale-read', 'time-and-travel-declaration-read', 'time-and-travel-export-attestation', 'member-vehicle'])]
   private ?string $fullName = null;
 
   #[ORM\OneToOne(mappedBy: 'member', targetEntity: UserMember::class)]
@@ -360,7 +360,7 @@ class Member extends UuidEntity implements ClubLinkedEntityInterface {
   private ?string $email = null;
 
   #[ORM\Column(length: 10, nullable: true)]
-  #[Groups(['autocomplete', 'member-read', 'club-supervisor-write', 'member-presence-read', 'sale-read'])]
+  #[Groups(['autocomplete', 'member-read', 'club-supervisor-write', 'member-presence-read', 'sale-read', 'time-and-travel-declaration-read', 'time-and-travel-export-attestation', 'member-vehicle'])]
   #[Assert\Regex(pattern: '/\d{8,10}/')]
   private ?string $licence = null;
 
