@@ -61,6 +61,13 @@ enum Permission: string {
   case MEMBER_CONTROL_TYPES_ACCESS = 'MEMBER_CONTROL_TYPES_ACCESS';
   case MEMBER_CONTROL_TYPES_EDIT = 'MEMBER_CONTROL_TYPES_EDIT';
 
+  // Time and travel declaration permissions
+  case TIME_TRAVEL_ACCESS = 'TIME_TRAVEL_ACCESS'; // Read any member's declarations/vehicles, the admin board, exports
+  case TIME_TRAVEL_EDIT = 'TIME_TRAVEL_EDIT'; // Create/update/delete declarations & vehicles on behalf of any member
+
+  case TIME_TRAVEL_EXPORT = 'TIME_TRAVEL_EXPORT'; // Generate/regenerate a draft export, lock it ("comptable" role)
+  case TIME_TRAVEL_UNLOCK = 'TIME_TRAVEL_UNLOCK'; // Unlock a locked export, delete a locked export
+
   /**
    * Returns all available permissions as an array of values
    * @return string[]
@@ -126,6 +133,17 @@ enum Permission: string {
     // LOAN_EDIT implies LOAN_ITEMS_ACCESS (needed to browse/select items when recording a loan)
     if ($this === self::LOAN_EDIT) {
       $implied[] = self::LOAN_ITEMS_ACCESS;
+    }
+
+    // TIME_TRAVEL_EXPORT implies TIME_TRAVEL_ACCESS (needed to see the declarations being exported)
+    if ($this === self::TIME_TRAVEL_EXPORT) {
+      $implied[] = self::TIME_TRAVEL_ACCESS;
+    }
+
+    // TIME_TRAVEL_UNLOCK implies TIME_TRAVEL_EXPORT and TIME_TRAVEL_ACCESS
+    if ($this === self::TIME_TRAVEL_UNLOCK) {
+      $implied[] = self::TIME_TRAVEL_EXPORT;
+      $implied[] = self::TIME_TRAVEL_ACCESS;
     }
 
     return $implied;
