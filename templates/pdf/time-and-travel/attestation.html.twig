@@ -4,7 +4,7 @@
   <h1>Attestation d'abandon de frais de bénévolat</h1>
   <h2>{{ member.fullName }}{% if member.licence %} — Licence {{ member.licence }}{% endif %}</h2>
   <p>
-    Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}{% if export.label %} — {{ export.label }}{% endif %}
+    Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}
   </p>
 
   <p>
@@ -52,6 +52,34 @@
     </tr>
     </tfoot>
   </table>
+
+  {% if totals.vehicleBreakdown|length %}
+    <p style="margin-top: 16px; margin-bottom: 4px;"><strong>Détail du calcul kilométrique (barème officiel) :</strong></p>
+    <table>
+      <thead>
+      <tr>
+        <th>Véhicule</th>
+        <th class="text-right">Km cumulés</th>
+        <th>Calcul</th>
+        <th class="text-right">Montant</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for row in totals.vehicleBreakdown %}
+        <tr>
+          <td>{{ row.vehicle.brand }} {{ row.vehicle.model }} — {{ row.vehicle.licensePlate }}</td>
+          <td class="text-right">{{ row.kilometers }}</td>
+          <td>{{ row.description }}</td>
+          <td class="text-right">{{ row.amount }} €</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size: 9px; color: #666; margin-top: 4px;">
+      En cas d'utilisation d'un véhicule électrique, le montant de l'indemnité kilométrique est majoré de {{ totals.electricBonusRatePercent }} %.
+      Barème officiel : <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F1132">service-public.gouv.fr/F1132</a>.
+    </p>
+  {% endif %}
 
   <p style="margin-top: 20px;">
     Frais kilométriques valorisés : <strong>{{ totals.totalTravelAmount }} €</strong><br>

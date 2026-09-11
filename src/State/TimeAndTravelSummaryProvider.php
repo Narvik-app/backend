@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\Pagination\TraversablePaginator;
 use ApiPlatform\State\ProviderInterface;
+use App\Entity\ClubDependent\ClubSetting;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubRepository;
 use App\State\Trait\DateRangeQueryTrait;
@@ -125,6 +126,6 @@ final readonly class TimeAndTravelSummaryProvider implements ProviderInterface {
       ['clubId' => $clubId]
     )->fetchOne();
 
-    return $rate !== false && $rate !== null ? (float) $rate : 0.0;
+    return (float) ($rate !== false && $rate !== null ? $rate : ClubSetting::DEFAULT_SMIC_HOURLY_RATE);
   }
 }

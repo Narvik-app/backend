@@ -19,6 +19,9 @@ enum GlobalSetting {
   case SMTP_NEWSLETTER_SENDER;
   case SMTP_SENDER_NAME;
 
+  /** Percentage bonus applied to the official barème kilométrique for electric vehicles (e.g. "0.20" for +20%). */
+  case TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE;
+
   public function isEncrypted(): bool {
     return match ($this) {
       self::SMTP_USERNAME, self::SMTP_PASSWORD => true,

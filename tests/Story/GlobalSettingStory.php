@@ -69,5 +69,10 @@ final class GlobalSettingStory extends Story {
       'name'  => GlobalSetting::SMTP_SENDER_NAME->name,
       'value' => null,
     ]));
+
+    $this->addToPool('required_settings', GlobalSettingFactory::createOne([
+      'name'  => GlobalSetting::TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE->name,
+      'value' => null, // Null falls back to MileageRateCalculationService::DEFAULT_ELECTRIC_BONUS_RATE
+    ]));
   }
 }

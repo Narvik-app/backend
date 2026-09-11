@@ -1,8 +1,8 @@
 {% extends 'pdf/layout.html.twig' %}
 
 {% block content %}
-  <h1>Récapitulatif des déclarations de temps et déplacements</h1>
-  <h2>Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}{% if export.label %} — {{ export.label }}{% endif %}</h2>
+  <h1>Récapitulatif des déclarations de temps & kilomètres</h1>
+  <h2>Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}</h2>
 
   <table>
     <thead>

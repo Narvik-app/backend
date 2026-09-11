@@ -14,6 +14,7 @@ class GlobalSettingGetPublic extends AbstractController {
     GlobalSettingEnum::LEGALS_CGU->name,
     GlobalSettingEnum::LEGALS_CGV->name,
     GlobalSettingEnum::LEGALS_PRIVACY_POLICY->name,
+    GlobalSettingEnum::TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE->name,
   ];
 
   public function __construct(

@@ -25,7 +25,7 @@ final class TimeAndTravelDeclarationFactory extends \Zenstruck\Foundry\Persisten
       'departureLocation' => mb_substr(self::faker()->city(), 0, TimeAndTravelDeclaration::LOCATION_MAX_LENGTH),
       'arrivalLocation' => mb_substr(self::faker()->city(), 0, TimeAndTravelDeclaration::LOCATION_MAX_LENGTH),
       'kilometers' => self::faker()->numberBetween(5, 150),
-      'hours' => self::faker()->randomFloat(2, 1, 8),
+      'hours' => self::faker()->numberBetween(2, 16) / 2, // Half-hour steps only, see TimeAndTravelDeclaration::validateHoursGranularity()
       'description' => mb_substr(self::faker()->sentence(4), 0, TimeAndTravelDeclaration::DESCRIPTION_MAX_LENGTH),
       'isRoundtrip' => self::faker()->boolean(70),
       'memberVehicle' => MemberVehicleFactory::randomOrCreate(),

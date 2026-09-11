@@ -24,7 +24,10 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE SEQUENCE time_and_travel_declaration_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE time_and_travel_export_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE time_and_travel_export_attestation_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
-        $this->addSql('CREATE TABLE member_vehicle (brand VARCHAR(255) NOT NULL, model VARCHAR(255) DEFAULT NULL, license_plate VARCHAR(20) NOT NULL, engine_type VARCHAR(255) NOT NULL, fiscal_power INT NOT NULL, fiscal_coefficient NUMERIC(8, 4) NOT NULL, is_enabled BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE SEQUENCE mileage_rate_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
+        $this->addSql('CREATE TABLE mileage_rate (id INT NOT NULL, category VARCHAR(255) NOT NULL, min_fiscal_power INT DEFAULT NULL, max_fiscal_power INT DEFAULT NULL, tier_order INT NOT NULL, tier_max_km INT DEFAULT NULL, rate NUMERIC(6, 4) NOT NULL, addend NUMERIC(8, 2) NOT NULL, PRIMARY KEY (id))');
+        $this->seedMileageRates();
+        $this->addSql('CREATE TABLE member_vehicle (brand VARCHAR(255) NOT NULL, model VARCHAR(255) DEFAULT NULL, license_plate VARCHAR(20) NOT NULL, engine_type VARCHAR(255) NOT NULL, category VARCHAR(255) NOT NULL, fiscal_power INT NOT NULL, is_enabled BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_A4745312D17F50A6 ON member_vehicle (uuid)');
         $this->addSql('CREATE INDEX IDX_A47453127597D3FE ON member_vehicle (member_id)');
         $this->addSql('CREATE INDEX IDX_A474531261190A32 ON member_vehicle (club_id)');
@@ -37,7 +40,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_6289DC742A15EB06 ON time_and_travel_declaration (member_presence_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7464CDAF82 ON time_and_travel_declaration (export_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7461190A32 ON time_and_travel_declaration (club_id)');
-        $this->addSql('CREATE TABLE time_and_travel_export (status VARCHAR(255) NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL, label VARCHAR(255) DEFAULT NULL, smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL, locked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, unlocked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, generated_by_id INT DEFAULT NULL, locked_by_id INT DEFAULT NULL, unlocked_by_id INT DEFAULT NULL, recap_file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE time_and_travel_export (status VARCHAR(255) NOT NULL, is_regenerating BOOLEAN NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL, smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL, locked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, unlocked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, generated_by_id INT DEFAULT NULL, locked_by_id INT DEFAULT NULL, unlocked_by_id INT DEFAULT NULL, recap_file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_53A200E0D17F50A6 ON time_and_travel_export (uuid)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_53A200E0E03C8F8F ON time_and_travel_export (recap_file_id)');
         $this->addSql('CREATE INDEX idx_tt_export_club_status ON time_and_travel_export (club_id, status)');
@@ -72,6 +75,37 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('ALTER TABLE club_setting ADD smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL');
     }
 
+    /**
+     * Official French kilometric mileage scale (Arrêté du 27 mars 2023) —
+     * see https://www.service-public.gouv.fr/particuliers/vosdroits/F1132
+     */
+    private function seedMileageRates(): void
+    {
+        $table = [
+            // [category, minFiscalPower, maxFiscalPower, [[tierOrder, tierMaxKm, rate, addend], ...]]
+            ['car', null, 3, [[1, 5000, '0.529', '0.00'], [2, 20000, '0.316', '1065.00'], [3, null, '0.370', '0.00']]],
+            ['car', 4, 4, [[1, 5000, '0.606', '0.00'], [2, 20000, '0.340', '1330.00'], [3, null, '0.407', '0.00']]],
+            ['car', 5, 5, [[1, 5000, '0.636', '0.00'], [2, 20000, '0.357', '1395.00'], [3, null, '0.427', '0.00']]],
+            ['car', 6, 6, [[1, 5000, '0.665', '0.00'], [2, 20000, '0.374', '1457.00'], [3, null, '0.447', '0.00']]],
+            ['car', 7, null, [[1, 5000, '0.697', '0.00'], [2, 20000, '0.394', '1515.00'], [3, null, '0.470', '0.00']]],
+
+            ['motorcycle', 1, 2, [[1, 3000, '0.395', '0.00'], [2, 6000, '0.099', '891.00'], [3, null, '0.248', '0.00']]],
+            ['motorcycle', 3, 5, [[1, 3000, '0.468', '0.00'], [2, 6000, '0.082', '1158.00'], [3, null, '0.275', '0.00']]],
+            ['motorcycle', 6, null, [[1, 3000, '0.606', '0.00'], [2, 6000, '0.079', '1583.00'], [3, null, '0.343', '0.00']]],
+
+            ['moped', null, null, [[1, 3000, '0.315', '0.00'], [2, 6000, '0.079', '711.00'], [3, null, '0.198', '0.00']]],
+        ];
+
+        foreach ($table as [$category, $minFiscalPower, $maxFiscalPower, $tiers]) {
+            foreach ($tiers as [$tierOrder, $tierMaxKm, $rate, $addend]) {
+                $minSql = $minFiscalPower === null ? 'NULL' : $minFiscalPower;
+                $maxSql = $maxFiscalPower === null ? 'NULL' : $maxFiscalPower;
+                $tierMaxKmSql = $tierMaxKm === null ? 'NULL' : $tierMaxKm;
+                $this->addSql("INSERT INTO mileage_rate (id, category, min_fiscal_power, max_fiscal_power, tier_order, tier_max_km, rate, addend) VALUES (NEXTVAL('mileage_rate_id_seq'), '{$category}', {$minSql}, {$maxSql}, {$tierOrder}, {$tierMaxKmSql}, {$rate}, {$addend})");
+            }
+        }
+    }
+
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
@@ -79,6 +113,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('DROP SEQUENCE time_and_travel_declaration_id_seq CASCADE');
         $this->addSql('DROP SEQUENCE time_and_travel_export_id_seq CASCADE');
         $this->addSql('DROP SEQUENCE time_and_travel_export_attestation_id_seq CASCADE');
+        $this->addSql('DROP SEQUENCE mileage_rate_id_seq CASCADE');
         $this->addSql('ALTER TABLE member_vehicle DROP CONSTRAINT FK_A47453127597D3FE');
         $this->addSql('ALTER TABLE member_vehicle DROP CONSTRAINT FK_A474531261190A32');
         $this->addSql('ALTER TABLE time_and_travel_declaration DROP CONSTRAINT FK_6289DC747597D3FE');
@@ -99,6 +134,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('DROP TABLE time_and_travel_declaration');
         $this->addSql('DROP TABLE time_and_travel_export');
         $this->addSql('DROP TABLE time_and_travel_export_attestation');
+        $this->addSql('DROP TABLE mileage_rate');
         $this->addSql('ALTER TABLE activity DROP prompt_time_and_travel_declaration');
         $this->addSql('ALTER TABLE club DROP time_and_travel_enabled');
         $this->addSql('ALTER TABLE club_setting DROP smic_hourly_rate');

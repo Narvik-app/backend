@@ -3,6 +3,7 @@
 namespace App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration;
 
 use App\Entity\Club;
+use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicle;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
 use App\Repository\Interface\ClubLinkedInterface;
@@ -41,6 +42,25 @@ class TimeAndTravelDeclarationRepository extends ServiceEntityRepository impleme
       ->addOrderBy('d.date', 'ASC');
 
     return $qb->getQuery()->getResult();
+  }
+
+  /**
+   * A vehicle's cumulative distance for the calendar year — the official mileage scale is
+   * bracketed on the volunteer's yearly tax-return total, not the club's sports season.
+   */
+  public function sumKilometersForVehicleInYear(MemberVehicle $vehicle, int $year): int {
+    $sum = $this->createQueryBuilder('d')
+      ->select('COALESCE(SUM(d.kilometers), 0)')
+      ->andWhere('d.memberVehicle = :vehicle')
+      ->andWhere('d.date >= :start')
+      ->andWhere('d.date <= :end')
+      ->setParameter('vehicle', $vehicle)
+      ->setParameter('start', new \DateTimeImmutable("{$year}-01-01"))
+      ->setParameter('end', new \DateTimeImmutable("{$year}-12-31"))
+      ->getQuery()
+      ->getSingleScalarResult();
+
+    return (int) $sum;
   }
 
   /**

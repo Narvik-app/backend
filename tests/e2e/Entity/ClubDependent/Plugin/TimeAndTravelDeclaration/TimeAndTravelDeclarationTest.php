@@ -2,6 +2,7 @@
 
 namespace App\Tests\e2e\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration;
 
+use App\Entity\ClubDependent\ClubSetting;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Enum\ClubRole;
 use App\Enum\Permission;
@@ -124,6 +125,22 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals(30, $response->toArray()['kilometers']);
   }
 
+  public function testTimeAmountUsesTheDefaultSmicRateWhenClubHasNoOverride(): void {
+    $declaration = TimeAndTravelDeclarationFactory::createOne([
+      'member' => _InitStory::MEMBER_member_club_1(),
+      'hours' => '2.00',
+      'kilometers' => null,
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'memberVehicle' => null,
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getIriFromResource($declaration));
+    $this->assertResponseIsSuccessful();
+    $this->assertEqualsWithDelta(2 * (float) ClubSetting::DEFAULT_SMIC_HOURLY_RATE, $response->toArray()['timeAmount'], 0.001);
+  }
+
   public function testKilometersAndHoursAreEachOptionalButAtLeastOneIsRequired(): void {
     $club1 = _InitStory::club_1();
     $member = _InitStory::MEMBER_member_club_1();
@@ -191,6 +208,30 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
       'description' => 'Missing vehicle',
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+  }
+
+  public function testHoursMustBeAMultipleOfAHalfHour(): void {
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_member_club_1();
+
+    $this->loggedAsAdminClub1();
+
+    // 1.3 is not a valid half-hour step (easy to mistake for "1h30", which is actually 1.5)
+    $this->makePostRequest($this->getRootWClubUrl($club1), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'hours' => '1.30',
+      'description' => 'Bad granularity',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::unprocessable_422->value);
+
+    $this->makePostRequest($this->getRootWClubUrl($club1), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'hours' => '1.50',
+      'description' => 'Good granularity',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
   }
 
   public function testLocationsAndDescriptionAreBoundedToKeepExportsReadable(): void {
@@ -268,6 +309,43 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
     $response = $this->makeGetRequest($this->getRootWClubUrl($club));
     $this->assertResponseIsSuccessful();
     $this->assertEquals($this->TOTAL_ADMIN_CLUB_1, $response->toArray()['totalItems']);
+  }
+
+  public function testSupervisorWithEditPermissionCanCreateDeclarationForAnyMember(): void {
+    $club = _InitStory::club_1();
+    $supervisor = _InitStory::MEMBER_supervisor_club_1();
+    $supervisorIri = $this->getIriFromResource($supervisor);
+    $member = _InitStory::MEMBER_member_club_1();
+    $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
+
+    // Without TIME_TRAVEL_EDIT, a supervisor cannot create a declaration on behalf of another member
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'hours' => '1.00',
+      'description' => 'Should be refused',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
+
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($supervisorIri . '/permissions', [
+      'member' => $supervisorIri,
+      'permission' => Permission::TIME_TRAVEL_EDIT->value,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+
+    $this->loggedAsSupervisorClub1();
+    $this->makePostRequest($this->getRootWClubUrl($club), [
+      'member' => $this->getIriFromResource($member),
+      'date' => new \DateTimeImmutable()->format('Y-m-d'),
+      'departureLocation' => 'Home',
+      'arrivalLocation' => 'Club',
+      'kilometers' => 10,
+      'memberVehicle' => $this->getIriFromResource($vehicle),
+      'description' => 'Declared by supervisor',
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
   }
 
   public function testCsvExport(): void {

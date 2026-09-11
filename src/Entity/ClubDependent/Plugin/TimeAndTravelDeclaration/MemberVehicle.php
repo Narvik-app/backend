@@ -22,6 +22,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
+use App\Enum\VehicleCategory;
 use App\Enum\VehicleEngineType;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleRepository;
 use App\Security\Voter\SelfMemberVoter;
@@ -126,21 +127,34 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
   #[Assert\NotNull]
   private VehicleEngineType $engineType = VehicleEngineType::petrol;
 
+  /** Which official mileage scale table to look the vehicle up in. */
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, enumType: VehicleCategory::class)]
+  #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
+  #[Assert\NotNull]
+  private VehicleCategory $category = VehicleCategory::car;
+
   #[ORM\Column(type: Types::INTEGER)]
   #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
   #[Assert\NotNull]
   #[Assert\Positive]
   private ?int $fiscalPower = null;
 
-  #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 4)]
-  #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
-  #[Assert\NotNull]
-  #[Assert\Positive]
-  private ?string $fiscalCoefficient = null;
-
   #[ORM\Column]
   #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
   private bool $isEnabled = true;
+
+  /**
+   * Not persisted: hydrated by MemberVehicleSubscriber::postLoad() so a member can see, and
+   * validate, the calculation that will actually apply to their declarations this calendar year.
+   */
+  #[Groups(['member-vehicle-read'])]
+  private ?int $currentYearKilometers = null;
+
+  #[Groups(['member-vehicle-read'])]
+  private ?string $currentYearEstimatedAmount = null;
+
+  #[Groups(['member-vehicle-read'])]
+  private ?string $currentYearCalculationDescription = null;
 
   public function __construct() {
     parent::__construct();
@@ -195,6 +209,15 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
     return $this;
   }
 
+  public function getCategory(): VehicleCategory {
+    return $this->category;
+  }
+
+  public function setCategory(VehicleCategory $category): static {
+    $this->category = $category;
+    return $this;
+  }
+
   public function getFiscalPower(): ?int {
     return $this->fiscalPower;
   }
@@ -204,13 +227,8 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
     return $this;
   }
 
-  public function getFiscalCoefficient(): ?string {
-    return $this->fiscalCoefficient;
-  }
-
-  public function setFiscalCoefficient(string $fiscalCoefficient): static {
-    $this->fiscalCoefficient = $fiscalCoefficient;
-    return $this;
+  public function isElectric(): bool {
+    return $this->engineType === VehicleEngineType::electric;
   }
 
   public function getIsEnabled(): bool {
@@ -222,12 +240,30 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
     return $this;
   }
 
-  /**
-   * Calculate the fiscal reduction (travel) amount for a number of kilometers.
-   * The kilometers declared are always the total for the trip — no round-trip
-   * doubling is applied, isRoundtrip is purely informational.
-   */
-  public function calculateTravelAmount(int $kilometers): float {
-    return (float) $kilometers * (float) $this->fiscalCoefficient;
+  public function getCurrentYearKilometers(): ?int {
+    return $this->currentYearKilometers;
+  }
+
+  public function setCurrentYearKilometers(?int $currentYearKilometers): static {
+    $this->currentYearKilometers = $currentYearKilometers;
+    return $this;
+  }
+
+  public function getCurrentYearEstimatedAmount(): ?string {
+    return $this->currentYearEstimatedAmount;
+  }
+
+  public function setCurrentYearEstimatedAmount(?string $currentYearEstimatedAmount): static {
+    $this->currentYearEstimatedAmount = $currentYearEstimatedAmount;
+    return $this;
+  }
+
+  public function getCurrentYearCalculationDescription(): ?string {
+    return $this->currentYearCalculationDescription;
+  }
+
+  public function setCurrentYearCalculationDescription(?string $currentYearCalculationDescription): static {
+    $this->currentYearCalculationDescription = $currentYearCalculationDescription;
+    return $this;
   }
 }
