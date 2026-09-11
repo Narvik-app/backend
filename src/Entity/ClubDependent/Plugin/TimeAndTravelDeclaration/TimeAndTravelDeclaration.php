@@ -41,6 +41,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: TimeAndTravelDeclarationRepository::class)]
 #[ORM\Index(name: 'idx_tt_declaration_club_date', columns: ['club_id', 'date'])]
@@ -203,6 +204,10 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[ApiProperty(readableLink: false)]
   private ?TimeAndTravelExport $export = null;
 
+  /** Hydrated by TimeAndTravelDeclarationSubscriber::postLoad() — not persisted. */
+  #[Groups(['time-and-travel-declaration-read'])]
+  private ?float $travelAmount = null;
+
   #[Groups(['time-and-travel-declaration-read'])]
   private ?float $timeAmount = null;
 
@@ -272,6 +277,21 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
     return $this;
   }
 
+  /** Half-hour granularity avoids ambiguous entries like "1.3" (meant as 1h30, actually 1.3h). */
+  #[Assert\Callback]
+  public function validateHoursGranularity(ExecutionContextInterface $context): void {
+    if ($this->hours === null) {
+      return;
+    }
+
+    $doubled = (float) $this->hours * 2;
+    if (abs($doubled - round($doubled)) > 0.001) {
+      $context->buildViolation('Hours must be a multiple of 0.5 (e.g. 1, 1.5, 2).')
+        ->atPath('hours')
+        ->addViolation();
+    }
+  }
+
   public function getDescription(): ?string {
     return $this->description;
   }
@@ -322,13 +342,20 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
     return $this->export !== null && $this->export->getStatus() === TimeAndTravelExportStatus::locked;
   }
 
-  #[Groups(['time-and-travel-declaration-read'])]
-  public function getTravelAmount(): float {
-    if (!$this->memberVehicle || !$this->kilometers) {
-      return 0.0;
-    }
+  /**
+   * A per-declaration ESTIMATE only, as if this declaration's own kilometers were the vehicle's
+   * whole cumulative distance for the year. The real, authoritative amount can only be known once
+   * every declaration on that vehicle for the export period is known — it's computed once per
+   * vehicle over its actual cumulative distance by TimeAndTravelExportGenerationService, not
+   * summed from this per-declaration figure. Set by TimeAndTravelDeclarationSubscriber::postLoad().
+   */
+  public function setTravelAmount(?float $travelAmount): static {
+    $this->travelAmount = $travelAmount;
+    return $this;
+  }
 
-    return $this->memberVehicle->calculateTravelAmount($this->kilometers);
+  public function getTravelAmount(): float {
+    return $this->travelAmount ?? 0.0;
   }
 
   /**

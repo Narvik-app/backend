@@ -17,19 +17,38 @@
       left: 0;
       right: 0;
       height: 16mm;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       border-bottom: 1px solid #ddd;
       padding-bottom: 4px;
     }
+    /* Dompdf has no flexbox support, so the header layout is a table instead. */
+    header table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0;
+    }
+    header td {
+      border: none;
+      padding: 0;
+      vertical-align: middle;
+    }
+    header .logo-cell {
+      width: 42mm;
+    }
     header img {
       max-height: 14mm;
-      max-width: 50mm;
+      max-width: 40mm;
     }
     header .club-name {
       font-size: 14px;
       font-weight: bold;
+    }
+    header .club-address {
+      font-size: 9px;
+      color: #666;
+    }
+    header .date-cell {
+      width: 25mm;
+      text-align: right;
     }
     footer {
       position: fixed;
@@ -76,19 +95,29 @@
   </style>
 </head>
 <body>
+{% set clubAddressLine = [club.address, [club.zipCode, club.city]|filter(v => v)|join(' ')]|filter(v => v)|join(', ') %}
+
 <header>
-  {% if logoBase64 %}
-    <img src="{{ logoBase64 }}" alt="Logo">
-  {% else %}
-    <span class="club-name">{{ club.name }}</span>
-  {% endif %}
-  <span>{{ 'now'|date('d/m/Y') }}</span>
+  <table>
+    <tr>
+      <td class="logo-cell">
+        {% if logoBase64 %}<img src="{{ logoBase64 }}" alt="Logo">{% endif %}
+      </td>
+      <td>
+        <div class="club-name">{{ club.name }}</div>
+        {% if clubAddressLine %}<div class="club-address">{{ clubAddressLine }}</div>{% endif %}
+      </td>
+      <td class="date-cell">{{ 'now'|date('d/m/Y') }}</td>
+    </tr>
+  </table>
 </header>
 
 {% block content %}{% endblock %}
 
 <footer>
-  {{ club.name }} — Document généré automatiquement, ne nécessite pas de signature manuscrite pour faire foi.
+  {{ club.name }}{% if clubAddressLine %} — {{ clubAddressLine }}{% endif %}
+  {%- if club.siret %} — SIRET : {{ club.siret }}{% endif %}
+  {%- if club.vat %} — TVA : {{ club.vat }}{% endif %}
 </footer>
 </body>
 </html>

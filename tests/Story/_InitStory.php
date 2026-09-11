@@ -31,6 +31,9 @@ use Zenstruck\Foundry\Story;
  */
 final class _InitStory extends Story {
   public function build(): void {
+    // The official mileage scale, needed by any test that generates a time-and-travel export
+    MileageRateStory::load();
+
     // We create the frontend client
     ClientFactory::createOne([
       'name'       => 'test',

@@ -25,9 +25,10 @@ final class MemberVehicleFactory extends \Zenstruck\Foundry\Persistence\Persiste
       'brand' => self::faker()->randomElement(['Renault', 'Peugeot', 'Citroën', 'Toyota']),
       'model' => self::faker()->word(),
       'licensePlate' => strtoupper(self::faker()->bothify('??-###-??')),
-      'engineType' => self::faker()->randomElement(VehicleEngineType::cases()),
+      // Deterministic (not electric) by default — the electric +20% bonus would otherwise
+      // silently perturb travel amount assertions in unrelated tests; set explicitly where needed.
+      'engineType' => VehicleEngineType::petrol,
       'fiscalPower' => self::faker()->numberBetween(4, 10),
-      'fiscalCoefficient' => self::faker()->randomFloat(4, 0.3, 0.7),
       'isEnabled' => true,
     ];
   }

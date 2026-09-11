@@ -8,6 +8,7 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclar
 use App\Entity\File;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportAttestation;
+use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicle;
 use App\Enum\FileCategory;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,6 +25,7 @@ class TimeAndTravelExportGenerationService {
     private readonly TimeAndTravelDeclarationRepository $declarationRepository,
     private readonly TimeAndTravelPdfService $pdfService,
     private readonly FileService $fileService,
+    private readonly MileageRateCalculationService $mileageRateCalculationService,
   ) {
   }
 
@@ -44,6 +46,10 @@ class TimeAndTravelExportGenerationService {
       }
       $byMember[$member->getId()][] = $declaration;
     }
+
+    // Alphabetical by lastname then firstname (Member::getFullName() is already "LASTNAME Firstname"),
+    // so the recap and the attestations are generated/listed in the same order.
+    uasort($byMember, fn (array $a, array $b) => strcmp((string) $a[0]->getMember()?->getFullName(), (string) $b[0]->getMember()?->getFullName()));
 
     $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
     $recapRows = [];
@@ -126,18 +132,58 @@ class TimeAndTravelExportGenerationService {
   }
 
   /**
+   * The official mileage scale prices a vehicle's WHOLE cumulative distance for the period under
+   * a single bracket (not marginally per km), so travel amount can't be summed declaration by
+   * declaration for a vehicle using the official scale — it has to be computed once per vehicle,
+   * over that vehicle's total kilometers across every declaration in the period.
+   *
    * @param TimeAndTravelDeclaration[] $declarations
-   * @return array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float}
+   * @return array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown: array}
    */
   private function computeTotals(array $declarations, float $smicRate): array {
     $totalKilometers = 0;
     $totalHours = 0.0;
-    $totalTravelAmount = 0.0;
+
+    /** @var array<int, array{vehicle: MemberVehicle, kilometers: int}> $byVehicle */
+    $byVehicle = [];
+    $flatRateTravelAmount = 0.0;
 
     foreach ($declarations as $declaration) {
-      $totalKilometers += $declaration->getKilometers() ?? 0;
+      $kilometers = $declaration->getKilometers() ?? 0;
+      $totalKilometers += $kilometers;
       $totalHours += (float) ($declaration->getHours() ?? 0);
-      $totalTravelAmount += $declaration->getTravelAmount();
+
+      $vehicle = $declaration->getMemberVehicle();
+      if (!$vehicle || $kilometers <= 0) {
+        continue;
+      }
+
+      $byVehicle[$vehicle->getId()]['vehicle'] ??= $vehicle;
+      $byVehicle[$vehicle->getId()]['kilometers'] = ($byVehicle[$vehicle->getId()]['kilometers'] ?? 0) + $kilometers;
+    }
+
+    $totalTravelAmount = 0.0;
+    $vehicleBreakdown = [];
+    foreach ($byVehicle as $entry) {
+      $vehicle = $entry['vehicle'];
+      $kilometers = $entry['kilometers'];
+
+      $result = $this->mileageRateCalculationService->calculate($vehicle->getCategory(), (int) $vehicle->getFiscalPower(), $kilometers, $vehicle->isElectric());
+      $totalTravelAmount += $result?->amount ?? 0.0;
+      $vehicleBreakdown[] = [
+        'vehicle' => $vehicle,
+        'kilometers' => $kilometers,
+        'description' => $result
+          ? sprintf(
+            '%s km × %s%s%s',
+            $kilometers,
+            $result->rate->getRate(),
+            (float) $result->rate->getAddend() > 0 ? ' + ' . $result->rate->getAddend() . ' €' : '',
+            $result->electricBonusRate > 0 ? sprintf(' (+%d%% véhicule électrique)', round($result->electricBonusRate * 100)) : ''
+          )
+          : 'Aucun barème applicable pour cette puissance/catégorie',
+        'amount' => number_format($result?->amount ?? 0.0, 2, '.', ''),
+      ];
     }
 
     $totalTimeAmount = $totalHours * $smicRate;
@@ -148,11 +194,12 @@ class TimeAndTravelExportGenerationService {
       'totalTravelAmount' => $totalTravelAmount,
       'totalTimeAmount' => $totalTimeAmount,
       'totalAmount' => $totalTravelAmount + $totalTimeAmount,
+      'vehicleBreakdown' => $vehicleBreakdown,
     ];
   }
 
   /**
-   * @param array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float} $totals
+   * @param array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown?: array} $totals
    */
   private function formatTotalsForTemplate(array $totals): array {
     return [
@@ -162,6 +209,8 @@ class TimeAndTravelExportGenerationService {
       'totalTravelAmount' => number_format($totals['totalTravelAmount'], 2, '.', ''),
       'totalTimeAmount' => number_format($totals['totalTimeAmount'], 2, '.', ''),
       'totalAmount' => number_format($totals['totalAmount'], 2, '.', ''),
+      'vehicleBreakdown' => $totals['vehicleBreakdown'] ?? [],
+      'electricBonusRatePercent' => (int) round($this->mileageRateCalculationService->getElectricBonusRate() * 100),
     ];
   }
 
