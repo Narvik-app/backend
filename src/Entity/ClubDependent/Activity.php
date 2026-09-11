@@ -108,6 +108,11 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
   #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
   private ?bool $isEnabled = true;
 
+  /** When true, the presence page prompts a time-and-travel declaration right after a presence is registered for this activity */
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::BOOLEAN, options: ['default' => false])]
+  #[Groups(['club-admin-write', 'activity-read','member-read', 'member-presence', 'external-presence'])]
+  private bool $promptTimeAndTravelDeclaration = false;
+
   #[ORM\ManyToMany(targetEntity: MemberPresence::class, mappedBy: 'activities')]
   private Collection $memberPresences;
 
@@ -148,6 +153,15 @@ class Activity extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setIsEnabled(?bool $isEnabled): Activity {
     $this->isEnabled = $isEnabled;
+    return $this;
+  }
+
+  public function getPromptTimeAndTravelDeclaration(): bool {
+    return $this->promptTimeAndTravelDeclaration;
+  }
+
+  public function setPromptTimeAndTravelDeclaration(bool $promptTimeAndTravelDeclaration): Activity {
+    $this->promptTimeAndTravelDeclaration = $promptTimeAndTravelDeclaration;
     return $this;
   }
 

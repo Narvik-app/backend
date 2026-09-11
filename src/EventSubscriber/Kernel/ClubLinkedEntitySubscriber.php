@@ -111,6 +111,16 @@ final readonly class ClubLinkedEntitySubscriber
       if ($checked) {
         return;
       }
+
+      $timeAndTravelPattern = [
+        '/time-and-travel-declarations',
+        '/time-and-travel-exports',
+        '/member-vehicles',
+      ];
+      $checked = $this->verifyAccessForPlugin("TimeAndTravel", $timeAndTravelPattern, $club->getTimeAndTravelEnabled(), $cleanedPath, $event);
+      if ($checked) {
+        return;
+      }
     }
     private function verifyAccessForPlugin(string $pluginName, array $urlPatterns, bool $pluginEnabled, string $requestedPath, RequestEvent $event): bool {
       foreach ($urlPatterns as $urlPattern) {

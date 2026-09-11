@@ -1,0 +1,80 @@
+{% extends 'pdf/layout.html.twig' %}
+
+{% block content %}
+  <h1>Attestation d'abandon de frais de bénévolat</h1>
+  <h2>{{ member.fullName }}{% if member.licence %} — Licence {{ member.licence }}{% endif %}</h2>
+  <p>
+    Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}{% if export.label %} — {{ export.label }}{% endif %}
+  </p>
+
+  <p>
+    {{ club.name }} atteste que {{ member.fullName }} a renoncé au remboursement des frais
+    engagés dans le cadre de son activité bénévole au sein de l'association, décrits ci-dessous.
+  </p>
+
+  <table>
+    <thead>
+    <tr>
+      <th>Date</th>
+      <th>Trajet</th>
+      <th class="text-right">Km</th>
+      <th class="text-right">Heures</th>
+      <th>Véhicule</th>
+      <th>Motif</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for declaration in declarations %}
+      <tr>
+        <td>{{ declaration.date|date('d/m/Y') }}</td>
+        <td>
+          {% if declaration.departureLocation and declaration.arrivalLocation %}
+            {{ declaration.departureLocation }} {{ declaration.isRoundtrip ? '↔' : '→' }} {{ declaration.arrivalLocation }}
+          {% endif %}
+        </td>
+        <td class="text-right">{{ declaration.kilometers }}</td>
+        <td class="text-right">{{ declaration.hours }}</td>
+        <td>
+          {% if declaration.memberVehicle %}
+            {{ declaration.memberVehicle.brand }} {{ declaration.memberVehicle.model }} — {{ declaration.memberVehicle.licensePlate }}
+          {% endif %}
+        </td>
+        <td>{{ declaration.description }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+      <td colspan="2">Total</td>
+      <td class="text-right">{{ totals.totalKilometers }}</td>
+      <td class="text-right">{{ totals.totalHours }}</td>
+      <td colspan="2"></td>
+    </tr>
+    </tfoot>
+  </table>
+
+  <p style="margin-top: 20px;">
+    Frais kilométriques valorisés : <strong>{{ totals.totalTravelAmount }} €</strong><br>
+    Temps de bénévolat valorisé : <strong>{{ totals.totalTimeAmount }} €</strong><br>
+    Montant total abandonné au profit de l'association : <strong>{{ totals.totalAmount }} €</strong>
+  </p>
+
+  <p style="margin-top: 40px;">
+    {{ member.fullName }} déclare renoncer expressément au remboursement de ces frais et
+    en faire don à {{ club.name }}, en vue de bénéficier de la réduction d'impôt prévue
+    par l'article 200 du Code Général des Impôts.
+  </p>
+
+  <table style="border: none; margin-top: 40px;">
+    <tr>
+      <td style="border: none; width: 50%;">
+        Fait à _________________, le {{ 'now'|date('d/m/Y') }}<br><br>
+        Signature du bénévole
+      </td>
+      <td style="border: none; width: 50%;">
+        Pour {{ club.name }}<br><br>
+        Signature
+      </td>
+    </tr>
+  </table>
+{% endblock %}

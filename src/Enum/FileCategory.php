@@ -11,4 +11,7 @@ enum FileCategory: string {
   case loan_item_picture = 'loan_item_picture';
 
   case club_email = 'club_email';
+
+  case time_and_travel_recap = 'time_and_travel_recap';
+  case time_and_travel_attestation = 'time_and_travel_attestation';
 }
