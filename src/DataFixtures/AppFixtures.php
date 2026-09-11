@@ -132,12 +132,12 @@ class AppFixtures extends Fixture {
     foreach ($timeAndTravelMembers as $member) {
       $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
       TimeAndTravelDeclarationFactory::new()
-        ->many(3, 10)
+        ->many(3)
         ->create(['member' => $member, 'memberVehicle' => $vehicle]);
     }
 
     // A couple of hours-only declarations (no distance, no vehicle needed)
-    TimeAndTravelDeclarationFactory::new()->many(4, 8)->create(fn () => [
+    TimeAndTravelDeclarationFactory::new()->many(4)->create(fn () => [
       'member' => faker()->randomElement($timeAndTravelMembers),
       'departureLocation' => null,
       'arrivalLocation' => null,

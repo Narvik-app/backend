@@ -54,6 +54,7 @@ security:
         - { path: ^/clubs, roles: [ROLE_USER, ROLE_BADGER] } # ClubDepend access control is defined directly in the entities
 
         - { path: ^/age-categories, roles: [ROLE_USER] }
+        - { path: ^/mileage-rates, roles: [ROLE_USER] }
         - { path: ^/global-settings, roles: [ROLE_SUPER_ADMIN] }
         - { path: ^/metrics, roles: [ROLE_SUPER_ADMIN] }
         - { path: ^/seasons, roles: [ROLE_USER] }

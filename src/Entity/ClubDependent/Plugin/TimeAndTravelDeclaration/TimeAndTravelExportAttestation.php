@@ -42,6 +42,7 @@ use Symfony\Component\Validator\Constraints as Assert;
   normalizationContext: [
     'groups' => ['time-and-travel-export-attestation']
   ],
+  order: ['member.lastname' => 'ASC', 'member.firstname' => 'ASC'],
 )]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/time-and-travel-attestations.{_format}',

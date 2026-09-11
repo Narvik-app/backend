@@ -21,7 +21,6 @@ final class TimeAndTravelExportFactory extends \Zenstruck\Foundry\Persistence\Pe
       'club' => _InitStory::club_1(),
       'startDate' => new \DateTimeImmutable('-2 months'),
       'endDate' => new \DateTimeImmutable('now'),
-      'label' => self::faker()->boolean(50) ? ucfirst(self::faker()->words(2, true)) : null,
       'generatedBy' => _InitStory::MEMBER_admin_club_1(),
     ];
   }
