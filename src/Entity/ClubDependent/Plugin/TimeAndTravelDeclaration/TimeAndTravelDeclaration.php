@@ -144,15 +144,21 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[Assert\NotNull]
   private ?\DateTimeImmutable $date = null;
 
+  /** Kept short so a trajet still fits on one line in the PDF/CSV exports. */
+  public const int LOCATION_MAX_LENGTH = 30;
+
+  /** Kept longer than the location fields since it is free-form but still bounded for the exports. */
+  public const int DESCRIPTION_MAX_LENGTH = 50;
+
   /** Only relevant (and required, see TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers) when kilometers is declared */
-  #[ORM\Column(length: 255, nullable: true)]
+  #[ORM\Column(length: self::LOCATION_MAX_LENGTH, nullable: true)]
   #[Groups(['time-and-travel-declaration'])]
-  #[Assert\Length(max: 255)]
+  #[Assert\Length(max: self::LOCATION_MAX_LENGTH)]
   private ?string $departureLocation = null;
 
-  #[ORM\Column(length: 255, nullable: true)]
+  #[ORM\Column(length: self::LOCATION_MAX_LENGTH, nullable: true)]
   #[Groups(['time-and-travel-declaration'])]
-  #[Assert\Length(max: 255)]
+  #[Assert\Length(max: self::LOCATION_MAX_LENGTH)]
   private ?string $arrivalLocation = null;
 
   #[ORM\Column(type: Types::INTEGER, nullable: true)]
@@ -166,10 +172,10 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[Assert\Positive]
   private ?string $hours = null;
 
-  #[ORM\Column(length: 255)]
+  #[ORM\Column(length: self::DESCRIPTION_MAX_LENGTH)]
   #[Groups(['time-and-travel-declaration'])]
   #[Assert\NotBlank]
-  #[Assert\Length(max: 255)]
+  #[Assert\Length(max: self::DESCRIPTION_MAX_LENGTH)]
   private ?string $description = null;
 
   #[ORM\Column]
