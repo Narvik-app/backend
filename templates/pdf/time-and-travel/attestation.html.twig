@@ -12,6 +12,7 @@
     engagés dans le cadre de son activité bénévole au sein de l'association, décrits ci-dessous.
   </p>
 
+  <p style="margin-top: 16px; margin-bottom: 4px;"><strong>Frais kilométriques</strong></p>
   <table>
     <thead>
     <tr>
@@ -24,7 +25,7 @@
     </tr>
     </thead>
     <tbody>
-    {% for declaration in declarations %}
+    {% for declaration in totals.kilometerDeclarations %}
       <tr>
         <td>{{ declaration.date|date('d/m/Y') }}</td>
         <td>
@@ -41,17 +42,48 @@
         </td>
         <td>{{ declaration.description }}</td>
       </tr>
+    {% else %}
+      <tr><td colspan="6"><i>Aucune déclaration kilométrique</i></td></tr>
     {% endfor %}
     </tbody>
     <tfoot>
     <tr>
       <td colspan="2">Total</td>
       <td class="text-right">{{ totals.totalKilometers }}</td>
-      <td class="text-right">{{ totals.totalHours }}</td>
+      <td class="text-right">{{ totals.kilometerDeclarationsHours }}</td>
       <td colspan="2"></td>
     </tr>
     </tfoot>
   </table>
+
+  {% if totals.timeDeclarations|length %}
+    <p style="margin-top: 16px; margin-bottom: 4px;"><strong>Temps de bénévolat (sans kilomètres)</strong></p>
+    <table>
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th class="text-right">Heures</th>
+        <th>Motif</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for declaration in totals.timeDeclarations %}
+        <tr>
+          <td>{{ declaration.date|date('d/m/Y') }}</td>
+          <td class="text-right">{{ declaration.hours }}</td>
+          <td>{{ declaration.description }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot>
+      <tr>
+        <td>Total</td>
+        <td class="text-right">{{ totals.timeOnlyHours }}</td>
+        <td></td>
+      </tr>
+      </tfoot>
+    </table>
+  {% endif %}
 
   {% if totals.vehicleBreakdown|length %}
     <p style="margin-top: 16px; margin-bottom: 4px;"><strong>Détail du calcul kilométrique (barème officiel) :</strong></p>

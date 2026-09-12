@@ -41,13 +41,12 @@ class TimeAndTravelPdfService {
    * @param TimeAndTravelDeclaration[] $declarations
    * @param array{totalKilometers: int, totalHours: string, totalTravelAmount: string, totalTimeAmount: string, totalAmount: string} $totals
    */
-  public function renderAttestation(TimeAndTravelExport $export, Member $member, array $declarations, array $totals): string {
+  public function renderAttestation(TimeAndTravelExport $export, Member $member, array $totals): string {
     $html = $this->twig->render('pdf/time-and-travel/attestation.html.twig', [
       'club' => $export->getClub(),
       'logoBase64' => $this->getClubLogoBase64($export),
       'export' => $export,
       'member' => $member,
-      'declarations' => $declarations,
       'totals' => $totals,
     ]);
 
