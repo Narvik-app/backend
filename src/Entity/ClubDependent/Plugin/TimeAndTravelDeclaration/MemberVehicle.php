@@ -144,19 +144,6 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
   #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
   private bool $isEnabled = true;
 
-  /**
-   * Not persisted: hydrated by MemberVehicleSubscriber::postLoad() so a member can see, and
-   * validate, the calculation that will actually apply to their declarations this calendar year.
-   */
-  #[Groups(['member-vehicle-read'])]
-  private ?int $currentYearKilometers = null;
-
-  #[Groups(['member-vehicle-read'])]
-  private ?string $currentYearEstimatedAmount = null;
-
-  #[Groups(['member-vehicle-read'])]
-  private ?string $currentYearCalculationDescription = null;
-
   public function __construct() {
     parent::__construct();
   }
@@ -238,33 +225,6 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
 
   public function setIsEnabled(bool $isEnabled): static {
     $this->isEnabled = $isEnabled;
-    return $this;
-  }
-
-  public function getCurrentYearKilometers(): ?int {
-    return $this->currentYearKilometers;
-  }
-
-  public function setCurrentYearKilometers(?int $currentYearKilometers): static {
-    $this->currentYearKilometers = $currentYearKilometers;
-    return $this;
-  }
-
-  public function getCurrentYearEstimatedAmount(): ?string {
-    return $this->currentYearEstimatedAmount;
-  }
-
-  public function setCurrentYearEstimatedAmount(?string $currentYearEstimatedAmount): static {
-    $this->currentYearEstimatedAmount = $currentYearEstimatedAmount;
-    return $this;
-  }
-
-  public function getCurrentYearCalculationDescription(): ?string {
-    return $this->currentYearCalculationDescription;
-  }
-
-  public function setCurrentYearCalculationDescription(?string $currentYearCalculationDescription): static {
-    $this->currentYearCalculationDescription = $currentYearCalculationDescription;
     return $this;
   }
 }
