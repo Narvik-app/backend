@@ -83,6 +83,10 @@
       </tr>
       </tfoot>
     </table>
+    <p style="font-size: 9px; color: #666; margin-top: 4px;">
+      Ce temps valorisé n'ouvre pas droit à la réduction d'impôt. Il est indiqué à titre informatif,
+      pour permettre à l'association de valoriser l'engagement bénévole de ses membres.
+    </p>
   {% endif %}
 
   {% if totals.vehicleBreakdown|length %}
@@ -108,21 +112,25 @@
       </tbody>
     </table>
     <p style="font-size: 9px; color: #666; margin-top: 4px;">
-      En cas d'utilisation d'un véhicule électrique, le montant de l'indemnité kilométrique est majoré de {{ totals.electricBonusRatePercent }} %.
+      En cas d'utilisation d'un véhicule électrique, le montant de l'indemnité kilométrique est majoré de {{ totals.electricBonusRatePercent }} %. <br />
       Barème officiel : <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F1132">service-public.gouv.fr/F1132</a>.
     </p>
   {% endif %}
 
   <p style="margin-top: 20px;">
-    Frais kilométriques valorisés : <strong>{{ totals.totalTravelAmount }} €</strong><br>
-    Temps de bénévolat valorisé : <strong>{{ totals.totalTimeAmount }} €</strong><br>
-    Montant total abandonné au profit de l'association : <strong>{{ totals.totalAmount }} €</strong>
+    Frais kilométriques valorisés (éligibles à la réduction d'impôt) : <strong>{{ totals.totalTravelAmount }} €</strong><br>
+    Temps de bénévolat valorisé (à titre informatif, non éligible à la réduction d'impôt) : <strong>{{ totals.totalTimeAmount }} €</strong><br>
+    Montant total valorisé de l'engagement bénévole : <strong>{{ totals.totalAmount }} €</strong>
   </p>
 
   <p style="margin-top: 40px;">
-    {{ member.fullName }} déclare renoncer expressément au remboursement de ces frais et
-    en faire don à {{ club.name }}, en vue de bénéficier de la réduction d'impôt prévue
-    par l'article 200 du Code Général des Impôts.
+    {{ member.fullName }} déclare renoncer expressément au remboursement des frais kilométriques
+    ci-dessus, soit <strong>{{ totals.totalTravelAmount }} €</strong>, et en faire don à {{ club.name }}. <br/>
+    Seuls ces frais kilométriques sont éligibles à la réduction d'impôt prévue par l'article 200 du
+    Code Général des Impôts. <br/>
+    Le temps de bénévolat valorisé ci-dessus n'entre pas dans ce don et ne peut pas y ouvrir droit. <br/><br/>
+    Je sollicite que cet abandon soit considéré comme un don et vous demande
+    donc de m'adresser un reçu d'un montant de <strong>{{ totals.totalTravelAmount }} €</strong>.
   </p>
 
   <table style="border: none; margin-top: 40px;">
