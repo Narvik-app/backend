@@ -22,6 +22,8 @@ class MemberVehicleTest extends AbstractEntityClubLinkedTestCase {
   protected int $TOTAL_ADMIN_CLUB_2 = 0;
   #[\Override]
   protected int $TOTAL_SUPERVISOR_CLUB_1 = 0;
+  #[\Override]
+  protected int $TOTAL_BADGER_CLUB_1 = 10;
 
   protected function getClassname(): string {
     return MemberVehicle::class;
@@ -36,6 +38,9 @@ class MemberVehicleTest extends AbstractEntityClubLinkedTestCase {
     $access = parent::getCollectionGrantedAccess();
     // Supervisors need TIME_TRAVEL_ACCESS to browse every member's vehicle
     $access[ClubRole::supervisor->value] = false;
+    // A badger/kiosk session can browse vehicles too, so it can offer the picker when declaring
+    // on behalf of whoever it just registered — same trust level as MemberPresence.
+    $access[ClubRole::badger->value] = true;
     return $access;
   }
 
