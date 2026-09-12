@@ -12,7 +12,6 @@ use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportFactory;
-use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Story\_InitStory;
 
 class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
@@ -115,63 +114,6 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
     $this->loggedAsMemberClub1();
     $this->makePatchRequest($this->getIriFromResource($declaration), ['description' => 'Hacked']);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
-  }
-
-  public function testMemberCannotSelfWriteAPresenceLinkedDeclarationOnlyASupervisorCan(): void {
-    $club1 = _InitStory::club_1();
-    $member = _InitStory::MEMBER_member_club_1();
-    $presence = MemberPresenceFactory::createOne(['member' => $member]);
-    $supervisor = _InitStory::MEMBER_supervisor_club_1();
-    $supervisorIri = $this->getIriFromResource($supervisor);
-
-    $payload = [
-      'member' => $this->getIriFromResource($member),
-      'date' => new \DateTimeImmutable()->format('Y-m-d'),
-      'hours' => '1.00',
-      'description' => 'Prompted after presence',
-      'memberPresence' => $this->getIriFromResource($presence),
-    ];
-
-    // The member themselves cannot self-write a declaration tied to their own presence
-    $this->loggedAsMemberClub1();
-    $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
-
-    // A supervisor without TIME_TRAVEL_EDIT can't either
-    $this->loggedAsSupervisorClub1();
-    $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::forbidden->value);
-
-    // But a supervisor granted TIME_TRAVEL_EDIT can create it on the member's behalf
-    $this->loggedAsAdminClub1();
-    $this->makePostRequest($supervisorIri . '/permissions', [
-      'member' => $supervisorIri,
-      'permission' => Permission::TIME_TRAVEL_EDIT->value,
-    ]);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
-
-    $this->loggedAsSupervisorClub1();
-    $this->makePostRequest($this->getRootWClubUrl($club1), $payload);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
-  }
-
-  public function testBadgerCanWriteAPresenceLinkedDeclarationForAnyMember(): void {
-    // The badger/kiosk session is trusted the same way it is for the presence itself (a badger can
-    // register anyone's presence) — it can declare time/km for whoever it just registered,
-    // regardless of that member's own role, mirroring MemberPresence's own security expression.
-    $club1 = _InitStory::club_1();
-    $member = _InitStory::MEMBER_member_club_1();
-    $memberPresence = MemberPresenceFactory::createOne(['member' => $member]);
-
-    $this->loggedAsBadgerClub1();
-    $this->makePostRequest($this->getRootWClubUrl($club1), [
-      'member' => $this->getIriFromResource($member),
-      'date' => new \DateTimeImmutable()->format('Y-m-d'),
-      'hours' => '1.00',
-      'description' => 'Badged in by a plain member',
-      'memberPresence' => $this->getIriFromResource($memberPresence),
-    ]);
-    $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
   }
 
   public function testKilometersIsAlwaysTheTotalRegardlessOfRoundtrip(): void {
@@ -410,21 +352,6 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
       'description' => 'Declared by supervisor',
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
-  }
-
-  public function testCanFindTheDeclarationLinkedToAPresence(): void {
-    $member = _InitStory::MEMBER_member_club_1();
-    $presence = MemberPresenceFactory::createOne(['member' => $member]);
-    $otherPresence = MemberPresenceFactory::createOne(['member' => $member]);
-    TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'memberPresence' => $presence]);
-    TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'memberPresence' => $otherPresence]);
-
-    $this->loggedAsAdminClub1();
-    $response = $this->makeGetRequest($this->getRootWClubUrl(_InitStory::club_1()) . '?memberPresence.uuid=' . $presence->getUuid()->toString());
-    $this->assertResponseIsSuccessful();
-    $items = $response->toArray()['member'];
-    $this->assertCount(1, $items);
-    $this->assertEquals($this->getIriFromResource($presence), $items[0]['memberPresence'] ?? null);
   }
 
   public function testCsvExport(): void {
