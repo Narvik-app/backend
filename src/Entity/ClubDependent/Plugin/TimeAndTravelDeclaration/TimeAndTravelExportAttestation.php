@@ -63,10 +63,12 @@ class TimeAndTravelExportAttestation extends UuidEntity implements TimestampEnti
   use TimestampTrait;
   use SelfClubLinkedEntityTrait;
 
+  /** Embedded (not just an IRI) so the member's own attestation listing can show the export's
+   * date range — the most useful thing to identify an attestation by — without an extra request. */
   #[ORM\ManyToOne(targetEntity: TimeAndTravelExport::class, inversedBy: 'attestations')]
   #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
   #[Groups(['time-and-travel-export-attestation'])]
-  #[ApiProperty(readableLink: false)]
+  #[ApiProperty(readableLink: true)]
   private ?TimeAndTravelExport $export = null;
 
   #[ORM\ManyToOne(targetEntity: Member::class)]
