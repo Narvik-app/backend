@@ -25,6 +25,7 @@ use App\Enum\Permission;
 use App\Enum\VehicleCategory;
 use App\Enum\VehicleEngineType;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleRepository;
+use App\Security\Voter\ClubBadgerVoter;
 use App\Security\Voter\SelfMemberVoter;
 use App\Security\Voter\TimeAndTravelSelfVoter;
 use App\State\TimeAndTravelMemberVehicleProcessor;
@@ -44,7 +45,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request)",
+      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', request)",
     ),
     new Post(
       uriTemplate: '/clubs/{clubUuid}/member-vehicles.{_format}',
@@ -56,7 +57,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ),
 
     new Get(
-      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_READ."', object)",
+      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', object) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_READ."', object)",
     ),
     new Patch(
       security: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
@@ -82,7 +83,7 @@ use Symfony\Component\Validator\Constraints as Assert;
   uriTemplate: '/clubs/{clubUuid}/members/{memberUuid}/vehicles.{_format}',
   operations: [
     new GetCollection(
-      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request) || is_granted('".SelfMemberVoter::READ."', request)",
+      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', request) || is_granted('".SelfMemberVoter::READ."', request)",
     ),
   ],
   uriVariables: [
