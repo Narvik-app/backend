@@ -52,10 +52,21 @@ class TimeAndTravelSelfVoter extends Voter {
     }
 
     if ($subject instanceof TimeAndTravelDeclaration || $subject instanceof MemberVehicle) {
-      // A locked declaration can never be self-written, regardless of ownership
-      if ($attribute === self::SELF_WRITE && $subject instanceof TimeAndTravelDeclaration && $subject->getIsLocked()) {
-        $vote?->addReason('Declaration is locked.');
-        return false;
+      if ($attribute === self::SELF_WRITE && $subject instanceof TimeAndTravelDeclaration) {
+        // A locked declaration can never be self-written, regardless of ownership
+        if ($subject->getIsLocked()) {
+          $vote?->addReason('Declaration is locked.');
+          return false;
+        }
+
+        // A declaration tied to a presence was prompted by whoever registered that presence — only
+        // a supervisor/admin (TIME_TRAVEL_EDIT) or the badger/kiosk session for this club (granted
+        // directly in the resource's security expression, same as MemberPresence) can act on it,
+        // never the member themselves, even though it's their own declaration.
+        if ($subject->getMemberPresence() !== null) {
+          $vote?->addReason('Declaration is linked to a presence; only a supervisor/admin can manage it.');
+          return false;
+        }
       }
 
       return $this->voteForEntity($subject, $user);
