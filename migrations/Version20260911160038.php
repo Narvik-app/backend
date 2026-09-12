@@ -31,13 +31,12 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE UNIQUE INDEX UNIQ_A4745312D17F50A6 ON member_vehicle (uuid)');
         $this->addSql('CREATE INDEX IDX_A47453127597D3FE ON member_vehicle (member_id)');
         $this->addSql('CREATE INDEX IDX_A474531261190A32 ON member_vehicle (club_id)');
-        $this->addSql('CREATE TABLE time_and_travel_declaration (date DATE NOT NULL, departure_location VARCHAR(30) DEFAULT NULL, arrival_location VARCHAR(30) DEFAULT NULL, kilometers INT DEFAULT NULL, hours NUMERIC(4, 2) DEFAULT NULL, description VARCHAR(50) NOT NULL, is_roundtrip BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, member_vehicle_id INT DEFAULT NULL, member_presence_id INT DEFAULT NULL, export_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE time_and_travel_declaration (date DATE NOT NULL, departure_location VARCHAR(30) DEFAULT NULL, arrival_location VARCHAR(30) DEFAULT NULL, kilometers INT DEFAULT NULL, hours NUMERIC(4, 2) DEFAULT NULL, description VARCHAR(50) NOT NULL, is_roundtrip BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, member_vehicle_id INT DEFAULT NULL, export_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_6289DC74D17F50A6 ON time_and_travel_declaration (uuid)');
         $this->addSql('CREATE INDEX idx_tt_declaration_club_date ON time_and_travel_declaration (club_id, date)');
         $this->addSql('CREATE INDEX idx_tt_declaration_member_date ON time_and_travel_declaration (member_id, date)');
         $this->addSql('CREATE INDEX IDX_6289DC747597D3FE ON time_and_travel_declaration (member_id)');
         $this->addSql('CREATE INDEX IDX_6289DC74BF1D0938 ON time_and_travel_declaration (member_vehicle_id)');
-        $this->addSql('CREATE INDEX IDX_6289DC742A15EB06 ON time_and_travel_declaration (member_presence_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7464CDAF82 ON time_and_travel_declaration (export_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7461190A32 ON time_and_travel_declaration (club_id)');
         $this->addSql('CREATE TABLE time_and_travel_export (status VARCHAR(255) NOT NULL, is_regenerating BOOLEAN NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL, smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL, locked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, unlocked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, generated_by_id INT DEFAULT NULL, locked_by_id INT DEFAULT NULL, unlocked_by_id INT DEFAULT NULL, recap_file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
@@ -58,7 +57,6 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('ALTER TABLE member_vehicle ADD CONSTRAINT FK_A474531261190A32 FOREIGN KEY (club_id) REFERENCES club (id) ON DELETE CASCADE NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_declaration ADD CONSTRAINT FK_6289DC747597D3FE FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_declaration ADD CONSTRAINT FK_6289DC74BF1D0938 FOREIGN KEY (member_vehicle_id) REFERENCES member_vehicle (id) ON DELETE SET NULL NOT DEFERRABLE');
-        $this->addSql('ALTER TABLE time_and_travel_declaration ADD CONSTRAINT FK_6289DC742A15EB06 FOREIGN KEY (member_presence_id) REFERENCES member_presence (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_declaration ADD CONSTRAINT FK_6289DC7464CDAF82 FOREIGN KEY (export_id) REFERENCES time_and_travel_export (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_declaration ADD CONSTRAINT FK_6289DC7461190A32 FOREIGN KEY (club_id) REFERENCES club (id) ON DELETE CASCADE NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E01BDD81B FOREIGN KEY (generated_by_id) REFERENCES member (id) ON DELETE SET NULL NOT DEFERRABLE');

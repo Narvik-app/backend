@@ -18,7 +18,6 @@ use ApiPlatform\Metadata\Post;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Club;
 use App\Entity\ClubDependent\Member;
-use App\Entity\ClubDependent\Plugin\Presence\MemberPresence;
 use App\Entity\Interface\ClubLinkedEntityInterface;
 use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
@@ -125,7 +124,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 #[ApiFilter(DateFilter::class, properties: ['date' => DateFilter::EXCLUDE_NULL])]
 #[ApiFilter(OrderFilter::class, properties: ['date' => 'DESC', 'createdAt' => 'DESC'])]
-#[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'export.uuid' => 'exact', 'memberPresence.uuid' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'export.uuid' => 'exact'])]
 #[ApiFilter(MultipleFilter::class, properties: ['member.firstname', 'member.lastname', 'member.licence'])]
 #[ApiFilter(ExistsFilter::class, properties: ['export'])]
 #[ApiFilter(CurrentSeasonFilter::class, properties: ['date'])]
@@ -190,13 +189,6 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[Groups(['time-and-travel-declaration'])]
   #[ApiProperty(readableLink: true)]
   private ?MemberVehicle $memberVehicle = null;
-
-  /** Set only by the presence-page follow-up flow, links the declaration back to the presence it was prompted from */
-  #[ORM\ManyToOne(targetEntity: MemberPresence::class)]
-  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
-  #[Groups(['time-and-travel-declaration'])]
-  #[ApiProperty(readableLink: false)]
-  private ?MemberPresence $memberPresence = null;
 
   /** Set only once the declaration is attached to an export (comptable side); never client-writable */
   #[ORM\ManyToOne(targetEntity: TimeAndTravelExport::class, inversedBy: 'declarations')]
@@ -317,15 +309,6 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
 
   public function setMemberVehicle(?MemberVehicle $memberVehicle): static {
     $this->memberVehicle = $memberVehicle;
-    return $this;
-  }
-
-  public function getMemberPresence(): ?MemberPresence {
-    return $this->memberPresence;
-  }
-
-  public function setMemberPresence(?MemberPresence $memberPresence): static {
-    $this->memberPresence = $memberPresence;
     return $this;
   }
 
