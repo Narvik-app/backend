@@ -401,6 +401,76 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEqualsWithDelta(2 * (float) ClubSetting::DEFAULT_SMIC_HOURLY_RATE, $row['totalTimeAmount'], 0.001);
   }
 
+  public function testSummaryPerMemberRespectsTheDateRangeFilter(): void {
+    // Regression test: the summary endpoint used to ignore the date range entirely — it parsed
+    // plain start/end query params, but the frontend (matching the declarations list's own
+    // DateFilter/CurrentSeasonFilter) sends date[after]/date[before] or current-season[date]/
+    // previous-season[date] instead, so the filter was silently a no-op.
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_supervisor_club_1();
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => null,
+      'kilometers' => null,
+      'hours' => '3.00',
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'date' => new \DateTimeImmutable('2020-01-15'),
+    ]);
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => null,
+      'kilometers' => null,
+      'hours' => '5.00',
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'date' => new \DateTimeImmutable('2021-06-15'),
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1) . '/-/summary-per-member?date[after]=2020-01-01&date[before]=2020-12-31');
+    $this->assertResponseIsSuccessful();
+    $rows = $response->toArray()['member'];
+    $row = current(array_filter($rows, fn (array $r) => $r['memberUuid'] === $member->getUuid()->toString()));
+    $this->assertNotFalse($row);
+    $this->assertEquals(1, $row['declarationCount']);
+    $this->assertEqualsWithDelta(3.0, $row['totalHours'], 0.001);
+  }
+
+  public function testSummaryPerMemberRespectsTheCurrentSeasonFilter(): void {
+    // Same regression as above, but for the current-season[date] boolean filter used by the
+    // "Cette saison" quick-range option (as opposed to an explicit date[after]/date[before] range).
+    $club1 = _InitStory::club_1();
+    $member = _InitStory::MEMBER_supervisor_club_1();
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => null,
+      'kilometers' => null,
+      'hours' => '4.00',
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'date' => new \DateTimeImmutable(),
+    ]);
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => null,
+      'kilometers' => null,
+      'hours' => '6.00',
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+      'date' => new \DateTimeImmutable('-3 years'),
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1) . '/-/summary-per-member?current-season[date]=true');
+    $this->assertResponseIsSuccessful();
+    $rows = $response->toArray()['member'];
+    $row = current(array_filter($rows, fn (array $r) => $r['memberUuid'] === $member->getUuid()->toString()));
+    $this->assertNotFalse($row);
+    $this->assertEquals(1, $row['declarationCount']);
+    $this->assertEqualsWithDelta(4.0, $row['totalHours'], 0.001);
+  }
+
   public function testCsvExport(): void {
     $this->loggedAsAdminClub1();
     $this->makeGetCsvRequest($this->getRootWClubUrl(_InitStory::club_1()) . '.csv');

@@ -6,15 +6,19 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\Pagination\TraversablePaginator;
 use ApiPlatform\State\ProviderInterface;
+use App\Entity\Club;
 use App\Entity\ClubDependent\ClubSetting;
 use App\Enum\VehicleCategory;
 use App\Enum\VehicleEngineType;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubRepository;
 use App\Service\MileageRateCalculationService;
+use App\Service\SeasonService;
 use App\State\Trait\DateRangeQueryTrait;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Backs both:
@@ -23,6 +27,10 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * distinguished by the presence of `memberUuid` in $uriVariables.
  */
 final readonly class TimeAndTravelSummaryProvider implements ProviderInterface {
+  // Only paginateRows() is used from this trait — date-range parsing here is resolveDateRange()
+  // below instead, since this endpoint must follow the declarations list's own filter conventions
+  // (date[after]/date[before], current-season[date]/previous-season[date]), not the plain
+  // start/end query params this trait's parseDateRangeFilter() expects elsewhere (e.g. MetricProvider).
   use DateRangeQueryTrait;
 
   public function __construct(
@@ -53,12 +61,13 @@ final readonly class TimeAndTravelSummaryProvider implements ProviderInterface {
       $memberId = $member->getId();
     }
 
-    return $this->provideSummary($club->getId(), $memberId);
+    return $this->provideSummary($club, $memberId);
   }
 
-  private function provideSummary(int $clubId, ?int $memberId): TraversablePaginator|array {
+  private function provideSummary(Club $club, ?int $memberId): TraversablePaginator|array {
+    $clubId = $club->getId();
     $request = $this->requestStack->getCurrentRequest();
-    [$start, $end] = $this->parseDateRangeFilter($request);
+    [$start, $end] = $this->resolveDateRange($request, $club);
 
     $whereClauses = ['d.club_id = :clubId'];
     $params = ['clubId' => $clubId];
@@ -174,6 +183,50 @@ final readonly class TimeAndTravelSummaryProvider implements ProviderInterface {
     usort($rows, fn (array $a, array $b) => [$a['lastname'], $a['firstname']] <=> [$b['lastname'], $b['firstname']]);
 
     return $this->paginateRows($rows, $request);
+  }
+
+  /**
+   * Mirrors DateFilter/CurrentSeasonFilter/PreviousSeasonFilter as attached to
+   * TimeAndTravelDeclaration's `date` property on the declarations list — this endpoint bypasses
+   * API Platform's own filter resolution (raw SQL), so it has to replicate the same query param
+   * conventions the frontend already sends for that list: `current-season[date]`/`previous-season[date]`
+   * (booleans) take precedence, otherwise `date[after]`/`date[before]` (ISO dates, inclusive).
+   *
+   * @return array{0: ?\DateTimeImmutable, 1: ?\DateTimeImmutable}
+   */
+  private function resolveDateRange(?Request $request, Club $club): array {
+    if (!$request) {
+      return [null, null];
+    }
+
+    if ($this->toBoolean($request->query->all('current-season')['date'] ?? null)) {
+      $range = SeasonService::calculateStartEndDate($club, SeasonService::getCurrentSeasonEndDate($club));
+      return [$range['start'], $range['end']];
+    }
+
+    if ($this->toBoolean($request->query->all('previous-season')['date'] ?? null)) {
+      $range = SeasonService::calculateStartEndDate($club, SeasonService::getPreviousSeasonEndDate($club), null, false);
+      return [$range['start'], $range['end']];
+    }
+
+    $afterFilter = $request->query->all('date')['after'] ?? null;
+    $beforeFilter = $request->query->all('date')['before'] ?? null;
+    if (!$afterFilter && !$beforeFilter) {
+      return [null, null];
+    }
+
+    try {
+      $start = $afterFilter ? new \DateTimeImmutable($afterFilter . ' 00:00:00') : null;
+      $end = $beforeFilter ? new \DateTimeImmutable($beforeFilter . ' 23:59:59') : null;
+    } catch (\Exception $e) {
+      throw new BadRequestHttpException('Invalid date filter.', $e);
+    }
+
+    return [$start, $end];
+  }
+
+  private function toBoolean(mixed $value): bool {
+    return filter_var($value, FILTER_VALIDATE_BOOLEAN);
   }
 
   private function getSmicHourlyRate(int $clubId): float {
