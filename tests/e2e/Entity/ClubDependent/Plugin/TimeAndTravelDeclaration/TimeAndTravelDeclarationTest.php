@@ -7,6 +7,8 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclar
 use App\Enum\ClubRole;
 use App\Enum\Permission;
 use App\Enum\TimeAndTravelExportStatus;
+use App\Enum\VehicleCategory;
+use App\Enum\VehicleEngineType;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
@@ -352,6 +354,51 @@ class TimeAndTravelDeclarationTest extends AbstractEntityClubLinkedTestCase {
       'description' => 'Declared by supervisor',
     ]);
     $this->assertResponseStatusCodeSame(ResponseCodeEnum::created->value);
+  }
+
+  public function testSummaryPerMemberComputesTravelAmountFromTheOfficialMileageScale(): void {
+    // Regression test: TimeAndTravelSummaryProvider used to reference a nonexistent
+    // member_vehicle.fiscal_coefficient column, throwing a SQL error on every call and leaving the
+    // frontend boards stuck at 0. It must instead reuse MileageRateCalculationService per vehicle.
+    $club1 = _InitStory::club_1();
+    // A member other than MEMBER_member_club_1() — initDefaultFixtures() seeds 10 random
+    // declarations (with random vehicles/kilometers) for that one, which would contaminate the totals.
+    $member = _InitStory::MEMBER_supervisor_club_1();
+    // 5 CV car, tier 1 (up to 5 000 km): d * 0.636
+    $vehicle = MemberVehicleFactory::createOne([
+      'member' => $member,
+      'category' => VehicleCategory::car,
+      'fiscalPower' => 5,
+      'engineType' => VehicleEngineType::petrol,
+    ]);
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => $vehicle,
+      'kilometers' => 1000,
+      'hours' => null,
+      'departureLocation' => 'Home',
+      'arrivalLocation' => 'Club',
+    ]);
+    TimeAndTravelDeclarationFactory::createOne([
+      'member' => $member,
+      'memberVehicle' => null,
+      'kilometers' => null,
+      'hours' => '2.00',
+      'departureLocation' => null,
+      'arrivalLocation' => null,
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1) . '/-/summary-per-member');
+    $this->assertResponseIsSuccessful();
+    $rows = $response->toArray()['member'];
+    $row = current(array_filter($rows, fn (array $r) => $r['memberUuid'] === $member->getUuid()->toString()));
+    $this->assertNotFalse($row);
+    $this->assertEquals(2, $row['declarationCount']);
+    $this->assertEquals(1000, $row['totalKilometers']);
+    $this->assertEqualsWithDelta(2.0, $row['totalHours'], 0.001);
+    $this->assertEqualsWithDelta(636.0, $row['totalTravelAmount'], 0.01);
+    $this->assertEqualsWithDelta(2 * (float) ClubSetting::DEFAULT_SMIC_HOURLY_RATE, $row['totalTimeAmount'], 0.001);
   }
 
   public function testCsvExport(): void {

@@ -68,7 +68,7 @@ class TimeAndTravelExportGenerationService {
         ->setTotalTimeAmount(number_format($totals['totalTimeAmount'], 2, '.', ''))
         ->setTotalAmount(number_format($totals['totalAmount'], 2, '.', ''));
 
-      $pdfBytes = $this->pdfService->renderAttestation($export, $member, $memberDeclarations, $this->formatTotalsForTemplate($totals));
+      $pdfBytes = $this->pdfService->renderAttestation($export, $member, $this->formatTotalsForTemplate($totals));
       $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
       $attestation->setFile($file);
 
@@ -138,20 +138,36 @@ class TimeAndTravelExportGenerationService {
    * over that vehicle's total kilometers across every declaration in the period.
    *
    * @param TimeAndTravelDeclaration[] $declarations
-   * @return array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown: array}
+   * @return array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown: array, kilometerDeclarations: TimeAndTravelDeclaration[], timeDeclarations: TimeAndTravelDeclaration[], kilometerDeclarationsHours: float, timeOnlyHours: float}
    */
   private function computeTotals(array $declarations, float $smicRate): array {
     $totalKilometers = 0;
     $totalHours = 0.0;
 
+    // Split for display purposes: a kilometer-based trip vs a pure time declaration are shown in
+    // separate tables in the attestation — the state doesn't need to see volunteer hours that
+    // carry no kilometric reimbursement alongside the km trips.
+    $kilometerDeclarations = [];
+    $timeDeclarations = [];
+    $kilometerDeclarationsHours = 0.0;
+    $timeOnlyHours = 0.0;
+
     /** @var array<int, array{vehicle: MemberVehicle, kilometers: int}> $byVehicle */
     $byVehicle = [];
-    $flatRateTravelAmount = 0.0;
 
     foreach ($declarations as $declaration) {
       $kilometers = $declaration->getKilometers() ?? 0;
+      $hours = (float) ($declaration->getHours() ?? 0);
       $totalKilometers += $kilometers;
-      $totalHours += (float) ($declaration->getHours() ?? 0);
+      $totalHours += $hours;
+
+      if ($kilometers > 0) {
+        $kilometerDeclarations[] = $declaration;
+        $kilometerDeclarationsHours += $hours;
+      } else {
+        $timeDeclarations[] = $declaration;
+        $timeOnlyHours += $hours;
+      }
 
       $vehicle = $declaration->getMemberVehicle();
       if (!$vehicle || $kilometers <= 0) {
@@ -195,11 +211,15 @@ class TimeAndTravelExportGenerationService {
       'totalTimeAmount' => $totalTimeAmount,
       'totalAmount' => $totalTravelAmount + $totalTimeAmount,
       'vehicleBreakdown' => $vehicleBreakdown,
+      'kilometerDeclarations' => $kilometerDeclarations,
+      'timeDeclarations' => $timeDeclarations,
+      'kilometerDeclarationsHours' => $kilometerDeclarationsHours,
+      'timeOnlyHours' => $timeOnlyHours,
     ];
   }
 
   /**
-   * @param array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown?: array} $totals
+   * @param array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown?: array, kilometerDeclarations?: TimeAndTravelDeclaration[], timeDeclarations?: TimeAndTravelDeclaration[], kilometerDeclarationsHours?: float, timeOnlyHours?: float} $totals
    */
   private function formatTotalsForTemplate(array $totals): array {
     return [
@@ -210,6 +230,10 @@ class TimeAndTravelExportGenerationService {
       'totalTimeAmount' => number_format($totals['totalTimeAmount'], 2, '.', ''),
       'totalAmount' => number_format($totals['totalAmount'], 2, '.', ''),
       'vehicleBreakdown' => $totals['vehicleBreakdown'] ?? [],
+      'kilometerDeclarations' => $totals['kilometerDeclarations'] ?? [],
+      'timeDeclarations' => $totals['timeDeclarations'] ?? [],
+      'kilometerDeclarationsHours' => number_format($totals['kilometerDeclarationsHours'] ?? 0.0, 2, '.', ''),
+      'timeOnlyHours' => number_format($totals['timeOnlyHours'] ?? 0.0, 2, '.', ''),
       'electricBonusRatePercent' => (int) round($this->mileageRateCalculationService->getElectricBonusRate() * 100),
     ];
   }
