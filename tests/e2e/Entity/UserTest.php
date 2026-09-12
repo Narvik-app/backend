@@ -4,10 +4,12 @@ namespace App\Tests\e2e\Entity;
 
 use App\Entity\User;
 use App\Enum\ClubActivity;
+use App\Enum\Permission;
 use App\Enum\UserSecurityCodeTrigger;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityApiTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
 use App\Tests\Factory\MemberFactory;
+use App\Tests\Factory\MemberPermissionFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserSecurityCodeFactory;
 use App\Tests\Story\_InitStory;
@@ -73,6 +75,24 @@ class UserTest extends AbstractEntityApiTestCase {
 
     // They are sorted alphabetically
     $this->assertEquals($response->toArray()['linkedProfiles'][0]['club']['name'], 'Club 1');
+  }
+
+  /**
+   * A plain member's permission rows (e.g. leftover from a past supervisor demotion) must never
+   * surface on their linkedProfile — PermissionVoter itself ignores them for a non-supervisor role,
+   * so the frontend (which trusts this field for UI gating) must see the same thing.
+   */
+  public function testPlainMemberNeverSeesPermissionsEvenWithLeftoverRows(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    MemberPermissionFactory::createOne(['member' => $member, 'club' => $member->getClub(), 'permission' => Permission::TIME_TRAVEL_EDIT]);
+
+    $this->loggedAsMemberClub1();
+    $response = $this->makeGetRequest('/self');
+    $this->assertResponseIsSuccessful();
+
+    $profile = current(array_filter($response->toArray()['linkedProfiles'], fn (array $p) => ($p['member']['uuid'] ?? null) === $member->getUuid()->toString()));
+    $this->assertNotFalse($profile);
+    $this->assertEquals([], $profile['permissions']);
   }
 
   public function testPatch(): void {

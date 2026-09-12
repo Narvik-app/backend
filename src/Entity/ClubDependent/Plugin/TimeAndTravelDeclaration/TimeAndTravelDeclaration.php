@@ -29,6 +29,7 @@ use App\Filter\ClubDependent\CurrentSeasonFilter;
 use App\Filter\ClubDependent\PreviousSeasonFilter;
 use App\Filter\MultipleFilter;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationRepository;
+use App\Security\Voter\ClubBadgerVoter;
 use App\Security\Voter\SelfMemberVoter;
 use App\Security\Voter\TimeAndTravelSelfVoter;
 use App\State\TimeAndTravelDeclarationProcessor;
@@ -58,7 +59,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request)",
+      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', request) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', request)",
     ),
     new GetCollection(
       uriTemplate: '/clubs/{clubUuid}/time-and-travel-declarations/-/summary-per-member.{_format}',
@@ -74,17 +75,17 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
       uriVariables: [
         'clubUuid' => new Link(toProperty: 'club', fromClass: Club::class),
       ],
-      securityPostDenormalize: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', request) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
+      securityPostDenormalize: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', request) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', request) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
       read: false
     ),
     new Get(
-      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_READ."', object)",
+      security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', object) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_READ."', object)",
     ),
     new Patch(
-      security: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
+      security: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', object) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
     ),
     new Delete(
-      security: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
+      security: "is_granted('".Permission::TIME_TRAVEL_EDIT->value."', object) || is_granted('".ClubBadgerVoter::IS_CLUB_BADGER."', object) || is_granted('".TimeAndTravelSelfVoter::SELF_WRITE."', object)",
       processor: TimeAndTravelDeclarationProcessor::class,
     ),
   ],
@@ -124,7 +125,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 #[ApiFilter(DateFilter::class, properties: ['date' => DateFilter::EXCLUDE_NULL])]
 #[ApiFilter(OrderFilter::class, properties: ['date' => 'DESC', 'createdAt' => 'DESC'])]
-#[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'export.uuid' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['member.uuid' => 'exact', 'export.uuid' => 'exact', 'memberPresence.uuid' => 'exact'])]
 #[ApiFilter(MultipleFilter::class, properties: ['member.firstname', 'member.lastname', 'member.licence'])]
 #[ApiFilter(ExistsFilter::class, properties: ['export'])]
 #[ApiFilter(CurrentSeasonFilter::class, properties: ['date'])]
