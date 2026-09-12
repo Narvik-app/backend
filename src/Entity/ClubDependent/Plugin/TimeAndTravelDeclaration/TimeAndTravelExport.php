@@ -119,12 +119,12 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   private bool $isRegenerating = false;
 
   #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-  #[Groups(['time-and-travel-export', 'time-and-travel-export-write'])]
+  #[Groups(['time-and-travel-export', 'time-and-travel-export-write', 'time-and-travel-export-attestation'])]
   #[Assert\NotNull]
   private ?\DateTimeImmutable $startDate = null;
 
   #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-  #[Groups(['time-and-travel-export', 'time-and-travel-export-write'])]
+  #[Groups(['time-and-travel-export', 'time-and-travel-export-write', 'time-and-travel-export-attestation'])]
   #[Assert\NotNull]
   #[Assert\GreaterThanOrEqual(propertyPath: 'startDate')]
   private ?\DateTimeImmutable $endDate = null;
