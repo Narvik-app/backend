@@ -171,6 +171,7 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   #[ORM\Column(type: Types::DECIMAL, precision: 4, scale: 2, nullable: true)]
   #[Groups(['time-and-travel-declaration'])]
   #[Assert\Positive]
+  #[Assert\LessThanOrEqual(value: 24, message: 'Maximum 24 hours per declaration')]
   private ?string $hours = null;
 
   #[ORM\Column(length: self::DESCRIPTION_MAX_LENGTH)]
