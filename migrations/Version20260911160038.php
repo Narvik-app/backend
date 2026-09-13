@@ -27,7 +27,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE SEQUENCE mileage_rate_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE TABLE mileage_rate (id INT NOT NULL, category VARCHAR(255) NOT NULL, min_fiscal_power INT DEFAULT NULL, max_fiscal_power INT DEFAULT NULL, tier_order INT NOT NULL, tier_max_km INT DEFAULT NULL, rate NUMERIC(6, 4) NOT NULL, addend NUMERIC(8, 2) NOT NULL, PRIMARY KEY (id))');
         $this->seedMileageRates();
-        $this->addSql('CREATE TABLE member_vehicle (brand VARCHAR(255) NOT NULL, model VARCHAR(255) DEFAULT NULL, license_plate VARCHAR(20) NOT NULL, engine_type VARCHAR(255) NOT NULL, category VARCHAR(255) NOT NULL, fiscal_power INT NOT NULL, is_enabled BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE member_vehicle (brand VARCHAR(255) NOT NULL, model VARCHAR(255) DEFAULT NULL, license_plate TEXT NOT NULL, engine_type VARCHAR(255) NOT NULL, category VARCHAR(255) NOT NULL, fiscal_power INT NOT NULL, is_enabled BOOLEAN NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, member_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_A4745312D17F50A6 ON member_vehicle (uuid)');
         $this->addSql('CREATE INDEX IDX_A47453127597D3FE ON member_vehicle (member_id)');
         $this->addSql('CREATE INDEX IDX_A474531261190A32 ON member_vehicle (club_id)');
