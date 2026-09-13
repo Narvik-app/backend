@@ -100,10 +100,6 @@ class TimeAndTravelExportAttestation extends UuidEntity implements TimestampEnti
   #[Groups(['time-and-travel-export-attestation'])]
   private string $totalTimeAmount = '0.00';
 
-  /** Not directly exposed — read/written through getTotalAmount()/setTotalAmount() to avoid two competing property names in the serializer */
-  #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-  private string $totalAmountPersisted = '0.00';
-
   public function __construct() {
     parent::__construct();
   }
@@ -176,11 +172,6 @@ class TimeAndTravelExportAttestation extends UuidEntity implements TimestampEnti
 
   #[Groups(['time-and-travel-export-attestation'])]
   public function getTotalAmount(): float {
-    return (float) $this->totalAmountPersisted;
-  }
-
-  public function setTotalAmount(string $totalAmount): static {
-    $this->totalAmountPersisted = $totalAmount;
-    return $this;
+    return (float) $this->totalTravelAmount + (float) $this->totalTimeAmount;
   }
 }
