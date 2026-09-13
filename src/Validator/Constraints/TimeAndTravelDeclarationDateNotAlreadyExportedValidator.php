@@ -5,7 +5,6 @@ namespace App\Validator\Constraints;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportRepository;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
@@ -16,21 +15,19 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * Declarations already attached to an export are unaffected (their date is
  * frozen the moment the export locks, via TimeAndTravelDeclarationNotLocked).
  */
-final class TimeAndTravelDeclarationDateNotAlreadyExportedValidator extends ConstraintValidator {
+final class TimeAndTravelDeclarationDateNotAlreadyExportedValidator extends AbstractTimeAndTravelDeclarationValidator {
   public function __construct(
     private readonly TimeAndTravelExportRepository $exportRepository,
   ) {
   }
 
-  public function validate(mixed $value, Constraint $constraint): void {
+  protected function assertConstraintType(Constraint $constraint): void {
     if (!$constraint instanceof TimeAndTravelDeclarationDateNotAlreadyExported) {
       throw new UnexpectedTypeException($constraint, TimeAndTravelDeclarationDateNotAlreadyExported::class);
     }
+  }
 
-    if (!$value instanceof TimeAndTravelDeclaration) {
-      return;
-    }
-
+  protected function validateDeclaration(TimeAndTravelDeclaration $value, Constraint $constraint): void {
     // Already attached to an export: its own lock (not this constraint) governs editability.
     if ($value->getExport() !== null) {
       return;
