@@ -28,15 +28,13 @@ use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleRe
 use App\Security\Voter\ClubBadgerVoter;
 use App\Security\Voter\SelfMemberVoter;
 use App\Security\Voter\TimeAndTravelSelfVoter;
-use App\State\TimeAndTravelMemberVehicleProcessor;
+use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelMemberVehicleProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MemberVehicleRepository::class)]
-#[UniqueEntity(fields: ['member', 'licensePlate'], message: 'This vehicle is already registered for that member')]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/member-vehicles/{uuid}',
   operations: [
@@ -117,7 +115,7 @@ class MemberVehicle extends UuidEntity implements TimestampEntityInterface, Club
   #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
   private ?string $model = null;
 
-  #[ORM\Column(length: 20)]
+  #[ORM\Column(type: 'encrypted_string')]
   #[Groups(['member-vehicle', 'time-and-travel-declaration-read'])]
   #[Assert\NotBlank]
   #[Assert\Length(max: 20)]

@@ -91,7 +91,7 @@ class LoanTest extends AbstractEntityClubLinkedTestCase {
   }
 
   /**
-   * LoanItemNotAlreadyLoaned: creating a loan for an item that already has an open loan
+   * ItemNotAlreadyLoaned: creating a loan for an item that already has an open loan
    * must be rejected — enforced at the API layer, not just the frontend.
    */
   public function testCannotCreateLoanForAlreadyLoanedItem(): void {
@@ -106,7 +106,7 @@ class LoanTest extends AbstractEntityClubLinkedTestCase {
   }
 
   /**
-   * LoanItemMustBeAvailable: creating a loan for an item that isn't "available"
+   * ItemMustBeAvailable: creating a loan for an item that isn't "available"
    * (maintenance/sold/retired) must be rejected.
    */
   public function testCannotCreateLoanForUnavailableItem(): void {

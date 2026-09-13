@@ -6,7 +6,7 @@ use App\Enum\TimeAndTravelExportStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportRepository;
-use App\Service\TimeAndTravelExportGenerationService;
+use App\Service\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
