@@ -47,7 +47,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_53A200E07A88E00 ON time_and_travel_export (locked_by_id)');
         $this->addSql('CREATE INDEX IDX_53A200E0371F3A6E ON time_and_travel_export (unlocked_by_id)');
         $this->addSql('CREATE INDEX IDX_53A200E061190A32 ON time_and_travel_export (club_id)');
-        $this->addSql('CREATE TABLE time_and_travel_export_attestation (total_kilometers INT NOT NULL, total_hours NUMERIC(6, 2) NOT NULL, total_travel_amount NUMERIC(10, 2) NOT NULL, total_time_amount NUMERIC(10, 2) NOT NULL, total_amount_persisted NUMERIC(10, 2) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, export_id INT NOT NULL, member_id INT DEFAULT NULL, file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE time_and_travel_export_attestation (total_kilometers INT NOT NULL, total_hours NUMERIC(6, 2) NOT NULL, total_travel_amount NUMERIC(10, 2) NOT NULL, total_time_amount NUMERIC(10, 2) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, export_id INT NOT NULL, member_id INT DEFAULT NULL, file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_C234D076D17F50A6 ON time_and_travel_export_attestation (uuid)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_C234D07693CB796C ON time_and_travel_export_attestation (file_id)');
         $this->addSql('CREATE INDEX IDX_C234D07664CDAF82 ON time_and_travel_export_attestation (export_id)');

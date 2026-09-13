@@ -66,8 +66,7 @@ class TimeAndTravelExportGenerationService {
         ->setTotalKilometers($totals['totalKilometers'])
         ->setTotalHours($formattedTotals['totalHours'])
         ->setTotalTravelAmount($formattedTotals['totalTravelAmount'])
-        ->setTotalTimeAmount($formattedTotals['totalTimeAmount'])
-        ->setTotalAmount($formattedTotals['totalAmount']);
+        ->setTotalTimeAmount($formattedTotals['totalTimeAmount']);
 
       $pdfBytes = $this->pdfService->renderAttestation($export, $member, $formattedTotals);
       $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
