@@ -3,7 +3,7 @@
 namespace App\EventSubscriber\Doctrine;
 
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
-use App\Service\MileageRateCalculationService;
+use App\Service\Plugin\TimeAndTravelDeclaration\MileageRateCalculationService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PostLoadEventArgs;
 

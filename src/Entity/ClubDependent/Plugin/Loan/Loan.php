@@ -26,10 +26,10 @@ use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRepository;
 use App\Security\Voter\LoanVoter;
 use App\Service\UtilsService;
-use App\Validator\Constraints\LoanBackdateAllowed;
-use App\Validator\Constraints\LoanEditableToday;
-use App\Validator\Constraints\LoanItemMustBeAvailable;
-use App\Validator\Constraints\LoanItemNotAlreadyLoaned;
+use App\Validator\Constraints\Plugin\Loan\BackdateAllowed;
+use App\Validator\Constraints\Plugin\Loan\EditableToday;
+use App\Validator\Constraints\Plugin\Loan\ItemMustBeAvailable;
+use App\Validator\Constraints\Plugin\Loan\ItemNotAlreadyLoaned;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -37,10 +37,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LoanRepository::class)]
 #[ORM\Index(name: 'idx_loan_club_start_date', columns: ['club_id', 'start_date'])]
-#[LoanItemNotAlreadyLoaned]
-#[LoanItemMustBeAvailable]
-#[LoanEditableToday]
-#[LoanBackdateAllowed]
+#[ItemNotAlreadyLoaned]
+#[ItemMustBeAvailable]
+#[EditableToday]
+#[BackdateAllowed]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loans/{uuid}',
   operations: [
