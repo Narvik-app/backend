@@ -19,6 +19,8 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * access is granted here instead, mirroring SelfMemberVoter.
  */
 class TimeAndTravelSelfVoter extends Voter {
+  use SelfProfileMatchTrait;
+
   public const string SELF_READ = 'TIME_TRAVEL_SELF_READ';
   public const string SELF_WRITE = 'TIME_TRAVEL_SELF_WRITE';
 
@@ -69,36 +71,10 @@ class TimeAndTravelSelfVoter extends Voter {
   }
 
   private function voteForEntity(TimeAndTravelDeclaration|MemberVehicle $subject, User $user): bool {
-    $member = $subject->getMember();
-    if (!$member) {
-      return false;
-    }
-
-    $linkedProfiles = $user->getLinkedProfiles();
-    $found = array_find(
-      $linkedProfiles->toArray(),
-      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $member->getUuid()->toString()
-    );
-    return $found !== null;
+    return $this->isLinkedToMember($user, $subject->getMember());
   }
 
   private function voteFromRequest(Request $request, User $user): bool {
-    $memberUuid = $request->attributes->get("memberUuid");
-    $clubUuid = $request->attributes->get("clubUuid");
-
-    $linkedProfiles = $user->getLinkedProfiles();
-    $found = array_find(
-      $linkedProfiles->toArray(),
-      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $memberUuid
-    );
-
-    if ($found === null) {
-      return false;
-    }
-
-    if ($clubUuid) { // We match also the club
-      return $found->getClub()->getUuid()->toString() === $clubUuid;
-    }
-    return true;
+    return $this->voteFromRequestForSelf($request, $user);
   }
 }
