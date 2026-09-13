@@ -3,7 +3,7 @@
 namespace App\Controller\ClubDependent\Plugin\Presence;
 
 use App\Controller\Abstract\AbstractClubDependentController;
-use App\Service\MemberPresenceService;
+use App\Service\Plugin\Presence\MemberPresenceService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
