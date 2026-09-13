@@ -15,6 +15,8 @@ use App\Repository\GlobalSettingRepository;
 class MileageRateCalculationService {
   public const string DEFAULT_ELECTRIC_BONUS_RATE = '0.20';
 
+  private ?float $electricBonusRate = null;
+
   public function __construct(
     private readonly MileageRateRepository $rateRepository,
     private readonly GlobalSettingRepository $globalSettingRepository,
@@ -22,8 +24,12 @@ class MileageRateCalculationService {
   }
 
   public function getElectricBonusRate(): float {
-    $setting = $this->globalSettingRepository->findOneByName(GlobalSettingEnum::TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE->name);
-    return (float) ($setting?->getValue() ?? self::DEFAULT_ELECTRIC_BONUS_RATE);
+    if ($this->electricBonusRate === null) {
+      $setting = $this->globalSettingRepository->findOneByName(GlobalSettingEnum::TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE->name);
+      $this->electricBonusRate = (float) ($setting?->getValue() ?? self::DEFAULT_ELECTRIC_BONUS_RATE);
+    }
+
+    return $this->electricBonusRate;
   }
 
   /**

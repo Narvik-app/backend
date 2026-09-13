@@ -16,6 +16,8 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class SelfMemberVoter extends Voter {
+  use SelfProfileMatchTrait;
+
   public const string READ = 'SELF_READ';
   public const string EDIT_PROFILE_IMAGE = 'SELF_EDIT_PROFILE_IMAGE';
 
@@ -61,31 +63,10 @@ class SelfMemberVoter extends Voter {
   }
 
   private function voteForMemberEntity(Member $member, User $user): bool {
-    $linkedProfiles = $user->getLinkedProfiles();
-    $found = array_find(
-      $linkedProfiles->toArray(),
-      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $member->getUuid()->toString()
-    );
-    return $found !== null;
+    return $this->isLinkedToMember($user, $member);
   }
 
   private function voteFromRequest(Request $request, User $user): bool {
-    $memberUuid = $request->attributes->get("memberUuid");
-    $clubUUid = $request->attributes->get("clubUuid");
-
-    $linkedProfiles = $user->getLinkedProfiles();
-    $found = array_find(
-      $linkedProfiles->toArray(),
-      fn($linkedProfile) => $linkedProfile->getMember()?->getUuid()->toString() === $memberUuid
-    );
-
-    if ($found === null) {
-      return false;
-    }
-
-    if ($clubUUid) { // We match also the club
-      return $found->getClub()->getUuid()->toString() === $clubUUid;
-    }
-    return true;
+    return $this->voteFromRequestForSelf($request, $user);
   }
 }

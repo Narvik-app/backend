@@ -4,7 +4,6 @@ namespace App\Validator\Constraints;
 
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
@@ -14,16 +13,14 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * (its category/fiscalPower look up a row in the official mileage scale), so
  * a kilometers-only declaration with no vehicle would have no way to be valued.
  */
-final class TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometersValidator extends ConstraintValidator {
-  public function validate(mixed $value, Constraint $constraint): void {
+final class TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometersValidator extends AbstractTimeAndTravelDeclarationValidator {
+  protected function assertConstraintType(Constraint $constraint): void {
     if (!$constraint instanceof TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers) {
       throw new UnexpectedTypeException($constraint, TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers::class);
     }
+  }
 
-    if (!$value instanceof TimeAndTravelDeclaration) {
-      return;
-    }
-
+  protected function validateDeclaration(TimeAndTravelDeclaration $value, Constraint $constraint): void {
     if (!$value->getKilometers()) {
       return;
     }

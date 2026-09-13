@@ -7,13 +7,15 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclar
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Twig\Environment;
 
 class TimeAndTravelPdfService {
+  /** @var array<string, ?string> */
+  private array $logoBase64Cache = [];
+
   public function __construct(
     private readonly Environment $twig,
-    private readonly ContainerBagInterface $params,
+    private readonly FileService $fileService,
   ) {
   }
 
@@ -68,21 +70,15 @@ class TimeAndTravelPdfService {
 
   private function getClubLogoBase64(TimeAndTravelExport $export): ?string {
     $logo = $export->getClub()?->getSettings()?->getLogo();
-    if (!$logo) {
+    if (!$logo || !$logo->getUuid()) {
       return null;
     }
 
-    $filesFolder = $this->params->get('app.files');
-    $path = $filesFolder . $logo->getPath();
-    if (!is_file($path)) {
-      return null;
+    $cacheKey = $logo->getUuid()->toString();
+    if (!array_key_exists($cacheKey, $this->logoBase64Cache)) {
+      $this->logoBase64Cache[$cacheKey] = $this->fileService->getFileDataUri($logo);
     }
 
-    $contents = file_get_contents($path);
-    if ($contents === false) {
-      return null;
-    }
-
-    return 'data:' . $logo->getMimeType() . ';base64,' . base64_encode($contents);
+    return $this->logoBase64Cache[$cacheKey];
   }
 }

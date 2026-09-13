@@ -4,19 +4,16 @@ namespace App\Validator\Constraints;
 
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-final class TimeAndTravelDeclarationRequiresKilometersOrHoursValidator extends ConstraintValidator {
-  public function validate(mixed $value, Constraint $constraint): void {
+final class TimeAndTravelDeclarationRequiresKilometersOrHoursValidator extends AbstractTimeAndTravelDeclarationValidator {
+  protected function assertConstraintType(Constraint $constraint): void {
     if (!$constraint instanceof TimeAndTravelDeclarationRequiresKilometersOrHours) {
       throw new UnexpectedTypeException($constraint, TimeAndTravelDeclarationRequiresKilometersOrHours::class);
     }
+  }
 
-    if (!$value instanceof TimeAndTravelDeclaration) {
-      return;
-    }
-
+  protected function validateDeclaration(TimeAndTravelDeclaration $value, Constraint $constraint): void {
     $hasKilometers = $value->getKilometers() !== null && $value->getKilometers() > 0;
     $hasHours = $value->getHours() !== null && (float) $value->getHours() > 0;
 
