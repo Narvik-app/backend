@@ -14,7 +14,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\ClubRole;
 use App\Repository\ClubDependent\Plugin\Sale\InventoryItemHistoryRepository;
-use App\State\InventoryItemHistoryProvider;
+use App\State\Plugin\Sale\InventoryItemHistoryProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;

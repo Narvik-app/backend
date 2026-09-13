@@ -31,12 +31,12 @@ use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDe
 use App\Security\Voter\ClubBadgerVoter;
 use App\Security\Voter\SelfMemberVoter;
 use App\Security\Voter\TimeAndTravelSelfVoter;
-use App\State\TimeAndTravelDeclarationProcessor;
-use App\State\TimeAndTravelSummaryProvider;
-use App\Validator\Constraints\TimeAndTravelDeclarationDateNotAlreadyExported;
-use App\Validator\Constraints\TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers;
-use App\Validator\Constraints\TimeAndTravelDeclarationNotLocked;
-use App\Validator\Constraints\TimeAndTravelDeclarationRequiresKilometersOrHours;
+use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationProcessor;
+use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelSummaryProvider;
+use App\Validator\Constraints\Plugin\TimeAndTravelDeclaration\DateNotAlreadyExported;
+use App\Validator\Constraints\Plugin\TimeAndTravelDeclaration\DistanceFieldsRequiredWithKilometers;
+use App\Validator\Constraints\Plugin\TimeAndTravelDeclaration\NotLocked;
+use App\Validator\Constraints\Plugin\TimeAndTravelDeclaration\RequiresKilometersOrHours;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -46,10 +46,10 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity(repositoryClass: TimeAndTravelDeclarationRepository::class)]
 #[ORM\Index(name: 'idx_tt_declaration_club_date', columns: ['club_id', 'date'])]
 #[ORM\Index(name: 'idx_tt_declaration_member_date', columns: ['member_id', 'date'])]
-#[TimeAndTravelDeclarationNotLocked]
-#[TimeAndTravelDeclarationRequiresKilometersOrHours]
-#[TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers]
-#[TimeAndTravelDeclarationDateNotAlreadyExported]
+#[NotLocked]
+#[RequiresKilometersOrHours]
+#[DistanceFieldsRequiredWithKilometers]
+#[DateNotAlreadyExported]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/time-and-travel-declarations/{uuid}',
   operations: [
@@ -151,7 +151,7 @@ class TimeAndTravelDeclaration extends UuidEntity implements TimestampEntityInte
   /** Kept longer than the location fields since it is free-form but still bounded for the exports. */
   public const int DESCRIPTION_MAX_LENGTH = 50;
 
-  /** Only relevant (and required, see TimeAndTravelDeclarationDistanceFieldsRequiredWithKilometers) when kilometers is declared */
+  /** Only relevant (and required, see DistanceFieldsRequiredWithKilometers) when kilometers is declared */
   #[ORM\Column(length: self::LOCATION_MAX_LENGTH, nullable: true)]
   #[Groups(['time-and-travel-declaration'])]
   #[Assert\Length(max: self::LOCATION_MAX_LENGTH)]
