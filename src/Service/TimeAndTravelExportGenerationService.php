@@ -58,17 +58,18 @@ class TimeAndTravelExportGenerationService {
     foreach ($byMember as $memberDeclarations) {
       $member = $memberDeclarations[0]->getMember();
       $totals = $this->computeTotals($memberDeclarations, $smicRateFloat);
+      $formattedTotals = $this->formatTotalsForTemplate($totals);
 
       $attestation = new TimeAndTravelExportAttestation();
       $attestation
         ->setMember($member)
         ->setTotalKilometers($totals['totalKilometers'])
-        ->setTotalHours(number_format($totals['totalHours'], 2, '.', ''))
-        ->setTotalTravelAmount(number_format($totals['totalTravelAmount'], 2, '.', ''))
-        ->setTotalTimeAmount(number_format($totals['totalTimeAmount'], 2, '.', ''))
-        ->setTotalAmount(number_format($totals['totalAmount'], 2, '.', ''));
+        ->setTotalHours($formattedTotals['totalHours'])
+        ->setTotalTravelAmount($formattedTotals['totalTravelAmount'])
+        ->setTotalTimeAmount($formattedTotals['totalTimeAmount'])
+        ->setTotalAmount($formattedTotals['totalAmount']);
 
-      $pdfBytes = $this->pdfService->renderAttestation($export, $member, $this->formatTotalsForTemplate($totals));
+      $pdfBytes = $this->pdfService->renderAttestation($export, $member, $formattedTotals);
       $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
       $attestation->setFile($file);
 
@@ -80,10 +81,10 @@ class TimeAndTravelExportGenerationService {
         'memberLicence' => $member->getLicence(),
         'declarationCount' => count($memberDeclarations),
         'totalKilometers' => $totals['totalKilometers'],
-        'totalHours' => number_format($totals['totalHours'], 2, '.', ''),
-        'totalTravelAmount' => number_format($totals['totalTravelAmount'], 2, '.', ''),
-        'totalTimeAmount' => number_format($totals['totalTimeAmount'], 2, '.', ''),
-        'totalAmount' => number_format($totals['totalAmount'], 2, '.', ''),
+        'totalHours' => $formattedTotals['totalHours'],
+        'totalTravelAmount' => $formattedTotals['totalTravelAmount'],
+        'totalTimeAmount' => $formattedTotals['totalTimeAmount'],
+        'totalAmount' => $formattedTotals['totalAmount'],
       ];
 
       $grandTotals['declarationCount'] += count($memberDeclarations);
