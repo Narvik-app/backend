@@ -8,7 +8,7 @@
   </p>
 
   <p>
-    {{ club.name }} atteste que {{ member.fullName }} a renoncé au remboursement des frais
+      <i>{{ club.name }}</i> atteste que {{ member.fullName }} a renoncé au remboursement des frais
     engagés dans le cadre de son activité bénévole au sein de l'association, décrits ci-dessous.
   </p>
 
@@ -20,8 +20,8 @@
       <th>Trajet</th>
       <th class="text-right">Km</th>
       <th class="text-right">Heures</th>
-      <th>Véhicule</th>
       <th>Motif</th>
+      <th>Véhicule</th>
     </tr>
     </thead>
     <tbody>
@@ -35,12 +35,12 @@
         </td>
         <td class="text-right">{{ declaration.kilometers }}</td>
         <td class="text-right">{{ declaration.hours }}</td>
+        <td>{{ declaration.description }}</td>
         <td>
           {% if declaration.memberVehicle %}
             {{ declaration.memberVehicle.brand }} {{ declaration.memberVehicle.model }} — {{ declaration.memberVehicle.licensePlate }}
           {% endif %}
         </td>
-        <td>{{ declaration.description }}</td>
       </tr>
     {% else %}
       <tr><td colspan="6"><i>Aucune déclaration kilométrique</i></td></tr>
@@ -125,7 +125,7 @@
 
   <p style="margin-top: 40px;">
     {{ member.fullName }} déclare renoncer expressément au remboursement des frais kilométriques
-    ci-dessus, soit <strong>{{ totals.totalTravelAmount }} €</strong>, et en faire don à {{ club.name }}. <br/>
+    ci-dessus, soit <strong>{{ totals.totalTravelAmount }} €</strong>, et en faire don à <i>{{ club.name }}</i>. <br/>
     Seuls ces frais kilométriques sont éligibles à la réduction d'impôt prévue par l'article 200 du
     Code Général des Impôts. <br/>
     Le temps de bénévolat valorisé ci-dessus n'entre pas dans ce don et ne peut pas y ouvrir droit. <br/><br/>
