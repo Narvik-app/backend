@@ -1,0 +1,46 @@
+{% extends 'pdf/layout.html.twig' %}
+
+{% block content %}
+  <h1>Récapitulatif des déclarations de temps & kilomètres</h1>
+  <h2>Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}</h2>
+
+  <table>
+    <thead>
+    <tr>
+      <th>Membre</th>
+      <th>Licence</th>
+      <th class="text-right">Déclarations</th>
+      <th class="text-right">Kilomètres</th>
+      <th class="text-right">Heures</th>
+      <th class="text-right">Frais km</th>
+      <th class="text-right">Valorisation temps</th>
+      <th class="text-right">Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td>{{ row.memberName }}</td>
+        <td>{{ row.memberLicence }}</td>
+        <td class="text-right">{{ row.declarationCount }}</td>
+        <td class="text-right">{{ row.totalKilometers }}</td>
+        <td class="text-right">{{ row.totalHours }}</td>
+        <td class="text-right">{{ row.totalTravelAmount }} €</td>
+        <td class="text-right">{{ row.totalTimeAmount }} €</td>
+        <td class="text-right">{{ row.totalAmount }} €</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+      <td colspan="2">Total</td>
+      <td class="text-right">{{ totals.declarationCount }}</td>
+      <td class="text-right">{{ totals.totalKilometers }}</td>
+      <td class="text-right">{{ totals.totalHours }}</td>
+      <td class="text-right">{{ totals.totalTravelAmount }} €</td>
+      <td class="text-right">{{ totals.totalTimeAmount }} €</td>
+      <td class="text-right">{{ totals.totalAmount }} €</td>
+    </tr>
+    </tfoot>
+  </table>
+{% endblock %}

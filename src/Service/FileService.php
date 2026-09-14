@@ -217,12 +217,34 @@ class FileService {
   }
 
   private function setDataUri($imagePath, ExposedFile $image): void {
-    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-    $type = $finfo->file($imagePath);
-
-    $data = "data:$type;base64," . base64_encode(file_get_contents($imagePath));
+    [$type, $data] = $this->computeDataUri($imagePath);
     $image->setMimeType($type)
           ->setBase64($data);
+  }
+
+  /**
+   * Returns the file's contents as a base64 data URI, or null if it isn't stored on disk.
+   */
+  public function getFileDataUri(FileEntity $file): ?string {
+    $filesFolder = $this->params->get('app.files');
+    $path = "$filesFolder/{$file->getPath()}";
+
+    if (!$this->fs->exists($path)) {
+      return null;
+    }
+
+    [, $data] = $this->computeDataUri($path);
+    return $data;
+  }
+
+  /**
+   * @return array{0: string, 1: string} [mimeType, dataUri]
+   */
+  private function computeDataUri(string $path): array {
+    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+    $type = $finfo->file($path);
+
+    return [$type, "data:$type;base64," . base64_encode(file_get_contents($path))];
   }
 
   private function getUniqueFilename(SfFile $file, string $path): string {

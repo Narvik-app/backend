@@ -388,11 +388,16 @@ class User extends UuidEntity implements UserInterface, PasswordAuthenticatedUse
           }
         }
 
+        // Mirrors PermissionVoter: a member's permission rows/template only ever count while they
+        // actually hold a supervisor role — a plain member must never see permission-gated UI,
+        // even if leftover MemberPermission rows exist from a past supervisor demotion.
+        $permissions = $membership->getRole()->hasSupervisorRole() ? ($membership->getMember()?->getEffectivePermissions() ?? []) : [];
+
         $profile
           ->setId($id)
           ->setDisplayName($displayName)
           ->setClub($club)
-          ->setPermissions($membership->getMember()?->getEffectivePermissions() ?? []);
+          ->setPermissions($permissions);
 
         $userClubs[] = $profile;
       }
