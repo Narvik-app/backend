@@ -58,6 +58,9 @@
 
   {% if totals.timeDeclarations|length %}
     <p style="margin-top: 16px; margin-bottom: 4px;"><strong>Temps de bénévolat (sans kilomètres)</strong></p>
+    <p style="font-size: 9px; color: #666;margin-top: -8px; margin-bottom: -8px;">
+      Taux horaire appliqué : {{ export.smicHourlyRate }} € / heure
+    </p>
     <table>
       <thead>
       <tr>
