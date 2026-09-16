@@ -12,6 +12,7 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicle;
 use App\Enum\FileCategory;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationRepository;
 use App\Service\FileService;
+use App\Service\ZipService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\File\File as SfFile;
 
@@ -26,6 +27,7 @@ class TimeAndTravelExportGenerationService {
     private readonly TimeAndTravelDeclarationRepository $declarationRepository,
     private readonly TimeAndTravelPdfService $pdfService,
     private readonly FileService $fileService,
+    private readonly ZipService $zipService,
     private readonly MileageRateCalculationService $mileageRateCalculationService,
   ) {
   }
@@ -55,6 +57,7 @@ class TimeAndTravelExportGenerationService {
     $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
     $recapRows = [];
     $grandTotals = ['declarationCount' => 0, 'totalKilometers' => 0, 'totalHours' => 0.0, 'totalTravelAmount' => 0.0, 'totalTimeAmount' => 0.0, 'totalAmount' => 0.0];
+    $attestationFiles = [];
 
     foreach ($byMember as $memberDeclarations) {
       $member = $memberDeclarations[0]->getMember();
@@ -72,6 +75,7 @@ class TimeAndTravelExportGenerationService {
       $pdfBytes = $this->pdfService->renderAttestation($export, $member, $formattedTotals);
       $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
       $attestation->setFile($file);
+      $attestationFiles[] = $file;
 
       $export->addAttestation($attestation);
       $this->entityManager->persist($attestation);
@@ -99,6 +103,15 @@ class TimeAndTravelExportGenerationService {
     $recapFile = $this->persistPdf($recapBytes, $this->slugFilename('recapitulatif', $club?->getName() ?? 'club', $export), FileCategory::time_and_travel_recap, $club);
     $export->setRecapFile($recapFile);
 
+    $zipFile = $this->zipService->createZip(
+      [$recapFile, ...$attestationFiles],
+      $this->slugFilename('export', $club?->getName() ?? 'club', $export, 'zip'),
+      FileCategory::time_and_travel_export_bundle,
+      club: $club,
+      flush: false,
+    );
+    $export->setZipFile($zipFile);
+
     $this->entityManager->flush();
   }
 
@@ -116,6 +129,12 @@ class TimeAndTravelExportGenerationService {
       $this->fileService->remove($export->getRecapFile());
       $this->entityManager->remove($export->getRecapFile());
       $export->setRecapFile(null);
+    }
+
+    if ($export->getZipFile()) {
+      $this->fileService->remove($export->getZipFile());
+      $this->entityManager->remove($export->getZipFile());
+      $export->setZipFile(null);
     }
 
     foreach ($export->getAttestations() as $attestation) {
@@ -248,9 +267,9 @@ class TimeAndTravelExportGenerationService {
     return $this->fileService->importFile($sfFile, $filename, $category, isPublic: false, club: $club, flush: false);
   }
 
-  private function slugFilename(string $prefix, string $name, TimeAndTravelExport $export): string {
+  private function slugFilename(string $prefix, string $name, TimeAndTravelExport $export, string $extension = 'pdf'): string {
     $slug = strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '-', $name));
     $period = $export->getStartDate()?->format('Ymd') . '-' . $export->getEndDate()?->format('Ymd');
-    return "{$prefix}-{$slug}-{$period}.pdf";
+    return "{$prefix}-{$slug}-{$period}.{$extension}";
   }
 }
