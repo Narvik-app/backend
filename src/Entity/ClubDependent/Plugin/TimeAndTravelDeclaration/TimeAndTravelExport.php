@@ -29,6 +29,7 @@ use App\Enum\TimeAndTravelExportStatus;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportRepository;
 use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportDeleteProcessor;
 use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportProcessor;
+use App\Validator\Constraints\Plugin\TimeAndTravelDeclaration\PeriodNotOverlappingAnotherExport;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -38,6 +39,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TimeAndTravelExportRepository::class)]
 #[ORM\Index(name: 'idx_tt_export_club_status', columns: ['club_id', 'status'])]
+#[PeriodNotOverlappingAnotherExport]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/time-and-travel-exports/{uuid}',
   operations: [
