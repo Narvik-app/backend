@@ -65,6 +65,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     'groups' => ['club-setting', 'club-setting-write'],
   ], order: ['name' => 'asc'],)]
 class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
+  public const string DEFAULT_SMIC_HOURLY_RATE = '12.31';
+
   public static function getClubSqlPath(): string {
     return "club";
   }
@@ -103,6 +105,12 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   #[Groups(['common-read', 'club-setting-read'])]
   private ?Season $currentSeason = null;
+
+  /** SMIC hourly rate used to value declared time in the time-and-travel plugin */
+  #[ORM\Column(type: \Doctrine\DBAL\Types\Types::DECIMAL, precision: 6, scale: 2, nullable: true)]
+  #[Groups(['club-setting'])]
+  #[Assert\Positive]
+  private ?string $smicHourlyRate = null;
 
   public function __construct() {
     parent::__construct();
@@ -193,6 +201,15 @@ class ClubSetting extends UuidEntity implements ClubLinkedEntityInterface {
 
   public function setEmailReplyTo(?string $emailReplyTo): static {
     $this->emailReplyTo = $emailReplyTo;
+    return $this;
+  }
+
+  public function getSmicHourlyRate(): ?string {
+    return $this->smicHourlyRate ?? self::DEFAULT_SMIC_HOURLY_RATE;
+  }
+
+  public function setSmicHourlyRate(?string $smicHourlyRate): static {
+    $this->smicHourlyRate = $smicHourlyRate;
     return $this;
   }
 }

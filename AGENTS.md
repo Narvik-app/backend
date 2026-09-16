@@ -60,15 +60,29 @@ The application uses a **plugin-based architecture** under `src/Entity/ClubDepen
 
 ```
 src/Entity/ClubDependent/Plugin/
-├── Emailing/         # Email management functionality
-│   ├── Email.php
-│   └── EmailTemplate.php
-└── Presence/         # Member presence tracking
-    ├── ExternalPresence.php
-    └── MemberPresence.php
+├── Emailing/                  # Email management functionality
+├── Loan/                      # Item loan tracking
+├── Presence/                  # Member presence tracking
+├── Sale/                      # Point-of-sale / inventory
+└── TimeAndTravelDeclaration/  # Volunteer time & mileage declarations
 ```
 
 Each plugin module represents a separate feature set that clubs can optionally use, making the system highly flexible and modular.
+
+**The same `Plugin/<PluginName>/` grouping is mirrored in every layer a plugin touches**, not just `Entity/`:
+
+```
+src/Repository/ClubDependent/Plugin/<PluginName>/
+src/State/Plugin/<PluginName>/
+src/Service/Plugin/<PluginName>/
+src/Validator/Constraints/Plugin/<PluginName>/
+```
+
+A class only goes under `Plugin/<PluginName>/` if it is specific to that plugin (its entity lives under `Entity/.../Plugin/<PluginName>/`, or it only makes sense in that plugin's context). Anything generic (shared across plugins, or belonging to a core entity like `Member`/`Club`) stays directly under `Repository/`, `State/`, `Service/`, or `Validator/Constraints/` — do not nest it under `Plugin/` just because it happens to be used by a plugin.
+
+When adding a class for a plugin (a repository, a state processor/provider, a service, or a validation constraint), put it in the matching `Plugin/<PluginName>/` subfolder in that layer, creating the plugin subfolder if it doesn't exist yet — don't drop it flat alongside the generic classes.
+
+Note: `Validator/Constraints/` classes also drop the plugin name prefix from the class name once nested (the namespace already carries it), e.g. `TimeAndTravelDeclarationNotLocked` becomes `Plugin\TimeAndTravelDeclaration\NotLocked`. `Repository/`, `State/` and `Service/` classes keep their full descriptive name even when nested (e.g. `Plugin\Loan\LoanItemRepository`, not `Plugin\Loan\ItemRepository`) — only shorten the class name where doing so doesn't blur which entity/feature it's about.
 
 ### Configuration (`config/`)
 ```
