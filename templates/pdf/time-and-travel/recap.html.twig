@@ -3,6 +3,9 @@
 {% block content %}
   <h1>Récapitulatif des déclarations de temps & kilomètres</h1>
   <h2>Période du {{ export.startDate|date('d/m/Y') }} au {{ export.endDate|date('d/m/Y') }}</h2>
+  <p style="font-size: 9px; color: #666; margin-top: -8px; margin-bottom: -8px;">
+    Taux horaire appliqué : {{ export.smicHourlyRate }} € / heure
+  </p>
 
   <table>
     <thead>
