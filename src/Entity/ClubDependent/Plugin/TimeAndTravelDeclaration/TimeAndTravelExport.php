@@ -55,6 +55,7 @@ use Symfony\Component\Validator\Constraints as Assert;
       ],
       security: "is_granted('".Permission::TIME_TRAVEL_EXPORT->value."', request)",
       processor: TimeAndTravelExportProcessor::class,
+      read: false,
     ),
     new Get(
       security: "is_granted('".Permission::TIME_TRAVEL_ACCESS->value."', object)",
