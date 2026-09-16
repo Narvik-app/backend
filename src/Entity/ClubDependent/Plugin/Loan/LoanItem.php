@@ -28,7 +28,7 @@ use App\Entity\Trait\TimestampTrait;
 use App\Enum\LoanItemStatus;
 use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanItemRepository;
-use App\State\LoanItemUsageProvider;
+use App\State\Plugin\Loan\LoanItemUsageProvider;
 use App\Service\UtilsService;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;

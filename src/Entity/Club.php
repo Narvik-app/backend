@@ -104,6 +104,11 @@ class Club extends UuidEntity implements TimestampEntityInterface {
   #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
   private bool $loansEnabled = false;
 
+  #[ORM\Column(options: ['default' => false])]
+  #[Groups(['club-read', 'super-admin-write'])]
+  #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
+  private bool $timeAndTravelEnabled = false;
+
   #[ORM\Column(options: ['default' => 0])]
   #[Groups(['club-read', 'super-admin-write'])]
   #[ApiProperty(securityPostDenormalize: "is_granted('".ClubRole::supervisor->value."', object)")] // Property can be read by club admin/supervisor
@@ -235,6 +240,15 @@ class Club extends UuidEntity implements TimestampEntityInterface {
 
   public function setLoansEnabled(bool $loansEnabled): static {
     $this->loansEnabled = $loansEnabled;
+    return $this;
+  }
+
+  public function getTimeAndTravelEnabled(): bool {
+    return $this->timeAndTravelEnabled;
+  }
+
+  public function setTimeAndTravelEnabled(bool $timeAndTravelEnabled): static {
+    $this->timeAndTravelEnabled = $timeAndTravelEnabled;
     return $this;
   }
 

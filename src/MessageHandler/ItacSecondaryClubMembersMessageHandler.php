@@ -13,7 +13,7 @@ use App\Repository\ClubDependent\MemberRepository;
 use App\Repository\ClubDependent\MemberSeasonRepository;
 use App\Repository\ClubRepository;
 use App\Repository\SeasonRepository;
-use App\Service\MemberPresenceService;
+use App\Service\Plugin\Presence\MemberPresenceService;
 use App\Service\SeasonService;
 use App\Service\UtilsService;
 use Doctrine\ORM\EntityManagerInterface;
