@@ -44,9 +44,8 @@ class FileService {
   }
 
   public function remove(FileEntity $file): void {
-    $filesFolder = $this->params->get('app.files');
-    $path = $filesFolder . '/' . $file->getPath();
-    if ($this->fs->exists($path)) {
+    $path = $this->getAbsolutePath($file);
+    if ($path) {
       $this->fs->remove($path);
     }
   }
@@ -124,15 +123,15 @@ class FileService {
    * @throws \Psr\Container\ContainerExceptionInterface
    * @throws \Psr\Container\NotFoundExceptionInterface
    */
+  /** Absolute path of a File's content on disk, or null if it's missing. */
+  public function getAbsolutePath(FileEntity $file): ?string {
+    $path = $this->params->get('app.files') . "/{$file->getPath()}";
+    return $this->fs->exists($path) ? $path : null;
+  }
+
   public function getMimePartFile(FileEntity $file): ?MimePartFile {
-    $filesFolder = $this->params->get('app.files');
-    $path = "$filesFolder/{$file->getPath()}";
-
-    if (!$this->fs->exists($path)) {
-      return null;
-    }
-
-    return new MimePartFile($path);
+    $path = $this->getAbsolutePath($file);
+    return $path ? new MimePartFile($path) : null;
   }
 
   public function loadFileFromProtectedPath(string $publicId, bool $isInline = false): ?ExposedFile {
@@ -198,22 +197,21 @@ class FileService {
   }
 
   private function loadFileFromFile(FileEntity $file, bool $isInline = false): ?ExposedFile {
-    $filesFolder = $this->params->get('app.files');
-    $path = "$filesFolder/{$file->getPath()}";
-
-    if ($this->fs->exists($path)) {
-      $image = new ExposedFile();
-      $image->setId(UuidService::encodeToReadable($file->getUuid()))
-            ->setName($file->getFilename())
-            ->setPath($path);
-
-      if (!$isInline) {
-        $this->setDataUri($path, $image);
-      }
-
-      return $image;
+    $path = $this->getAbsolutePath($file);
+    if (!$path) {
+      return null;
     }
-    return null;
+
+    $image = new ExposedFile();
+    $image->setId(UuidService::encodeToReadable($file->getUuid()))
+          ->setName($file->getFilename())
+          ->setPath($path);
+
+    if (!$isInline) {
+      $this->setDataUri($path, $image);
+    }
+
+    return $image;
   }
 
   private function setDataUri($imagePath, ExposedFile $image): void {
@@ -226,10 +224,8 @@ class FileService {
    * Returns the file's contents as a base64 data URI, or null if it isn't stored on disk.
    */
   public function getFileDataUri(FileEntity $file): ?string {
-    $filesFolder = $this->params->get('app.files');
-    $path = "$filesFolder/{$file->getPath()}";
-
-    if (!$this->fs->exists($path)) {
+    $path = $this->getAbsolutePath($file);
+    if (!$path) {
       return null;
     }
 
