@@ -49,6 +49,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->assertEquals(1, $export['declarationCount']);
     $this->assertEquals(1, $export['memberCount']);
     $this->assertNotNull($export['recapFile']);
+    $this->assertNotNull($export['zipFile']);
 
     // The in-period declaration is now attached and locked-flagged by the (still draft) export...
     // ...but a draft export does not lock its declarations yet.
@@ -58,6 +59,51 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     // The out-of-period declaration was left untouched
     $outOfPeriodResponse = $this->makeGetRequest($this->getIriFromResource($outOfPeriod));
     $this->assertNull($outOfPeriodResponse->toArray()['export'] ?? null);
+  }
+
+  /**
+   * The zip is meant to let a comptable download everything for a period in one go, so it must
+   * contain the recap plus every member's attestation — nothing more, nothing missing.
+   */
+  public function testZipBundlesRecapAndEveryAttestation(): void {
+    $club = _InitStory::club_1();
+    $clubIri = $this->getIriFromResource($club);
+
+    $memberA = _InitStory::MEMBER_member_club_1();
+    $memberB = MemberFactory::createOne(['club' => $club]);
+    foreach ([$memberA, $memberB] as $member) {
+      TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'date' => new \DateTimeImmutable('-5 days')]);
+    }
+
+    $this->loggedAsAdminClub1();
+    $exportResponse = $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => new \DateTimeImmutable('-1 month')->format('Y-m-d'),
+      'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
+    ]);
+    $exportIri = $exportResponse->toArray()['@id'];
+
+    // The freshly-persisted zipFile has no privateUrl yet (File::postLoad only fires on a genuine
+    // reload), same as recapFile right after creation — fetch the export back to get it.
+    $export = $this->makeGetRequest($exportIri)->toArray();
+    $zipUrl = $export['zipFile']['privateUrl'] ?? null;
+    $this->assertNotNull($zipUrl);
+
+    $base64 = $this->makeGetRequest($zipUrl)->toArray()['base64'];
+    $tmpPath = tempnam(sys_get_temp_dir(), 'zip_test_') . '.zip';
+    file_put_contents($tmpPath, base64_decode(explode(',', $base64)[1]));
+
+    $zip = new \ZipArchive();
+    $zip->open($tmpPath);
+    $entries = [];
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+      $entries[] = $zip->getNameIndex($i);
+    }
+    $zip->close();
+    unlink($tmpPath);
+
+    $this->assertCount(3, $entries);
+    $this->assertCount(1, array_filter($entries, static fn (string $name) => str_starts_with($name, 'recapitulatif-')));
+    $this->assertCount(2, array_filter($entries, static fn (string $name) => str_starts_with($name, 'attestation-')));
   }
 
   public function testAttestationsAreOrderedAlphabeticallyByLastnameThenFirstname(): void {

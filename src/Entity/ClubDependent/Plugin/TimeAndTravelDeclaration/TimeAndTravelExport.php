@@ -169,6 +169,13 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   #[ApiProperty(readableLink: true)]
   private ?File $recapFile = null;
 
+  /** All attestations + the recap, bundled as one zip — lets a comptable download everything at once. */
+  #[ORM\OneToOne(targetEntity: File::class)]
+  #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+  #[Groups(['time-and-travel-export-read'])]
+  #[ApiProperty(readableLink: true)]
+  private ?File $zipFile = null;
+
   /**
    * @var Collection<int, TimeAndTravelDeclaration>
    */
@@ -284,6 +291,15 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
 
   public function setRecapFile(?File $recapFile): static {
     $this->recapFile = $recapFile;
+    return $this;
+  }
+
+  public function getZipFile(): ?File {
+    return $this->zipFile;
+  }
+
+  public function setZipFile(?File $zipFile): static {
+    $this->zipFile = $zipFile;
     return $this;
   }
 
