@@ -14,4 +14,5 @@ enum FileCategory: string {
 
   case time_and_travel_recap = 'time_and_travel_recap';
   case time_and_travel_attestation = 'time_and_travel_attestation';
+  case time_and_travel_export_bundle = 'time_and_travel_export_bundle';
 }
