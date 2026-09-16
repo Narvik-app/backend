@@ -1,0 +1,25 @@
+App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration:
+    uuid: ~
+    date: ~
+    departureLocation: ~
+    arrivalLocation: ~
+    kilometers: ~
+    hours: ~
+    description: ~
+    isRoundtrip: ~
+    timeAmount: ~
+    totalAmount: ~
+
+    member:
+        prefix: member
+        fields:
+            licence: ~
+            fullName: ~
+
+    memberVehicle:
+        prefix: vehicle
+        fields:
+            brand: ~
+            model: ~
+            licensePlate: ~
+            fiscalPower: ~
