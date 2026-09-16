@@ -39,9 +39,10 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_6289DC74BF1D0938 ON time_and_travel_declaration (member_vehicle_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7464CDAF82 ON time_and_travel_declaration (export_id)');
         $this->addSql('CREATE INDEX IDX_6289DC7461190A32 ON time_and_travel_declaration (club_id)');
-        $this->addSql('CREATE TABLE time_and_travel_export (status VARCHAR(255) NOT NULL, is_regenerating BOOLEAN NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL, smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL, locked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, unlocked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, generated_by_id INT DEFAULT NULL, locked_by_id INT DEFAULT NULL, unlocked_by_id INT DEFAULT NULL, recap_file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE TABLE time_and_travel_export (status VARCHAR(255) NOT NULL, is_regenerating BOOLEAN NOT NULL, start_date DATE NOT NULL, end_date DATE NOT NULL, smic_hourly_rate NUMERIC(6, 2) DEFAULT NULL, locked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, unlocked_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, id INT NOT NULL, uuid UUID NOT NULL, generated_by_id INT DEFAULT NULL, locked_by_id INT DEFAULT NULL, unlocked_by_id INT DEFAULT NULL, recap_file_id INT DEFAULT NULL, zip_file_id INT DEFAULT NULL, club_id INT NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_53A200E0D17F50A6 ON time_and_travel_export (uuid)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_53A200E0E03C8F8F ON time_and_travel_export (recap_file_id)');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_53A200E028FA108C ON time_and_travel_export (zip_file_id)');
         $this->addSql('CREATE INDEX idx_tt_export_club_status ON time_and_travel_export (club_id, status)');
         $this->addSql('CREATE INDEX IDX_53A200E01BDD81B ON time_and_travel_export (generated_by_id)');
         $this->addSql('CREATE INDEX IDX_53A200E07A88E00 ON time_and_travel_export (locked_by_id)');
@@ -63,6 +64,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E07A88E00 FOREIGN KEY (locked_by_id) REFERENCES member (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E0371F3A6E FOREIGN KEY (unlocked_by_id) REFERENCES member (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E0E03C8F8F FOREIGN KEY (recap_file_id) REFERENCES file (id) ON DELETE SET NULL NOT DEFERRABLE');
+        $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E028FA108C FOREIGN KEY (zip_file_id) REFERENCES file (id) ON DELETE SET NULL NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export ADD CONSTRAINT FK_53A200E061190A32 FOREIGN KEY (club_id) REFERENCES club (id) ON DELETE CASCADE NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export_attestation ADD CONSTRAINT FK_C234D07664CDAF82 FOREIGN KEY (export_id) REFERENCES time_and_travel_export (id) ON DELETE CASCADE NOT DEFERRABLE');
         $this->addSql('ALTER TABLE time_and_travel_export_attestation ADD CONSTRAINT FK_C234D0767597D3FE FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE SET NULL NOT DEFERRABLE');
@@ -123,6 +125,7 @@ final class Version20260911160038 extends AbstractMigration
         $this->addSql('ALTER TABLE time_and_travel_export DROP CONSTRAINT FK_53A200E07A88E00');
         $this->addSql('ALTER TABLE time_and_travel_export DROP CONSTRAINT FK_53A200E0371F3A6E');
         $this->addSql('ALTER TABLE time_and_travel_export DROP CONSTRAINT FK_53A200E0E03C8F8F');
+        $this->addSql('ALTER TABLE time_and_travel_export DROP CONSTRAINT FK_53A200E028FA108C');
         $this->addSql('ALTER TABLE time_and_travel_export DROP CONSTRAINT FK_53A200E061190A32');
         $this->addSql('ALTER TABLE time_and_travel_export_attestation DROP CONSTRAINT FK_C234D07664CDAF82');
         $this->addSql('ALTER TABLE time_and_travel_export_attestation DROP CONSTRAINT FK_C234D0767597D3FE');
