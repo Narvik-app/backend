@@ -370,4 +370,50 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->makePostRequest($exportIri . '/unlock');
     $this->assertResponseStatusCodeSame(403);
   }
+
+  /**
+   * Two exports covering the same dates would each only pick up whatever declarations aren't
+   * already attached to the other — silently splitting a period, or leaving an empty duplicate
+   * draft, instead of ever raising an error. Overlap must be refused outright.
+   */
+  public function testCannotCreateAnExportOverlappingAnotherOne(): void {
+    $club = _InitStory::club_1();
+    $clubIri = $this->getIriFromResource($club);
+
+    $this->loggedAsAdminClub1();
+    $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => '2026-01-01',
+      'endDate' => '2026-01-31',
+    ]);
+    $this->assertResponseStatusCodeSame(201);
+
+    $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => '2026-01-15',
+      'endDate' => '2026-02-15',
+    ]);
+    $this->assertResponseStatusCodeSame(422);
+    $this->assertJsonContains(['violations' => [['propertyPath' => 'startDate']]]);
+
+    // A non-overlapping period is still free to use
+    $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => '2026-02-01',
+      'endDate' => '2026-02-28',
+    ]);
+    $this->assertResponseStatusCodeSame(201);
+  }
+
+  public function testCanNarrowAnExportsOwnPeriodWithoutSelfConflicting(): void {
+    $club = _InitStory::club_1();
+    $clubIri = $this->getIriFromResource($club);
+
+    $this->loggedAsAdminClub1();
+    $exportResponse = $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => '2026-01-01',
+      'endDate' => '2026-01-31',
+    ]);
+    $exportIri = $exportResponse->toArray()['@id'];
+
+    $this->makePatchRequest($exportIri, ['startDate' => '2026-01-05']);
+    $this->assertResponseIsSuccessful();
+  }
 }

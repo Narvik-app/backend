@@ -61,4 +61,25 @@ class TimeAndTravelExportRepository extends ServiceEntityRepository implements C
       ->getQuery()
       ->getOneOrNullResult();
   }
+
+  /**
+   * Any other export (draft or locked) whose period overlaps [$start, $end] for this club —
+   * used to refuse creating/editing an export that would contend with it over declarations.
+   */
+  public function findOverlapping(Club $club, \DateTimeImmutable $start, \DateTimeImmutable $end, ?TimeAndTravelExport $excluding = null): ?TimeAndTravelExport {
+    $qb = $this->createQueryBuilder('e')
+      ->where('e.club = :club')
+      ->andWhere('e.startDate <= :end')
+      ->andWhere('e.endDate >= :start')
+      ->setParameter('club', $club)
+      ->setParameter('start', $start)
+      ->setParameter('end', $end)
+      ->setMaxResults(1);
+
+    if ($excluding?->getId() !== null) {
+      $qb->andWhere('e.id != :excludingId')->setParameter('excludingId', $excluding->getId());
+    }
+
+    return $qb->getQuery()->getOneOrNullResult();
+  }
 }
