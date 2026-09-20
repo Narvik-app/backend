@@ -379,4 +379,65 @@ class SaleTest extends AbstractEntityClubLinkedTestCase {
       'detail' => 'Unable to remove this permission because \'SALE_NEW\' is enabled and requires it.',
     ]);
   }
+
+  /**
+   * Regression guard for the pagination work: totalItems must stay constant across pages,
+   * and no sale should appear on more than one page or be missing from all of them.
+   */
+  public function testSalesCollectionTotalItemsIsStableAcrossPages(): void {
+    $club1 = _InitStory::club_1();
+    $this->loggedAsAdminClub1();
+
+    $seenUuids = [];
+    $totalItems = null;
+    $itemsPerPage = 3;
+    $page = 1;
+
+    do {
+      $response = $this->makeGetRequest($this->getRootWClubUrl($club1), ['itemsPerPage' => $itemsPerPage, 'page' => $page]);
+      $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+      $data = $response->toArray();
+
+      $totalItems ??= $data['totalItems'];
+      $this->assertEquals($totalItems, $data['totalItems'], "totalItems changed between page 1 and page {$page}");
+
+      foreach ($data['member'] as $sale) {
+        $this->assertArrayNotHasKey($sale['@id'], $seenUuids, 'A sale appeared on more than one page');
+        $seenUuids[$sale['@id']] = true;
+      }
+
+      $page++;
+    } while (count($seenUuids) < $totalItems && $page <= 20); // safety cap against an infinite loop
+
+    $this->assertCount($totalItems, $seenUuids);
+  }
+
+  /**
+   * createdAt[strictly_before] must exclude the boundary instant itself - mirrors the
+   * equivalent boundary check on the sales-stats endpoint (MetricTest) so the two can't
+   * silently diverge on where a day starts/ends.
+   */
+  public function testSalesCollectionDateBoundary(): void {
+    $club1 = _InitStory::club_1();
+    $this->loggedAsAdminClub1();
+
+    $day = new \DateTimeImmutable('-30 days')->setTime(0, 0);
+    $after = $day->format('Y-m-d');
+    $before = $day->modify('+1 day')->format('Y-m-d');
+
+    $baseline = $this->makeGetRequest($this->getRootWClubUrl($club1), [
+      'createdAt[after]' => $after,
+      'createdAt[strictly_before]' => $before,
+    ])->toArray()['totalItems'];
+
+    SaleFactory::createOne(['createdAt' => $day->setTime(23, 59, 59)]); // last instant inside the window
+    SaleFactory::createOne(['createdAt' => $day->modify('+1 day')]); // exactly at the boundary - excluded
+
+    $response = $this->makeGetRequest($this->getRootWClubUrl($club1), [
+      'createdAt[after]' => $after,
+      'createdAt[strictly_before]' => $before,
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals($baseline + 1, $response->toArray()['totalItems']);
+  }
 }
