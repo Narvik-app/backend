@@ -7,9 +7,11 @@ use App\Enum\Permission;
 use App\Enum\SalePaymentModeKind;
 use App\Tests\e2e\Entity\Abstract\AbstractEntityClubLinkedTestCase;
 use App\Tests\Enum\ResponseCodeEnum;
+use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\SalePaymentModeFactory;
+use App\Tests\Factory\SalePurchasedItemFactory;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 
@@ -602,6 +604,165 @@ class MetricTest extends AbstractEntityClubLinkedTestCase {
       $this->assertArrayHasKey('count', $row);
       $this->assertArrayHasKey('amount', $row);
     }
+  }
+
+  /**
+   * Regression guard: /admin/sales/history's "Ventes (N)" (the paginated collection's
+   * totalItems) and /admin/sales's "Nombres de ventes" (sales-stats' value) are two
+   * independent backend queries for the same window - they must never drift apart, or the
+   * two admin sale screens will disagree on how many sales happened.
+   *
+   * Uses a mid-day window (start/end well away from midnight) so this test isn't affected
+   * by the known, separate sub-second discrepancy between the collection's exclusive end
+   * (createdAt[strictly_before]) and the stats' inclusive 23:59:59 end.
+   */
+  public function testSalesStatsMatchesCollectionTotalItems(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+
+    $windowStart = new \DateTimeImmutable('-10 days')->setTime(8, 0);
+    $windowEnd = new \DateTimeImmutable('-5 days')->setTime(20, 0);
+
+    // Inside the window
+    SaleFactory::createMany(3, ['createdAt' => new \DateTimeImmutable('-7 days')->setTime(12, 0), 'paymentMode' => $cash]);
+    // Outside the window (before and after)
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable('-20 days')->setTime(12, 0), 'paymentMode' => $cash]);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash]);
+
+    $this->loggedAsAdminClub1();
+
+    $statsIri = $this->getRootWClubUrl($club1) . "/sales-stats?start={$windowStart->format('Y-m-d')}&end={$windowEnd->format('Y-m-d')}";
+    $statsResponse = $this->makeGetRequest($statsIri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $statsCount = $statsResponse->toArray()['value'];
+
+    $salesIri = $this->getIriFromResource($club1) . '/sales';
+    $collectionResponse = $this->makeGetRequest($salesIri, [
+      'createdAt[after]' => $windowStart->format('Y-m-d'),
+      'createdAt[strictly_before]' => $windowEnd->modify('+1 day')->format('Y-m-d'),
+    ]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $collectionCount = $collectionResponse->toArray()['totalItems'];
+
+    $this->assertEquals(3, $statsCount);
+    $this->assertEquals($statsCount, $collectionCount);
+  }
+
+  /**
+   * The collection's totalItems/stats must reflect the whole window, not just the
+   * requested page - regression guard for the pagination work.
+   */
+  public function testSalesStatsIsUnaffectedByPagination(): void {
+    $club1 = _InitStory::club_1();
+    SaleFactory::createMany(5, ['createdAt' => new \DateTimeImmutable('-1 day')->setTime(12, 0)]);
+
+    $this->loggedAsAdminClub1();
+
+    $salesIri = $this->getIriFromResource($club1) . '/sales';
+    $fullResponse = $this->makeGetRequest($salesIri, ['itemsPerPage' => 100]);
+    $totalItems = $fullResponse->toArray()['totalItems'];
+
+    $pagedResponse = $this->makeGetRequest($salesIri, ['itemsPerPage' => 2, 'page' => 2]);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $pagedData = $pagedResponse->toArray();
+
+    $this->assertEquals($totalItems, $pagedData['totalItems']);
+    $this->assertCount(2, $pagedData['member']);
+  }
+
+  /**
+   * count is the sum of purchased quantities (including stock removals); amount is the sum
+   * of itemPrice * quantity, excluding stock removals.
+   */
+  public function testSalesPerItemStatsCountsQuantities(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+    $stockRemoval = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::stock_removal]);
+    $item = InventoryItemFactory::createOne(['name' => 'Jus de fruit', 'sellingPrice' => '2.50']);
+
+    // Two paid sales of the same item (2 + 3 units) and one stock removal (1 unit).
+    SaleFactory::createOne([
+      'createdAt' => new \DateTimeImmutable(),
+      'paymentMode' => $cash,
+      'salePurchasedItems' => [SalePurchasedItemFactory::createOne(['item' => $item, 'quantity' => 2])],
+    ]);
+    SaleFactory::createOne([
+      'createdAt' => new \DateTimeImmutable(),
+      'paymentMode' => $cash,
+      'salePurchasedItems' => [SalePurchasedItemFactory::createOne(['item' => $item, 'quantity' => 3])],
+    ]);
+    SaleFactory::createOne([
+      'createdAt' => new \DateTimeImmutable(),
+      'paymentMode' => $stockRemoval,
+      'salePurchasedItems' => [SalePurchasedItemFactory::createOne(['item' => $item, 'quantity' => 1])],
+    ]);
+
+    $this->loggedAsAdminClub1();
+    $iri = $this->getRootWClubUrl($club1) . "/sales-per-item-stats";
+    $response = $this->makeGetRequest($iri);
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $data = $response->toArray();
+
+    $cashRow = current(array_filter($data['values'], fn($row) => $row['itemName'] === 'Jus de fruit' && $row['paymentModeName'] === $cash->getName()));
+    $stockRemovalRow = current(array_filter($data['values'], fn($row) => $row['itemName'] === 'Jus de fruit' && $row['paymentModeName'] === $stockRemoval->getName()));
+
+    $this->assertNotFalse($cashRow, 'Expected a "Jus de fruit" row for the cash payment mode');
+    $this->assertEquals(5, $cashRow['count']); // 2 + 3
+    $this->assertEquals(12.5, $cashRow['amount']); // 5 * 2.50
+
+    $this->assertNotFalse($stockRemovalRow, 'Expected a "Jus de fruit" row for the stock removal payment mode');
+    $this->assertEquals(1, $stockRemovalRow['count']);
+    $this->assertEquals(0, $stockRemovalRow['amount']); // stock removals are excluded from amount
+  }
+
+  /**
+   * The sum of per-item amounts (which exclude stock removals) must equal sales-stats'
+   * total-amount (which also excludes stock removals) for the same window - both are
+   * meant to describe the exact same set of sales.
+   */
+  public function testSalesPerItemStatsReconcilesWithSalesStats(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+    $stockRemoval = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::stock_removal]);
+
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash]);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash]);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $stockRemoval]);
+
+    $this->loggedAsAdminClub1();
+
+    $statsResponse = $this->makeGetRequest($this->getRootWClubUrl($club1) . "/sales-stats");
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $totalAmount = array_column($statsResponse->toArray()['childMetrics'], 'value', 'name')['total-amount'];
+
+    $perItemResponse = $this->makeGetRequest($this->getRootWClubUrl($club1) . "/sales-per-item-stats");
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $sumOfPerItemAmounts = array_sum(array_column($perItemResponse->toArray()['values'], 'amount'));
+
+    $this->assertEqualsWithDelta($totalAmount, $sumOfPerItemAmounts, 0.01);
+  }
+
+  /**
+   * previous-season=true and the current-season default must only ever count sales that
+   * actually fall in their respective season.
+   */
+  public function testSalesStatsSeasonWindow(): void {
+    $club1 = _InitStory::club_1();
+    $cash = SalePaymentModeFactory::createOne(['kind' => SalePaymentModeKind::payment]);
+
+    $previousSeasonDate = \App\Service\SeasonService::getPreviousSeasonEndDate($club1)->modify('-10 days');
+    SaleFactory::createOne(['createdAt' => $previousSeasonDate, 'paymentMode' => $cash]);
+    SaleFactory::createOne(['createdAt' => new \DateTimeImmutable(), 'paymentMode' => $cash]);
+
+    $this->loggedAsAdminClub1();
+
+    $currentSeasonResponse = $this->makeGetRequest($this->getRootWClubUrl($club1) . "/sales-stats");
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(1, $currentSeasonResponse->toArray()['value']);
+
+    $previousSeasonResponse = $this->makeGetRequest($this->getRootWClubUrl($club1) . "/sales-stats?previous-season=true");
+    $this->assertResponseStatusCodeSame(ResponseCodeEnum::ok->value);
+    $this->assertEquals(1, $previousSeasonResponse->toArray()['value']);
   }
 
 }
