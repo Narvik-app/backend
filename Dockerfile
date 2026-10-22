@@ -83,7 +83,9 @@ RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 RUN set -eux; \
 	install-php-extensions \
 		xdebug \
-	;
+	; \
+	useradd -m -s /bin/bash nonroot; \
+	git config --system --add safe.directory /app
 
 COPY --link docker/frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
 

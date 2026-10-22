@@ -15,7 +15,7 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
-[*.{js,html,ts,tsx}]
+[{*.{js,html,ts,tsx},compose.*yaml,.devcontainer/compose.*yaml,.github/**/*.yaml}]
 indent_size = 2
 
 [*.json]
