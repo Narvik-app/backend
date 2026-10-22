@@ -63,7 +63,8 @@ final class InventoryItemFactory extends \Zenstruck\Foundry\Persistence\Persiste
   protected function defaults(): array {
     return [
       'club'            => _InitStory::club_1(),
-      'name'            => self::faker()->unique()->text(10),
+      // faker's unique() is per-process (paratest workers don't share it) add rand to be sure unique name.
+      'name'            => self::faker()->unique()->text(10) . ' ' . bin2hex(random_bytes(4)),
       'description'     => self::faker()->boolean(40) ? self::faker()->words(self::faker()->numberBetween(4, 8), true) : null,
       'canBeSold'       => self::faker()->boolean(75),
       'category'        => InventoryCategoryStory::getRandom('default'),
