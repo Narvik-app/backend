@@ -75,7 +75,7 @@ jobs:
         run: curl -v --insecure --fail-with-body https://localhost
       -
         name: Check Mercure reachability
-        run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?topic=test
+        run: curl -vI --insecure --fail-with-body https://localhost/.well-known/mercure?match=test
       -
         name: Run PHPUnit
         id: phpunit

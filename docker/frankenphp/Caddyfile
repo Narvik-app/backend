@@ -25,10 +25,17 @@
 	encode zstd br gzip
 
 	mercure {
-		# Publisher JWT key
-		publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} {env.MERCURE_PUBLISHER_JWT_ALG}
-		# Subscriber JWT key
-		subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} {env.MERCURE_SUBSCRIBER_JWT_ALG}
+		# Named so that every server generated from the site addresses shares the same hub
+		name narvik
+		# Trusted token issuer (must match the "iss" claim of the JWTs)
+		issuer {$MERCURE_ISSUER:narvik} {
+			publisher {
+				jwt {env.MERCURE_PUBLISHER_JWT_KEY} {env.MERCURE_PUBLISHER_JWT_ALG}
+			}
+			subscriber {
+				jwt {env.MERCURE_SUBSCRIBER_JWT_KEY} {env.MERCURE_SUBSCRIBER_JWT_ALG}
+			}
+		}
 		# Allow anonymous subscribers (double-check that it's what you want)
 		anonymous
 		# Enable the subscription API (double-check that it's what you want)
