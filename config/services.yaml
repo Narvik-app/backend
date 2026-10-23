@@ -26,6 +26,13 @@ when@test:
         # the same way config/packages/doctrine.yaml isolates each worker's database.
         app.files: '%kernel.project_dir%/private/test%env(default::TEST_TOKEN)%'
 
+    services:
+        # Lowest bcrypt cost: client secrets are hashed/verified on every login in the e2e suite.
+        # Must match the hasher used in tests/Factory/ClientFactory.php, else the bundle rehashes the secret.
+        league.oauth2_server.password_hasher:
+            class: Symfony\Component\PasswordHasher\Hasher\NativePasswordHasher
+            arguments: [null, null, 4]
+
 services:
     # default configuration for services in *this* file
     _defaults:

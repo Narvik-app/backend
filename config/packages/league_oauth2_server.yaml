@@ -4,6 +4,9 @@ league_oauth2_server:
         private_key_passphrase: '%env(resolve:OAUTH_PASSPHRASE)%'
         encryption_key: '%env(resolve:OAUTH_ENCRYPTION_KEY)%'
             
+        # Whether to enable the password grant (disabled by default since bundle 2.0, used by the frontend login)
+        enable_password_grant: true
+
         # Whether to enable the refresh token grant
         enable_refresh_token_grant: true
     resource_server:
