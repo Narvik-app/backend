@@ -30,7 +30,7 @@ final class ClientFactory extends \Zenstruck\Foundry\Persistence\PersistentObjec
       'active'             => true,
       'allowPlainTextPkce' => false,
       // oauth2-server-bundle 2.x no longer accepts plaintext secrets: the stored value must be hashed
-      'secret'             => self::$secretHash ??= (new NativePasswordHasher(null, null, 4))->hash('secretTestOnly')
+      'secret'             => self::$secretHash ??= new NativePasswordHasher(null, null, 4)->hash('secretTestOnly')
     ];
   }
 
