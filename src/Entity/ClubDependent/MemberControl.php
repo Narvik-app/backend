@@ -142,11 +142,16 @@ class MemberControl extends UuidEntity implements ClubLinkedEntityInterface, Tim
   /**
    * Computed status of this control against its type's thresholds.
    * `null` means "nothing to alert on" (no date, or the alert is muted, or the type has no alert delay).
+   * `missing` means there is no date but the type requires one (see MemberControlType::$alertIfMissing).
    */
   #[Groups(['member-control-read', 'member-read', 'member-presence-read'])]
   public function getStatus(): ?string {
-    if (!$this->date || $this->alertDisabled || !$this->type) {
+    if ($this->alertDisabled || !$this->type) {
       return null;
+    }
+
+    if (!$this->date) {
+      return $this->type->isAlertIfMissing() ? 'missing' : null;
     }
 
     $daysSince = new \DateTimeImmutable()->diff($this->date)->days;
