@@ -406,7 +406,16 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     static::getContainer()->get('event_dispatcher')->dispatch(new WorkerMessageFailedEvent($envelope, 'async_medium', new UnrecoverableMessageHandlingException('boom')));
     // The release is plain SQL, so drop the entities already loaded by this test's kernel
     static::getContainer()->get('doctrine.orm.entity_manager')->clear();
-    $this->assertFalse($this->makeGetRequest($exportIri)->toArray()['isRegenerating']);
+    $failedExport = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertFalse($failedExport['isRegenerating']);
+    $this->assertTrue($failedExport['regenerationFailed']);
+
+    // Regenerating again clears the failure
+    $this->makePostRequest($exportIri . '/regenerate');
+    $this->assertResponseStatusCodeSame(202);
+    $restarted = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertTrue($restarted['isRegenerating']);
+    $this->assertFalse($restarted['regenerationFailed']);
   }
 
   /**
