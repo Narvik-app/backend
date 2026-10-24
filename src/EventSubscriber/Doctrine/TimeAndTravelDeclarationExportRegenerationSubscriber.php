@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber\Doctrine;
 
+use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
 use App\Enum\TimeAndTravelExportStatus;
@@ -31,7 +32,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
 #[AsEntityListener(event: 'postRemove', entity: TimeAndTravelDeclaration::class)]
 #[AsDoctrineListener(event: Events::postFlush)]
 class TimeAndTravelDeclarationExportRegenerationSubscriber extends AbstractEventSubscriber {
-  /** @var array<int, TimeAndTravelExport> */
+  /**
+   * Per export, the members whose declarations changed — only their attestations get regenerated.
+   * A null member list means "unknown", i.e. the whole export is regenerated.
+   *
+   * @var array<int, array{export: TimeAndTravelExport, memberUuids: array<string, true>|null}>
+   */
   private array $pendingExports = [];
 
   public function __construct(
@@ -59,8 +65,13 @@ class TimeAndTravelDeclarationExportRegenerationSubscriber extends AbstractEvent
     if (array_key_exists('date', $changedProperties)) {
       $oldDate = $changedProperties['date'][0] ?? null;
       if ($oldDate instanceof \DateTimeImmutable && $declaration->getClub()) {
-        $this->queueExport($this->exportRepository->findDraftCoveringDate($declaration->getClub(), $oldDate));
+        $this->queueExport($this->exportRepository->findDraftCoveringDate($declaration->getClub(), $oldDate), $declaration->getMember());
       }
+    }
+
+    // Reassigned to another member: the previous one's attestation loses it too
+    if (array_key_exists('member', $changedProperties) && $changedProperties['member'][0] instanceof Member) {
+      $this->queueCoveringExport($declaration, $changedProperties['member'][0]);
     }
   }
 
@@ -76,36 +87,48 @@ class TimeAndTravelDeclarationExportRegenerationSubscriber extends AbstractEvent
     $exports = $this->pendingExports;
     $this->pendingExports = [];
 
-    foreach ($exports as $export) {
-      $export->setIsRegenerating(true);
+    foreach ($exports as $pending) {
+      $pending['export']->setIsRegenerating(true);
     }
     $this->entityManager->flush();
 
-    foreach ($exports as $export) {
-      $this->messageBus->dispatch(new TimeAndTravelExportRegenerateMessage($export->getUuid()->toString()));
+    foreach ($exports as $pending) {
+      $this->messageBus->dispatch(new TimeAndTravelExportRegenerateMessage(
+        $pending['export']->getUuid()->toString(),
+        memberUuids: $pending['memberUuids'] === null ? [] : array_keys($pending['memberUuids']),
+      ));
     }
   }
 
-  private function queueCoveringExport(TimeAndTravelDeclaration $declaration): void {
+  private function queueCoveringExport(TimeAndTravelDeclaration $declaration, ?Member $member = null): void {
     $club = $declaration->getClub();
     $date = $declaration->getDate();
     if (!$club || !$date) {
       return;
     }
 
-    $this->queueExport($this->exportRepository->findDraftCoveringDate($club, $date));
+    $member ??= $declaration->getMember();
+    $this->queueExport($this->exportRepository->findDraftCoveringDate($club, $date), $member);
 
     // Already attached to a (still draft) export — e.g. a non-date field changed on a declaration
     // that's inside the period but the lookup above already found the same one; harmless either way.
     $attachedExport = $declaration->getExport();
     if ($attachedExport && $attachedExport->getStatus() === TimeAndTravelExportStatus::draft) {
-      $this->queueExport($attachedExport);
+      $this->queueExport($attachedExport, $member);
     }
   }
 
-  private function queueExport(?TimeAndTravelExport $export): void {
-    if ($export) {
-      $this->pendingExports[$export->getId()] = $export;
+  private function queueExport(?TimeAndTravelExport $export, ?Member $member): void {
+    if (!$export) {
+      return;
     }
+
+    $pending = $this->pendingExports[$export->getId()] ?? ['export' => $export, 'memberUuids' => []];
+    if ($member === null || $pending['memberUuids'] === null) {
+      $pending['memberUuids'] = null;
+    } else {
+      $pending['memberUuids'][$member->getUuid()->toString()] = true;
+    }
+    $this->pendingExports[$export->getId()] = $pending;
   }
 }
