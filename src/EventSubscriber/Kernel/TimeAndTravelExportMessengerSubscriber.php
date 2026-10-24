@@ -12,7 +12,7 @@ use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 /**
  * The export's isRegenerating flag is only cleared by the regeneration job itself, so a job that
  * fails for good would leave the export "in progress" forever (and its buttons disabled). Once
- * the retries are exhausted, clear the flag so the export can be regenerated again.
+ * the retries are exhausted, clear the flag and mark the export as failed, so the UI can offer to regenerate it.
  */
 final readonly class TimeAndTravelExportMessengerSubscriber implements EventSubscriberInterface {
 
@@ -39,7 +39,7 @@ final readonly class TimeAndTravelExportMessengerSubscriber implements EventSubs
     // Plain SQL: the entity manager is closed when the failure came from a flush
     $table = $this->entityManager->getClassMetadata(TimeAndTravelExport::class)->getTableName();
     $this->connection->executeStatement(
-      sprintf('UPDATE %s SET is_regenerating = false WHERE uuid = :uuid', $this->connection->quoteSingleIdentifier($table)),
+      sprintf('UPDATE %s SET is_regenerating = false, regeneration_failed = true WHERE uuid = :uuid', $this->connection->quoteSingleIdentifier($table)),
       ['uuid' => $message->getExportUuid()],
     );
   }
