@@ -9,6 +9,9 @@ use App\Tests\Factory\MemberFactory;
 use App\Tests\Story\_InitStory;
 use App\Enum\VehicleCategory;
 use App\Enum\VehicleEngineType;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Zenstruck\Messenger\Test\InteractsWithMessenger;
 
 /**
@@ -43,8 +46,17 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $this->assertResponseStatusCodeSame(201);
-    $export = $exportResponse->toArray();
+    $created = $exportResponse->toArray();
 
+    // The generation runs in the background: the export is created empty and flagged as regenerating
+    $this->assertTrue($created['isRegenerating']);
+    $this->assertEquals(0, $created['declarationCount']);
+    $this->assertNull($created['zipFile'] ?? null);
+
+    $this->transport('async_medium')->process();
+
+    $export = $this->makeGetRequest($created['@id'])->toArray();
+    $this->assertFalse($export['isRegenerating']);
     $this->assertEquals('draft', $export['status']);
     $this->assertEquals(1, $export['declarationCount']);
     $this->assertEquals(1, $export['memberCount']);
@@ -81,6 +93,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $exportIri = $exportResponse->toArray()['@id'];
+    $this->transport('async_medium')->process();
 
     // The freshly-persisted zipFile has no privateUrl yet (File::postLoad only fires on a genuine
     // reload), same as recapFile right after creation — fetch the export back to get it.
@@ -125,6 +138,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     ]);
     $this->assertResponseStatusCodeSame(201);
     $exportIri = $exportResponse->toArray()['@id'];
+    $this->transport('async_medium')->process();
 
     $attestations = $this->makeGetRequest($exportIri . '/attestations')->toArray()['member'];
     $names = array_map(static fn (array $a) => $a['member']['fullName'] ?? null, $attestations);
@@ -148,6 +162,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $exportIri = $exportResponse->toArray()['@id'];
+    $this->transport('async_medium')->process();
 
     // Locking a draft is accepted, then regenerates and locks in the background
     $this->makePostRequest($exportIri . '/lock');
@@ -202,6 +217,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $this->assertResponseStatusCodeSame(201);
+    $this->transport('async_medium')->process();
 
     $attestations = $this->makeGetRequest($exportResponse->toArray()['@id'] . '/attestations')->toArray()['member'];
     $this->assertCount(1, $attestations);
@@ -227,6 +243,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $this->assertResponseStatusCodeSame(201);
+    $this->transport('async_medium')->process();
 
     $attestations = $this->makeGetRequest($exportResponse->toArray()['@id'] . '/attestations')->toArray()['member'];
     $this->assertEquals('3052.80', $attestations[0]['totalTravelAmount']);
@@ -288,6 +305,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $exportIri = $exportResponse->toArray()['@id'];
     $this->assertEquals(0, $exportResponse->toArray()['declarationCount']);
 
+    $this->transport('async_medium')->process();
     $this->transport('async_medium')->queue()->assertEmpty();
 
     $this->makePostRequest($clubIri . '/time-and-travel-declarations', [
@@ -312,6 +330,103 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $exportAfterRegeneration = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals(1, $exportAfterRegeneration['declarationCount']);
     $this->assertFalse($exportAfterRegeneration['isRegenerating']);
+  }
+
+  public function testChangingADeclarationOnlyRegeneratesThatMembersAttestationAndTheRecap(): void {
+    $club = _InitStory::club_1();
+    $clubIri = $this->getIriFromResource($club);
+    $memberA = _InitStory::MEMBER_member_club_1();
+    $memberB = MemberFactory::createOne(['club' => $club]);
+    $vehicleA = MemberVehicleFactory::createOne(['member' => $memberA]);
+    foreach ([$memberA, $memberB] as $member) {
+      TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'date' => new \DateTimeImmutable('-5 days'), 'kilometers' => 10]);
+    }
+
+    $this->loggedAsAdminClub1();
+    $exportIri = $this->makePostRequest($clubIri . '/time-and-travel-exports', [
+      'startDate' => new \DateTimeImmutable('-1 month')->format('Y-m-d'),
+      'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
+    ])->toArray()['@id'];
+    $this->transport('async_medium')->process();
+
+    $before = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertEquals(2, $before['declarationCount']);
+    $this->assertEquals(20, $before['totalKilometers']);
+    $attestationsBefore = $this->attestationsByMemberUuid($exportIri);
+
+    $this->makePostRequest($clubIri . '/time-and-travel-declarations', [
+      'member' => $this->getIriFromResource($memberA),
+      'date' => new \DateTimeImmutable('-3 days')->format('Y-m-d'),
+      'departureLocation' => 'Home',
+      'arrivalLocation' => 'Club',
+      'kilometers' => 15,
+      'memberVehicle' => $this->getIriFromResource($vehicleA),
+      'description' => 'Only member A is affected',
+    ]);
+    $this->assertResponseStatusCodeSame(201);
+    $this->transport('async_medium')->process();
+
+    $after = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertFalse($after['isRegenerating']);
+    $this->assertEquals(3, $after['declarationCount']);
+    $this->assertEquals(2, $after['memberCount']);
+    $this->assertEquals(35, $after['totalKilometers']);
+    $this->assertNotEquals($before['recapFile']['uuid'], $after['recapFile']['uuid']);
+    $this->assertNotEquals($before['zipFile']['uuid'], $after['zipFile']['uuid']);
+
+    $attestationsAfter = $this->attestationsByMemberUuid($exportIri);
+    $uuidA = $memberA->getUuid()->toString();
+    $uuidB = $memberB->getUuid()->toString();
+    $this->assertEquals(25, $attestationsAfter[$uuidA]['totalKilometers']);
+    $this->assertNotEquals($attestationsBefore[$uuidA]['file']['uuid'], $attestationsAfter[$uuidA]['file']['uuid']);
+    // Member B's attestation was neither rebuilt nor re-rendered
+    $this->assertEquals(10, $attestationsAfter[$uuidB]['totalKilometers']);
+    $this->assertEquals($attestationsBefore[$uuidB]['file']['uuid'], $attestationsAfter[$uuidB]['file']['uuid']);
+  }
+
+  public function testExportIsNotLeftRegeneratingWhenTheJobFailsForGood(): void {
+    $club = _InitStory::club_1();
+
+    $this->loggedAsAdminClub1();
+    $exportIri = $this->makePostRequest($this->getIriFromResource($club) . '/time-and-travel-exports', [
+      'startDate' => new \DateTimeImmutable('-1 month')->format('Y-m-d'),
+      'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
+    ])->toArray()['@id'];
+    $this->assertTrue($this->makeGetRequest($exportIri)->toArray()['isRegenerating']);
+
+    $envelope = new Envelope(new \App\Message\TimeAndTravelExportRegenerateMessage(basename($exportIri)));
+
+    // Still going to be retried: stays in progress
+    $willRetry = new WorkerMessageFailedEvent($envelope, 'async_medium', new \RuntimeException('boom'));
+    $willRetry->setForRetry();
+    static::getContainer()->get('event_dispatcher')->dispatch($willRetry);
+    $this->assertTrue($this->makeGetRequest($exportIri)->toArray()['isRegenerating']);
+
+    // Retries exhausted: released so it can be regenerated again
+    static::getContainer()->get('event_dispatcher')->dispatch(new WorkerMessageFailedEvent($envelope, 'async_medium', new UnrecoverableMessageHandlingException('boom')));
+    // The release is plain SQL, so drop the entities already loaded by this test's kernel
+    static::getContainer()->get('doctrine.orm.entity_manager')->clear();
+    $failedExport = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertFalse($failedExport['isRegenerating']);
+    $this->assertTrue($failedExport['regenerationFailed']);
+
+    // Regenerating again clears the failure
+    $this->makePostRequest($exportIri . '/regenerate');
+    $this->assertResponseStatusCodeSame(202);
+    $restarted = $this->makeGetRequest($exportIri)->toArray();
+    $this->assertTrue($restarted['isRegenerating']);
+    $this->assertFalse($restarted['regenerationFailed']);
+  }
+
+  /**
+   * @return array<string, array>
+   */
+  private function attestationsByMemberUuid(string $exportIri): array {
+    $byMember = [];
+    foreach ($this->makeGetRequest($exportIri . '/attestations')->toArray()['member'] as $attestation) {
+      $byMember[$attestation['member']['uuid']] = $attestation;
+    }
+    return $byMember;
   }
 
   public function testCannotCreateADeclarationInAPeriodCoveredByALockedExport(): void {

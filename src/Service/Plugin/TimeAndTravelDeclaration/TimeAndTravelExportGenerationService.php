@@ -11,6 +11,7 @@ use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicle;
 use App\Enum\FileCategory;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationRepository;
+use App\Repository\ClubDependent\MemberRepository;
 use App\Service\FileService;
 use App\Service\ZipService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,6 +30,7 @@ class TimeAndTravelExportGenerationService {
     private readonly FileService $fileService,
     private readonly ZipService $zipService,
     private readonly MileageRateCalculationService $mileageRateCalculationService,
+    private readonly MemberRepository $memberRepository,
   ) {
   }
 
@@ -39,7 +41,6 @@ class TimeAndTravelExportGenerationService {
 
     $declarations = $this->declarationRepository->findExportableForPeriod($club, $export->getStartDate(), $export->getEndDate());
 
-    /** @var array<int, TimeAndTravelDeclaration[]> $byMember */
     $byMember = [];
     foreach ($declarations as $declaration) {
       $declaration->setExport($export);
@@ -50,53 +51,200 @@ class TimeAndTravelExportGenerationService {
       $byMember[$member->getId()][] = $declaration;
     }
 
-    // Alphabetical by lastname then firstname (Member::getFullName() is already "LASTNAME Firstname"),
-    // so the recap and the attestations are generated/listed in the same order.
     uasort($byMember, fn (array $a, array $b) => strcmp((string) $a[0]->getMember()?->getFullName(), (string) $b[0]->getMember()?->getFullName()));
 
     $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
+    foreach ($byMember as $memberDeclarations) {
+      $this->generateAttestation($export, $memberDeclarations[0]->getMember(), $memberDeclarations, $smicRateFloat);
+    }
+
+    // The recap's per-member declaration counts come from the database
+    $this->entityManager->flush();
+
+    $this->generateRecapAndZip($export);
+
+    $this->entityManager->flush();
+  }
+
+  /**
+   * Rebuilds a draft export. With $memberUuids, only those members' attestations are regenerated
+   * (their declarations re-attached, totals recomputed) — the recap and the zip always are, since
+   * they span every member. Without, or when the export was never fully generated, everything is.
+   *
+   * @param string[] $memberUuids
+   */
+  public function regenerate(TimeAndTravelExport $export, array $memberUuids = []): void {
+    $members = $this->resolveMembers($memberUuids);
+    if ($members === null || !$export->getRecapFile()) {
+      $this->regenerateAll($export);
+      return;
+    }
+
+    $this->regenerateMembers($export, $members);
+  }
+
+  private function regenerateAll(TimeAndTravelExport $export): void {
+    foreach ($this->declarationRepository->findByExport($export) as $declaration) {
+      $declaration->setExport(null);
+    }
+
+    $this->discardFile($export->getRecapFile());
+    $export->setRecapFile(null);
+
+    $this->discardFile($export->getZipFile());
+    $export->setZipFile(null);
+
+    foreach ($export->getAttestations() as $attestation) {
+      $this->discardFile($attestation->getFile());
+      $export->getAttestations()->removeElement($attestation);
+      $this->entityManager->remove($attestation);
+    }
+
+    $this->entityManager->flush();
+
+    $this->generate($export);
+  }
+
+  /**
+   * @param Member[] $members
+   */
+  private function regenerateMembers(TimeAndTravelExport $export, array $members): void {
+    $memberIds = array_map(static fn (Member $member) => $member->getId(), $members);
+
+    foreach ($this->declarationRepository->findByExport($export, $members) as $declaration) {
+      $declaration->setExport(null);
+    }
+
+    foreach ($export->getAttestations() as $attestation) {
+      if (!in_array($attestation->getMember()?->getId(), $memberIds, true)) {
+        continue;
+      }
+      $this->discardFile($attestation->getFile());
+      $export->getAttestations()->removeElement($attestation);
+      $this->entityManager->remove($attestation);
+    }
+
+    $this->discardFile($export->getRecapFile());
+    $export->setRecapFile(null);
+
+    $this->discardFile($export->getZipFile());
+    $export->setZipFile(null);
+
+    $this->entityManager->flush();
+
+    // The snapshot taken when the export was created is kept, so every attestation of it stays priced the same way.
+    $smicRate = $export->getSmicHourlyRate();
+    $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
+
+    $byMember = [];
+    foreach ($this->declarationRepository->findExportableForPeriod($export->getClub(), $export->getStartDate(), $export->getEndDate(), $members) as $declaration) {
+      $declaration->setExport($export);
+      $byMember[$declaration->getMember()?->getId()][] = $declaration;
+    }
+    foreach ($byMember as $memberDeclarations) {
+      $this->generateAttestation($export, $memberDeclarations[0]->getMember(), $memberDeclarations, $smicRateFloat);
+    }
+
+    // The recap's per-member declaration counts come from the database
+    $this->entityManager->flush();
+
+    $this->generateRecapAndZip($export);
+
+    $this->entityManager->flush();
+  }
+
+  /**
+   * @param string[] $memberUuids
+   * @return Member[]|null Null when the whole export must be regenerated: no member given, or one no longer exists
+   */
+  private function resolveMembers(array $memberUuids): ?array {
+    if (!$memberUuids) {
+      return null;
+    }
+
+    $members = [];
+    foreach (array_unique($memberUuids) as $memberUuid) {
+      $member = $this->memberRepository->findOneByUuid($memberUuid);
+      if (!$member) {
+        return null;
+      }
+      $members[] = $member;
+    }
+
+    return $members;
+  }
+
+  /**
+   * Builds one member's attestation (totals + PDF) from their declarations and adds it to the export.
+   *
+   * @param TimeAndTravelDeclaration[] $memberDeclarations
+   */
+  private function generateAttestation(TimeAndTravelExport $export, Member $member, array $memberDeclarations, float $smicRate): void {
+    $club = $export->getClub();
+    $totals = $this->computeTotals($memberDeclarations, $smicRate);
+    $formattedTotals = $this->formatTotalsForTemplate($totals);
+
+    $attestation = new TimeAndTravelExportAttestation();
+    $attestation
+      ->setMember($member)
+      ->setTotalKilometers($totals['totalKilometers'])
+      ->setTotalHours($formattedTotals['totalHours'])
+      ->setTotalTravelAmount($formattedTotals['totalTravelAmount'])
+      ->setTotalTimeAmount($formattedTotals['totalTimeAmount']);
+
+    $pdfBytes = $this->pdfService->renderAttestation($export, $member, $formattedTotals);
+    $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
+    $attestation->setFile($file);
+
+    $export->addAttestation($attestation);
+    $this->entityManager->persist($attestation);
+  }
+
+  /**
+   * Renders the recap from the export's attestations (their stored totals — so members whose PDF was
+   * not regenerated are still counted) and bundles it with every attestation in the zip.
+   */
+  private function generateRecapAndZip(TimeAndTravelExport $export): void {
+    $club = $export->getClub();
+
+    $declarationCounts = [];
+    foreach ($this->declarationRepository->findByExport($export) as $declaration) {
+      $memberId = $declaration->getMember()?->getId();
+      $declarationCounts[$memberId] = ($declarationCounts[$memberId] ?? 0) + 1;
+    }
+
+    $attestations = $export->getAttestations()->toArray();
+    usort($attestations, fn (TimeAndTravelExportAttestation $a, TimeAndTravelExportAttestation $b) => strcmp((string) $a->getMember()?->getFullName(), (string) $b->getMember()?->getFullName()));
+
     $recapRows = [];
     $grandTotals = ['declarationCount' => 0, 'totalKilometers' => 0, 'totalHours' => 0.0, 'totalTravelAmount' => 0.0, 'totalTimeAmount' => 0.0, 'totalAmount' => 0.0];
     $attestationFiles = [];
 
-    foreach ($byMember as $memberDeclarations) {
-      $member = $memberDeclarations[0]->getMember();
-      $totals = $this->computeTotals($memberDeclarations, $smicRateFloat);
-      $formattedTotals = $this->formatTotalsForTemplate($totals);
-
-      $attestation = new TimeAndTravelExportAttestation();
-      $attestation
-        ->setMember($member)
-        ->setTotalKilometers($totals['totalKilometers'])
-        ->setTotalHours($formattedTotals['totalHours'])
-        ->setTotalTravelAmount($formattedTotals['totalTravelAmount'])
-        ->setTotalTimeAmount($formattedTotals['totalTimeAmount']);
-
-      $pdfBytes = $this->pdfService->renderAttestation($export, $member, $formattedTotals);
-      $file = $this->persistPdf($pdfBytes, $this->slugFilename('attestation', $member->getFullName() ?? $member->getUuid()->toString(), $export), FileCategory::time_and_travel_attestation, $club);
-      $attestation->setFile($file);
-      $attestationFiles[] = $file;
-
-      $export->addAttestation($attestation);
-      $this->entityManager->persist($attestation);
+    foreach ($attestations as $attestation) {
+      $member = $attestation->getMember();
+      $declarationCount = $declarationCounts[$member?->getId()] ?? 0;
 
       $recapRows[] = [
-        'memberName' => $member->getFullName(),
-        'memberLicence' => $member->getLicence(),
-        'declarationCount' => count($memberDeclarations),
-        'totalKilometers' => $totals['totalKilometers'],
-        'totalHours' => $formattedTotals['totalHours'],
-        'totalTravelAmount' => $formattedTotals['totalTravelAmount'],
-        'totalTimeAmount' => $formattedTotals['totalTimeAmount'],
-        'totalAmount' => $formattedTotals['totalAmount'],
+        'memberName' => $member?->getFullName(),
+        'memberLicence' => $member?->getLicence(),
+        'declarationCount' => $declarationCount,
+        'totalKilometers' => $attestation->getTotalKilometers(),
+        'totalHours' => $attestation->getTotalHours(),
+        'totalTravelAmount' => $attestation->getTotalTravelAmount(),
+        'totalTimeAmount' => $attestation->getTotalTimeAmount(),
+        'totalAmount' => number_format($attestation->getTotalAmount(), 2, '.', ''),
       ];
 
-      $grandTotals['declarationCount'] += count($memberDeclarations);
-      $grandTotals['totalKilometers'] += $totals['totalKilometers'];
-      $grandTotals['totalHours'] += $totals['totalHours'];
-      $grandTotals['totalTravelAmount'] += $totals['totalTravelAmount'];
-      $grandTotals['totalTimeAmount'] += $totals['totalTimeAmount'];
-      $grandTotals['totalAmount'] += $totals['totalAmount'];
+      $grandTotals['declarationCount'] += $declarationCount;
+      $grandTotals['totalKilometers'] += $attestation->getTotalKilometers();
+      $grandTotals['totalHours'] += (float) $attestation->getTotalHours();
+      $grandTotals['totalTravelAmount'] += (float) $attestation->getTotalTravelAmount();
+      $grandTotals['totalTimeAmount'] += (float) $attestation->getTotalTimeAmount();
+      $grandTotals['totalAmount'] += $attestation->getTotalAmount();
+
+      if ($attestation->getFile()) {
+        $attestationFiles[] = $attestation->getFile();
+      }
     }
 
     $recapBytes = $this->pdfService->renderRecap($export, $recapRows, $this->formatTotalsForTemplate($grandTotals));
@@ -111,55 +259,17 @@ class TimeAndTravelExportGenerationService {
       flush: false,
     );
     $export->setZipFile($zipFile);
-
-    $this->entityManager->flush();
   }
 
-  /**
-   * Detaches every declaration and deletes the previously generated files,
-   * then regenerates from scratch. Only valid while the export is a draft
-   * (enforced by the caller).
-   */
-  public function regenerate(TimeAndTravelExport $export): void {
-    foreach ($this->declarationRepository->findByExport($export) as $declaration) {
-      $declaration->setExport(null);
+  private function discardFile(?File $file): void {
+    if (!$file) {
+      return;
     }
 
-    if ($export->getRecapFile()) {
-      $this->fileService->remove($export->getRecapFile());
-      $this->entityManager->remove($export->getRecapFile());
-      $export->setRecapFile(null);
-    }
-
-    if ($export->getZipFile()) {
-      $this->fileService->remove($export->getZipFile());
-      $this->entityManager->remove($export->getZipFile());
-      $export->setZipFile(null);
-    }
-
-    foreach ($export->getAttestations() as $attestation) {
-      if ($attestation->getFile()) {
-        $this->fileService->remove($attestation->getFile());
-        $this->entityManager->remove($attestation->getFile());
-      }
-      $export->getAttestations()->removeElement($attestation);
-      $this->entityManager->remove($attestation);
-    }
-
-    $this->entityManager->flush();
-
-    $this->generate($export);
+    $this->fileService->remove($file);
+    $this->entityManager->remove($file);
   }
 
-  /**
-   * The official mileage scale prices a vehicle's WHOLE cumulative distance for the period under
-   * a single bracket (not marginally per km), so travel amount can't be summed declaration by
-   * declaration for a vehicle using the official scale — it has to be computed once per vehicle,
-   * over that vehicle's total kilometers across every declaration in the period.
-   *
-   * @param TimeAndTravelDeclaration[] $declarations
-   * @return array{totalKilometers: int, totalHours: float, totalTravelAmount: float, totalTimeAmount: float, totalAmount: float, vehicleBreakdown: array, kilometerDeclarations: TimeAndTravelDeclaration[], timeDeclarations: TimeAndTravelDeclaration[], kilometerDeclarationsHours: float, timeOnlyHours: float}
-   */
   private function computeTotals(array $declarations, float $smicRate): array {
     $totalKilometers = 0;
     $totalHours = 0.0;

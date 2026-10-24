@@ -5,20 +5,21 @@ namespace App\State\Plugin\TimeAndTravelDeclaration;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
+use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Service\RequestService;
-use App\Service\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportGenerationService;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Creates a draft export: persists it, stamps who generated it, then
- * immediately runs the generation (attach declarations + render both PDF kinds).
+ * Creates a draft export: persists it, stamps who generated it, then queues the generation
+ * (attach declarations + render both PDF kinds) in the background.
  */
 class TimeAndTravelExportProcessor implements ProcessorInterface {
   public function __construct(
     #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
     private readonly ProcessorInterface $persistProcessor,
     private readonly RequestService $requestService,
-    private readonly TimeAndTravelExportGenerationService $generationService,
+    private readonly MessageBusInterface $messageBus,
   ) {
   }
 
@@ -32,9 +33,13 @@ class TimeAndTravelExportProcessor implements ProcessorInterface {
       $data->setGeneratedBy($activeProfile->getMember());
     }
 
+    // The generation renders a PDF per member, which times out on a long period — so the export is
+    // only created here, flagged as regenerating, and filled in by the background job.
+    $data->setIsRegenerating(true);
+
     $data = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
 
-    $this->generationService->generate($data);
+    $this->messageBus->dispatch(new TimeAndTravelExportRegenerateMessage($data->getUuid()->toString()));
 
     return $data;
   }

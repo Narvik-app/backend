@@ -121,6 +121,14 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   #[Groups(['time-and-travel-export-read'])]
   private bool $isRegenerating = false;
 
+  /**
+   * True once the background job gave up (retries exhausted) — the PDFs may then be missing or out
+   * of date. Cleared as soon as a new regeneration starts.
+   */
+  #[ORM\Column(options: ['default' => false])]
+  #[Groups(['time-and-travel-export-read'])]
+  private bool $regenerationFailed = false;
+
   #[ORM\Column(type: Types::DATE_IMMUTABLE)]
   #[Groups(['time-and-travel-export', 'time-and-travel-export-write', 'time-and-travel-export-attestation'])]
   #[Assert\NotNull]
@@ -210,6 +218,18 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
 
   public function setIsRegenerating(bool $isRegenerating): static {
     $this->isRegenerating = $isRegenerating;
+    if ($isRegenerating) {
+      $this->regenerationFailed = false;
+    }
+    return $this;
+  }
+
+  public function getRegenerationFailed(): bool {
+    return $this->regenerationFailed;
+  }
+
+  public function setRegenerationFailed(bool $regenerationFailed): static {
+    $this->regenerationFailed = $regenerationFailed;
     return $this;
   }
 

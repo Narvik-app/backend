@@ -28,7 +28,7 @@ class TimeAndTravelExportRegenerateMessageHandler {
       return;
     }
 
-    $this->generationService->regenerate($export);
+    $this->generationService->regenerate($export, $message->getMemberUuids());
 
     if ($message->isLockAfter()) {
       $lockedBy = $message->getLockedByMemberUuid() ? $this->memberRepository->findOneByUuid($message->getLockedByMemberUuid()) : null;
