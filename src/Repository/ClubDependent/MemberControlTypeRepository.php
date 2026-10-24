@@ -34,4 +34,19 @@ class MemberControlTypeRepository extends ServiceEntityRepository implements Sor
       ->getQuery()
       ->getResult();
   }
+
+  /**
+   * Types whose rows are maintained by the backend: automatic ones, and the ones that must exist
+   * for every member so a missing date can be flagged.
+   *
+   * @return MemberControlType[]
+   */
+  public function findAllSyncedByClub(\App\Entity\Club $club): array {
+    $qb = $this->createQueryBuilder('t');
+    $this->applyClubRestriction($qb, $club);
+    return $qb
+      ->andWhere('t.activity IS NOT NULL OR t.alertIfMissing = true')
+      ->getQuery()
+      ->getResult();
+  }
 }

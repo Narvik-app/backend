@@ -129,6 +129,14 @@ class MemberControlType extends UuidEntity implements ClubLinkedEntityInterface,
   #[Groups(['member-control-type', 'member-control-read', 'member-read', 'member-presence-read'])]
   private bool $displayOnPresenceCard = true;
 
+  /**
+   * When true, every member without a date for this control is flagged as "missing"
+   * (unless the alert is muted on that member's control).
+   */
+  #[ORM\Column(options: ['default' => false])]
+  #[Groups(['member-control-type', 'member-control-read', 'member-read', 'member-presence-read'])]
+  private bool $alertIfMissing = false;
+
   #[ORM\Column(nullable: true)]
   #[Groups(['member-control-type', 'member-read', 'member-presence-read'])]
   private ?int $weight = null;
@@ -175,6 +183,13 @@ class MemberControlType extends UuidEntity implements ClubLinkedEntityInterface,
     return $this->activity !== null;
   }
 
+  /**
+   * Whether the backend maintains one row per member for this type.
+   */
+  public function isSynced(): bool {
+    return $this->isAutomatic() || $this->alertIfMissing;
+  }
+
   public function getWarningDays(): ?int {
     return $this->warningDays;
   }
@@ -199,6 +214,15 @@ class MemberControlType extends UuidEntity implements ClubLinkedEntityInterface,
 
   public function setDisplayOnPresenceCard(bool $displayOnPresenceCard): static {
     $this->displayOnPresenceCard = $displayOnPresenceCard;
+    return $this;
+  }
+
+  public function isAlertIfMissing(): bool {
+    return $this->alertIfMissing;
+  }
+
+  public function setAlertIfMissing(bool $alertIfMissing): static {
+    $this->alertIfMissing = $alertIfMissing;
     return $this;
   }
 
