@@ -9,8 +9,8 @@ use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 
 /**
- * When a type is created (or its linked activity changes) with an activity already set,
- * backfill every member's control from their existing presence history.
+ * When a type is created (or its linked activity / "alert if missing" flag changes) and the backend
+ * must maintain its rows, backfill every member's control (from presence history for automatic types).
  *
  * This dispatches a background job (see MemberControlService::dispatchSyncForType).
  */
@@ -23,13 +23,13 @@ class MemberControlTypeSubscriber extends AbstractEventSubscriber {
   }
 
   public function postPersist(MemberControlType $type, PostPersistEventArgs $args): void {
-    if ($type->isAutomatic()) {
+    if ($type->isSynced()) {
       $this->memberControlService->dispatchSyncForType($type);
     }
   }
 
   public function postUpdate(MemberControlType $type, PostUpdateEventArgs $args): void {
-    if ($this->isPropertyChanged($args->getObjectManager(), $type, 'activity') && $type->isAutomatic()) {
+    if ($this->hasChangedProperties($args->getObjectManager(), $type, ['activity', 'alertIfMissing']) && $type->isSynced()) {
       $this->memberControlService->dispatchSyncForType($type);
     }
   }

@@ -199,6 +199,30 @@ class MemberControlTest extends AbstractEntityClubLinkedTestCase {
     $this->assertEquals('2026-07-03T00:00:00+00:00', $data['controls'][0]['date']);
   }
 
+  public function testMissingDateIsFlaggedOnlyWhenTypeRequiresIt(): void {
+    $member = _InitStory::MEMBER_member_club_1();
+    $required = MemberControlTypeFactory::createOne(['alertIfMissing' => true, 'warningDays' => null, 'alertDays' => null]);
+    $optional = MemberControlTypeFactory::createOne();
+
+    $this->loggedAsSupervisorClub1();
+
+    $response = $this->makePostRequest($this->getRootWClubUrl(_InitStory::club_1()), [
+      'member' => $this->getIriFromResource($member),
+      'type' => $this->getIriFromResource($required),
+    ]);
+    $this->assertResponseIsSuccessful();
+    $this->assertJsonContains(['status' => 'missing']);
+
+    $patchResponse = $this->makePatchRequest($response->toArray()['@id'], ['alertDisabled' => true]);
+    $this->assertArrayNotHasKey('status', $patchResponse->toArray());
+
+    $optionalResponse = $this->makePostRequest($this->getRootWClubUrl(_InitStory::club_1()), [
+      'member' => $this->getIriFromResource($member),
+      'type' => $this->getIriFromResource($optional),
+    ]);
+    $this->assertArrayNotHasKey('status', $optionalResponse->toArray());
+  }
+
   public function testStatusTransitionsAcrossThresholds(): void {
     $member = _InitStory::MEMBER_member_club_1();
     $type = MemberControlTypeFactory::createOne(['warningDays' => 335, 'alertDays' => 365]);

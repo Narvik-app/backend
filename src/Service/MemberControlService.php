@@ -36,7 +36,7 @@ class MemberControlService {
    * type — see MemberControlTypeSubscriber. Chunk size matches ImportItacCsvService's.
    */
   public function dispatchSyncForType(MemberControlType $type): void {
-    if (!$type->isAutomatic()) {
+    if (!$type->isSynced()) {
       return;
     }
 
@@ -69,7 +69,7 @@ class MemberControlService {
     }
 
     $changed = false;
-    foreach ($this->memberControlTypeRepository->findAllAutomaticByClub($club) as $type) {
+    foreach ($this->memberControlTypeRepository->findAllSyncedByClub($club) as $type) {
       $changed = $this->syncMemberForType($member, $type) || $changed;
     }
 
@@ -82,7 +82,7 @@ class MemberControlService {
    * Full rebuild of one automatic type across the whole club (e.g. after its linked activity changed).
    */
   public function syncForType(MemberControlType $type): void {
-    if (!$type->isAutomatic()) {
+    if (!$type->isSynced()) {
       return;
     }
 
@@ -102,27 +102,30 @@ class MemberControlService {
   }
 
   /**
-   * Sync one member's control for one automatic type. Persists but does not flush — callers own
-   * the flush (once per request/message, not once per member).
+   * Sync one member's control for one synced type (automatic and/or flagged "alert if missing").
+   * Persists but does not flush — callers own the flush (once per request/message, not once per member).
    */
   public function syncMemberForType(Member $member, MemberControlType $type): bool {
     $activity = $type->getActivity();
+    $control = $this->memberControlRepository->findOneByMemberAndType($member, $type);
+
     if (!$activity) {
+      // Manual type: dates are user-entered, we only make sure the row exists so it can be flagged as missing.
+      if (!$control && $type->isAlertIfMissing()) {
+        $this->createControl($member, $type, null);
+        return true;
+      }
       return false;
     }
 
     $presence = $this->memberPresenceRepository->findLastOneByActivity($member, $activity);
-    $control = $this->memberControlRepository->findOneByMemberAndType($member, $type);
     $newDate = $presence?->getDate();
 
     if (!$control) {
-      if (!$newDate) {
+      if (!$newDate && !$type->isAlertIfMissing()) {
         return false;
       }
-      $control = new MemberControl();
-      $control->setMember($member)->setType($type);
-      $this->entityManager->persist($control);
-      $control->setDate($newDate);
+      $this->createControl($member, $type, $newDate);
       return true;
     }
 
@@ -132,5 +135,12 @@ class MemberControlService {
     }
 
     return false;
+  }
+
+  private function createControl(Member $member, MemberControlType $type, ?\DateTimeImmutable $date): void {
+    $control = new MemberControl();
+    $control->setMember($member)->setType($type);
+    $this->entityManager->persist($control);
+    $control->setDate($date);
   }
 }
