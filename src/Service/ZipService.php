@@ -23,7 +23,9 @@ class ZipService {
    * @return FileEntity|null The persisted zip, or null if none of the given files could be read.
    */
   public function createZip(array $files, string $filename, FileCategory $category, bool $isPublic = false, ?Club $club = null, bool $flush = true): ?FileEntity {
-    $tmpPath = tempnam(sys_get_temp_dir(), 'zip_') . '.zip';
+    $tmpFile = tempnam(sys_get_temp_dir(), 'zip_');
+    $tmpPath = $tmpFile . '.zip';
+    rename($tmpFile, $tmpPath);
 
     $zip = new \ZipArchive();
     $zip->open($tmpPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);

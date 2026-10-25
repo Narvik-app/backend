@@ -5,6 +5,7 @@ namespace App\EventSubscriber\Doctrine;
 use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclaration;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportRepository;
@@ -88,7 +89,7 @@ class TimeAndTravelDeclarationExportRegenerationSubscriber extends AbstractEvent
     $this->pendingExports = [];
 
     foreach ($exports as $pending) {
-      $pending['export']->setIsRegenerating(true);
+      $pending['export']->setGenerationStatus(TimeAndTravelExportGenerationStatus::generating);
     }
     $this->entityManager->flush();
 

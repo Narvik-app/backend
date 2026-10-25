@@ -2,6 +2,7 @@
 
 namespace App\MessageHandler;
 
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Repository\ClubDependent\MemberRepository;
@@ -38,7 +39,7 @@ class TimeAndTravelExportRegenerateMessageHandler {
         ->setLockedBy($lockedBy);
     }
 
-    $export->setIsRegenerating(false);
+    $export->setGenerationStatus(TimeAndTravelExportGenerationStatus::idle);
     $this->entityManager->flush();
   }
 }

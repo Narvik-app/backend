@@ -25,6 +25,7 @@ use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\SelfClubLinkedEntityTrait;
 use App\Entity\Trait\TimestampTrait;
 use App\Enum\Permission;
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Repository\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportRepository;
 use App\State\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportDeleteProcessor;
@@ -113,21 +114,14 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
   private TimeAndTravelExportStatus $status = TimeAndTravelExportStatus::draft;
 
   /**
-   * True while a background job (triggered by a declaration change, or by locking) is
-   * regenerating this draft's PDFs. Purely informational for the frontend to poll on —
-   * see FEATURE_MERCURE.md for turning this into a push-based update later.
+   * Generating while a background job (triggered by a declaration change, or by locking) is
+   * regenerating this draft's PDFs — purely informational for the frontend to poll on, see
+   * FEATURE_MERCURE.md for turning this into a push-based update later. Failed once the job
+   * gave up (retries exhausted): the PDFs may then be missing or out of date.
    */
-  #[ORM\Column]
+  #[ORM\Column(type: Types::STRING, enumType: TimeAndTravelExportGenerationStatus::class)]
   #[Groups(['time-and-travel-export-read'])]
-  private bool $isRegenerating = false;
-
-  /**
-   * True once the background job gave up (retries exhausted) — the PDFs may then be missing or out
-   * of date. Cleared as soon as a new regeneration starts.
-   */
-  #[ORM\Column(options: ['default' => false])]
-  #[Groups(['time-and-travel-export-read'])]
-  private bool $regenerationFailed = false;
+  private TimeAndTravelExportGenerationStatus $generationStatus = TimeAndTravelExportGenerationStatus::idle;
 
   #[ORM\Column(type: Types::DATE_IMMUTABLE)]
   #[Groups(['time-and-travel-export', 'time-and-travel-export-write', 'time-and-travel-export-attestation'])]
@@ -212,24 +206,12 @@ class TimeAndTravelExport extends UuidEntity implements TimestampEntityInterface
     return $this;
   }
 
-  public function getIsRegenerating(): bool {
-    return $this->isRegenerating;
+  public function getGenerationStatus(): TimeAndTravelExportGenerationStatus {
+    return $this->generationStatus;
   }
 
-  public function setIsRegenerating(bool $isRegenerating): static {
-    $this->isRegenerating = $isRegenerating;
-    if ($isRegenerating) {
-      $this->regenerationFailed = false;
-    }
-    return $this;
-  }
-
-  public function getRegenerationFailed(): bool {
-    return $this->regenerationFailed;
-  }
-
-  public function setRegenerationFailed(bool $regenerationFailed): static {
-    $this->regenerationFailed = $regenerationFailed;
+  public function setGenerationStatus(TimeAndTravelExportGenerationStatus $generationStatus): static {
+    $this->generationStatus = $generationStatus;
     return $this;
   }
 
