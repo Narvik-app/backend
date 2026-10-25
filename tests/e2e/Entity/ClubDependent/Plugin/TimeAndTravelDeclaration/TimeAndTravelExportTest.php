@@ -500,8 +500,26 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->transport('async_medium')->process();
 
     $lockedExport = $this->makeGetRequest($exportIri)->toArray();
-    $this->assertEquals('locked', $lockedExport['status']);
+    $this->assertEquals('locked', $lockedExport['status'], $this->describeMessengerFailures());
     $this->assertEquals(1, $lockedExport['declarationCount']);
+  }
+
+  /**
+   * Handler exceptions are caught by the test transport; lists them so a failed assertion explains itself.
+   */
+  private function describeMessengerFailures(): string {
+    $lines = [];
+    foreach (['async_medium' => 'queue', 'failed' => 'queue'] as $name => $_) {
+      foreach ($this->transport($name)->queue() as $envelope) {
+        $details = $envelope->last(\Symfony\Component\Messenger\Stamp\ErrorDetailsStamp::class);
+        $lines[] = sprintf('[%s] %s: %s', $name, $envelope->getMessage()::class, $details ? $details->getExceptionClass() . ' ' . $details->getExceptionMessage() : 'queued, not processed');
+      }
+    }
+    foreach ($this->transport('async_medium')->rejected() as $envelope) {
+      $lines[] = '[rejected] ' . $envelope->getMessage()::class;
+    }
+
+    return $lines ? implode("\n", $lines) : 'No message left in the queues.';
   }
 
   public function testSupervisorNeedsUnlockPermissionToUnlock(): void {
