@@ -4,6 +4,7 @@ namespace App\Controller\ClubDependent\Plugin\TimeAndTravelDeclaration;
 
 use App\Controller\Abstract\AbstractController;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,7 +27,7 @@ class TimeAndTravelExportRegenerate extends AbstractController {
 
     // Runs in the background like locking does — see TimeAndTravelExportLock — so a big export
     // doesn't block the request on PDF rendering for every member.
-    $export->setIsRegenerating(true);
+    $export->setGenerationStatus(TimeAndTravelExportGenerationStatus::generating);
     $this->entityManager->flush();
 
     $this->messageBus->dispatch(new TimeAndTravelExportRegenerateMessage($export->getUuid()->toString()));

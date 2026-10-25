@@ -4,6 +4,7 @@ namespace App\Controller\ClubDependent\Plugin\TimeAndTravelDeclaration;
 
 use App\Controller\Abstract\AbstractController;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Service\RequestService;
@@ -29,7 +30,7 @@ class TimeAndTravelExportLock extends AbstractController {
     // Declarations can be added right up until locking, so regeneration (picking up every last
     // declaration) and the lock itself both happen in the background job — see FEATURE_MERCURE.md
     // for how the frontend is meant to learn when this finishes.
-    $export->setIsRegenerating(true);
+    $export->setGenerationStatus(TimeAndTravelExportGenerationStatus::generating);
     $this->entityManager->flush();
 
     $activeProfile = $this->requestService->getActiveProfile();

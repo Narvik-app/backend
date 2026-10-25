@@ -5,6 +5,7 @@ namespace App\State\Plugin\TimeAndTravelDeclaration;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExport;
+use App\Enum\TimeAndTravelExportGenerationStatus;
 use App\Message\TimeAndTravelExportRegenerateMessage;
 use App\Service\RequestService;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -35,7 +36,7 @@ class TimeAndTravelExportProcessor implements ProcessorInterface {
 
     // The generation renders a PDF per member, which times out on a long period — so the export is
     // only created here, flagged as regenerating, and filled in by the background job.
-    $data->setIsRegenerating(true);
+    $data->setGenerationStatus(TimeAndTravelExportGenerationStatus::generating);
 
     $data = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
 

@@ -333,7 +333,9 @@ class TimeAndTravelExportGenerationService {
   }
 
   private function persistPdf(string $bytes, string $filename, FileCategory $category, ?Club $club): File {
-    $tmpPath = tempnam(sys_get_temp_dir(), 'ttpdf_') . '.pdf';
+    $tmpFile = tempnam(sys_get_temp_dir(), 'ttpdf_');
+    $tmpPath = $tmpFile . '.pdf';
+    rename($tmpFile, $tmpPath);
     file_put_contents($tmpPath, $bytes);
 
     $sfFile = new SfFile($tmpPath);

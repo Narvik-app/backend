@@ -49,14 +49,14 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $created = $exportResponse->toArray();
 
     // The generation runs in the background: the export is created empty and flagged as regenerating
-    $this->assertTrue($created['isRegenerating']);
+    $this->assertSame('generating', $created['generationStatus']);
     $this->assertEquals(0, $created['declarationCount']);
     $this->assertNull($created['zipFile'] ?? null);
 
     $this->transport('async_medium')->process();
 
     $export = $this->makeGetRequest($created['@id'])->toArray();
-    $this->assertFalse($export['isRegenerating']);
+    $this->assertSame('idle', $export['generationStatus']);
     $this->assertEquals('draft', $export['status']);
     $this->assertEquals(1, $export['declarationCount']);
     $this->assertEquals(1, $export['memberCount']);
@@ -170,13 +170,13 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
 
     $exportWhileRegenerating = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals('draft', $exportWhileRegenerating['status']);
-    $this->assertTrue($exportWhileRegenerating['isRegenerating']);
+    $this->assertSame('generating', $exportWhileRegenerating['generationStatus']);
 
     $this->transport('async_medium')->process();
 
     $exportAfterLock = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals('locked', $exportAfterLock['status']);
-    $this->assertFalse($exportAfterLock['isRegenerating']);
+    $this->assertSame('idle', $exportAfterLock['generationStatus']);
 
     // A second lock attempt is a conflict
     $this->makePostRequest($exportIri . '/lock');
@@ -323,13 +323,13 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->transport('async_medium')->queue()->assertContains(\App\Message\TimeAndTravelExportRegenerateMessage::class, 1);
     $exportWhileRegenerating = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals(0, $exportWhileRegenerating['declarationCount']);
-    $this->assertTrue($exportWhileRegenerating['isRegenerating']);
+    $this->assertSame('generating', $exportWhileRegenerating['generationStatus']);
 
     $this->transport('async_medium')->process();
 
     $exportAfterRegeneration = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals(1, $exportAfterRegeneration['declarationCount']);
-    $this->assertFalse($exportAfterRegeneration['isRegenerating']);
+    $this->assertSame('idle', $exportAfterRegeneration['generationStatus']);
   }
 
   public function testChangingADeclarationOnlyRegeneratesThatMembersAttestationAndTheRecap(): void {
@@ -367,7 +367,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->transport('async_medium')->process();
 
     $after = $this->makeGetRequest($exportIri)->toArray();
-    $this->assertFalse($after['isRegenerating']);
+    $this->assertSame('idle', $after['generationStatus']);
     $this->assertEquals(3, $after['declarationCount']);
     $this->assertEquals(2, $after['memberCount']);
     $this->assertEquals(35, $after['totalKilometers']);
@@ -392,7 +392,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'startDate' => new \DateTimeImmutable('-1 month')->format('Y-m-d'),
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ])->toArray()['@id'];
-    $this->assertTrue($this->makeGetRequest($exportIri)->toArray()['isRegenerating']);
+    $this->assertSame('generating', $this->makeGetRequest($exportIri)->toArray()['generationStatus']);
 
     $envelope = new Envelope(new \App\Message\TimeAndTravelExportRegenerateMessage(basename($exportIri)));
 
@@ -400,22 +400,20 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $willRetry = new WorkerMessageFailedEvent($envelope, 'async_medium', new \RuntimeException('boom'));
     $willRetry->setForRetry();
     static::getContainer()->get('event_dispatcher')->dispatch($willRetry);
-    $this->assertTrue($this->makeGetRequest($exportIri)->toArray()['isRegenerating']);
+    $this->assertSame('generating', $this->makeGetRequest($exportIri)->toArray()['generationStatus']);
 
     // Retries exhausted: released so it can be regenerated again
     static::getContainer()->get('event_dispatcher')->dispatch(new WorkerMessageFailedEvent($envelope, 'async_medium', new UnrecoverableMessageHandlingException('boom')));
     // The release is plain SQL, so drop the entities already loaded by this test's kernel
     static::getContainer()->get('doctrine.orm.entity_manager')->clear();
     $failedExport = $this->makeGetRequest($exportIri)->toArray();
-    $this->assertFalse($failedExport['isRegenerating']);
-    $this->assertTrue($failedExport['regenerationFailed']);
+    $this->assertSame('failed', $failedExport['generationStatus']);
 
     // Regenerating again clears the failure
     $this->makePostRequest($exportIri . '/regenerate');
     $this->assertResponseStatusCodeSame(202);
     $restarted = $this->makeGetRequest($exportIri)->toArray();
-    $this->assertTrue($restarted['isRegenerating']);
-    $this->assertFalse($restarted['regenerationFailed']);
+    $this->assertSame('generating', $restarted['generationStatus']);
   }
 
   /**
