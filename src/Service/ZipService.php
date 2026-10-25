@@ -48,7 +48,14 @@ class ZipService {
       return null;
     }
 
-    return $this->fileService->importFile(new SfFile($tmpPath), $filename, $category, $isPublic, $club, $flush);
+    try {
+      return $this->fileService->importFile(new SfFile($tmpPath), $filename, $category, $isPublic, $club, $flush);
+    } finally {
+      // importFile moves the file on success; this only cleans up when it failed first
+      if (file_exists($tmpPath)) {
+        unlink($tmpPath);
+      }
+    }
   }
 
   /** Disambiguates entries so two attached files sharing the same display name don't collide inside the archive. */

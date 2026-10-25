@@ -338,9 +338,14 @@ class TimeAndTravelExportGenerationService {
     rename($tmpFile, $tmpPath);
     file_put_contents($tmpPath, $bytes);
 
-    $sfFile = new SfFile($tmpPath);
-
-    return $this->fileService->importFile($sfFile, $filename, $category, isPublic: false, club: $club, flush: false);
+    try {
+      return $this->fileService->importFile(new SfFile($tmpPath), $filename, $category, isPublic: false, club: $club, flush: false);
+    } finally {
+      // importFile moves the file on success; this only cleans up when it failed first
+      if (file_exists($tmpPath)) {
+        unlink($tmpPath);
+      }
+    }
   }
 
   private function slugFilename(string $prefix, string $name, TimeAndTravelExport $export, string $extension = 'pdf'): string {
