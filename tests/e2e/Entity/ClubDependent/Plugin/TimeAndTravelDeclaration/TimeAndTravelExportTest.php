@@ -9,6 +9,7 @@ use App\Tests\Factory\MemberFactory;
 use App\Tests\Story\_InitStory;
 use App\Enum\VehicleCategory;
 use App\Enum\VehicleEngineType;
+use App\Message\TimeAndTravelExportRegenerateMessage;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
@@ -53,7 +54,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->assertEquals(0, $created['declarationCount']);
     $this->assertNull($created['zipFile'] ?? null);
 
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $export = $this->makeGetRequest($created['@id'])->toArray();
     $this->assertSame('idle', $export['generationStatus']);
@@ -93,7 +94,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $exportIri = $exportResponse->toArray()['@id'];
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     // The freshly-persisted zipFile has no privateUrl yet (File::postLoad only fires on a genuine
     // reload), same as recapFile right after creation — fetch the export back to get it.
@@ -138,7 +139,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     ]);
     $this->assertResponseStatusCodeSame(201);
     $exportIri = $exportResponse->toArray()['@id'];
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $attestations = $this->makeGetRequest($exportIri . '/attestations')->toArray()['member'];
     $names = array_map(static fn (array $a) => $a['member']['fullName'] ?? null, $attestations);
@@ -162,7 +163,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $exportIri = $exportResponse->toArray()['@id'];
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     // Locking a draft is accepted, then regenerates and locks in the background
     $this->makePostRequest($exportIri . '/lock');
@@ -172,7 +173,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->assertEquals('draft', $exportWhileRegenerating['status']);
     $this->assertSame('generating', $exportWhileRegenerating['generationStatus']);
 
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $exportAfterLock = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals('locked', $exportAfterLock['status']);
@@ -217,7 +218,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $this->assertResponseStatusCodeSame(201);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $attestations = $this->makeGetRequest($exportResponse->toArray()['@id'] . '/attestations')->toArray()['member'];
     $this->assertCount(1, $attestations);
@@ -243,7 +244,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ]);
     $this->assertResponseStatusCodeSame(201);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $attestations = $this->makeGetRequest($exportResponse->toArray()['@id'] . '/attestations')->toArray()['member'];
     $this->assertEquals('3052.80', $attestations[0]['totalTravelAmount']);
@@ -305,7 +306,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $exportIri = $exportResponse->toArray()['@id'];
     $this->assertEquals(0, $exportResponse->toArray()['declarationCount']);
 
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
     $this->transport('async_medium')->queue()->assertEmpty();
 
     $this->makePostRequest($clubIri . '/time-and-travel-declarations', [
@@ -325,7 +326,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $this->assertEquals(0, $exportWhileRegenerating['declarationCount']);
     $this->assertSame('generating', $exportWhileRegenerating['generationStatus']);
 
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $exportAfterRegeneration = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals(1, $exportAfterRegeneration['declarationCount']);
@@ -347,7 +348,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'startDate' => new \DateTimeImmutable('-1 month')->format('Y-m-d'),
       'endDate' => new \DateTimeImmutable()->format('Y-m-d'),
     ])->toArray()['@id'];
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $before = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals(2, $before['declarationCount']);
@@ -364,7 +365,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
       'description' => 'Only member A is affected',
     ]);
     $this->assertResponseStatusCodeSame(201);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $after = $this->makeGetRequest($exportIri)->toArray();
     $this->assertSame('idle', $after['generationStatus']);
@@ -394,7 +395,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     ])->toArray()['@id'];
     $this->assertSame('generating', $this->makeGetRequest($exportIri)->toArray()['generationStatus']);
 
-    $envelope = new Envelope(new \App\Message\TimeAndTravelExportRegenerateMessage(basename($exportIri)));
+    $envelope = new Envelope(new TimeAndTravelExportRegenerateMessage(basename($exportIri)));
 
     // Still going to be retried: stays in progress
     $willRetry = new WorkerMessageFailedEvent($envelope, 'async_medium', new \RuntimeException('boom'));
@@ -441,7 +442,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $exportIri = $exportResponse->toArray()['@id'];
     $this->makePostRequest($exportIri . '/lock');
     $this->assertResponseStatusCodeSame(202);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     // A new declaration inside that now-locked period is refused
     $response = $this->makePostRequest($clubIri . '/time-and-travel-declarations', [
@@ -497,7 +498,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
 
     $this->makePostRequest($exportIri . '/lock');
     $this->assertResponseStatusCodeSame(202);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     $lockedExport = $this->makeGetRequest($exportIri)->toArray();
     $this->assertEquals('locked', $lockedExport['status'], $this->describeMessengerFailures());
@@ -540,7 +541,7 @@ class TimeAndTravelExportTest extends AbstractApiTestCase {
     $exportIri = $exportResponse->toArray()['@id'];
     $this->makePostRequest($exportIri . '/lock');
     $this->assertResponseStatusCodeSame(202);
-    $this->transport('async_medium')->process();
+    $this->transport('async_medium')->process(filter: TimeAndTravelExportRegenerateMessage::class);
 
     // Supervisor has TIME_TRAVEL_EXPORT but not TIME_TRAVEL_UNLOCK
     $this->loggedAsSupervisorClub1();
