@@ -35,35 +35,9 @@ class TimeAndTravelExportGenerationService {
   }
 
   public function generate(TimeAndTravelExport $export): void {
-    $club = $export->getClub();
-    $smicRate = $club?->getSettings()?->getSmicHourlyRate();
-    $export->setSmicHourlyRate($smicRate);
+    $export->setSmicHourlyRate($export->getClub()?->getSettings()?->getSmicHourlyRate());
 
-    $declarations = $this->declarationRepository->findExportableForPeriod($club, $export->getStartDate(), $export->getEndDate());
-
-    $byMember = [];
-    foreach ($declarations as $declaration) {
-      $declaration->setExport($export);
-      $member = $declaration->getMember();
-      if (!$member) {
-        continue;
-      }
-      $byMember[$member->getId()][] = $declaration;
-    }
-
-    uasort($byMember, fn (array $a, array $b) => strcmp((string) $a[0]->getMember()?->getFullName(), (string) $b[0]->getMember()?->getFullName()));
-
-    $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
-    foreach ($byMember as $memberDeclarations) {
-      $this->generateAttestation($export, $memberDeclarations[0]->getMember(), $memberDeclarations, $smicRateFloat);
-    }
-
-    // The recap's per-member declaration counts come from the database
-    $this->entityManager->flush();
-
-    $this->generateRecapAndZip($export);
-
-    $this->entityManager->flush();
+    $this->build($export);
   }
 
   /**
@@ -76,47 +50,29 @@ class TimeAndTravelExportGenerationService {
   public function regenerate(TimeAndTravelExport $export, array $memberUuids = []): void {
     $members = $this->resolveMembers($memberUuids);
     if ($members === null || !$export->getRecapFile()) {
-      $this->regenerateAll($export);
+      $this->reset($export);
+      $this->generate($export);
       return;
     }
 
-    $this->regenerateMembers($export, $members);
-  }
-
-  private function regenerateAll(TimeAndTravelExport $export): void {
-    foreach ($this->declarationRepository->findByExport($export) as $declaration) {
-      $declaration->setExport(null);
-    }
-
-    $this->discardFile($export->getRecapFile());
-    $export->setRecapFile(null);
-
-    $this->discardFile($export->getZipFile());
-    $export->setZipFile(null);
-
-    foreach ($export->getAttestations() as $attestation) {
-      $this->discardFile($attestation->getFile());
-      $export->getAttestations()->removeElement($attestation);
-      $this->entityManager->remove($attestation);
-    }
-
-    $this->entityManager->flush();
-
-    $this->generate($export);
+    $this->reset($export, $members);
+    $this->build($export, $members);
   }
 
   /**
+   * Detaches declarations and discards the generated files, for the given members only (all when empty).
+   * The recap and the zip are always discarded.
+   *
    * @param Member[] $members
    */
-  private function regenerateMembers(TimeAndTravelExport $export, array $members): void {
-    $memberIds = array_map(static fn (Member $member) => $member->getId(), $members);
-
+  private function reset(TimeAndTravelExport $export, array $members = []): void {
     foreach ($this->declarationRepository->findByExport($export, $members) as $declaration) {
       $declaration->setExport(null);
     }
 
+    $memberIds = array_flip(array_map(static fn (Member $member) => $member->getId(), $members));
     foreach ($export->getAttestations() as $attestation) {
-      if (!in_array($attestation->getMember()?->getId(), $memberIds, true)) {
+      if ($members && !isset($memberIds[$attestation->getMember()?->getId()])) {
         continue;
       }
       $this->discardFile($attestation->getFile());
@@ -131,16 +87,30 @@ class TimeAndTravelExportGenerationService {
     $export->setZipFile(null);
 
     $this->entityManager->flush();
+  }
 
-    // The snapshot taken when the export was created is kept, so every attestation of it stays priced the same way.
+  /**
+   * Attaches the exportable declarations (of the given members only, all when empty), generates their
+   * attestations, then the recap and the zip. Attestations are priced with the export's SMIC snapshot.
+   *
+   * @param Member[] $members
+   */
+  private function build(TimeAndTravelExport $export, array $members = []): void {
     $smicRate = $export->getSmicHourlyRate();
     $smicRateFloat = $smicRate !== null ? (float) $smicRate : 0.0;
 
     $byMember = [];
     foreach ($this->declarationRepository->findExportableForPeriod($export->getClub(), $export->getStartDate(), $export->getEndDate(), $members) as $declaration) {
       $declaration->setExport($export);
-      $byMember[$declaration->getMember()?->getId()][] = $declaration;
+      $member = $declaration->getMember();
+      if (!$member) {
+        continue;
+      }
+      $byMember[$member->getId()][] = $declaration;
     }
+
+    uasort($byMember, fn (array $a, array $b) => strcmp((string) $a[0]->getMember()?->getFullName(), (string) $b[0]->getMember()?->getFullName()));
+
     foreach ($byMember as $memberDeclarations) {
       $this->generateAttestation($export, $memberDeclarations[0]->getMember(), $memberDeclarations, $smicRateFloat);
     }
@@ -162,16 +132,10 @@ class TimeAndTravelExportGenerationService {
       return null;
     }
 
-    $members = [];
-    foreach (array_unique($memberUuids) as $memberUuid) {
-      $member = $this->memberRepository->findOneByUuid($memberUuid);
-      if (!$member) {
-        return null;
-      }
-      $members[] = $member;
-    }
+    $memberUuids = array_unique($memberUuids);
+    $members = $this->memberRepository->findBy(['uuid' => $memberUuids]);
 
-    return $members;
+    return count($members) === count($memberUuids) ? $members : null;
   }
 
   /**
