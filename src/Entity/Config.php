@@ -38,9 +38,6 @@ class Config {
   #[Groups(['config'])]
   private ?array $modules = null;
 
-  #[Groups(['config'])]
-  private ?array $profiles = null;
-
   public function getId(): string {
     return $this->id;
   }
@@ -88,20 +85,6 @@ class Config {
 
   public function addModule(string $name, array $moduleConfig): Config {
     $this->modules[$name] = $moduleConfig;
-    return $this;
-  }
-
-  public function getProfiles(): ?array {
-    return $this->profiles;
-  }
-
-  public function setProfiles(?array $profiles): Config {
-    $this->profiles = $profiles;
-    return $this;
-  }
-
-  public function addProfileModule(string $profile, string $name, array $moduleConfig): Config {
-    $this->profiles[$profile][$name] = $moduleConfig;
     return $this;
   }
 }
