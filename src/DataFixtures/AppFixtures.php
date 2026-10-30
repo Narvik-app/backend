@@ -5,7 +5,9 @@ namespace App\DataFixtures;
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationFactory;
+use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
+use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
 use App\Entity\ClubDependent\Plugin\Loan\LoanRecordingType;
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
@@ -20,7 +22,9 @@ use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Factory\MemberSeasonFactory;
+use App\Enum\TimeAndTravelExportStatus;
 use App\Service\ImageService;
+use App\Service\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportGenerationService;
 use App\Tests\FixtureFileManager;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
@@ -34,7 +38,10 @@ use Doctrine\Persistence\ObjectManager;
 use function Zenstruck\Foundry\faker;
 
 class AppFixtures extends Fixture {
-  public function __construct(private readonly ImageService $imageService) {
+  public function __construct(
+    private readonly ImageService $imageService,
+    private readonly TimeAndTravelExportGenerationService $exportGenerationService,
+  ) {
   }
 
   public function load(ObjectManager $manager): void {
@@ -162,6 +169,36 @@ class AppFixtures extends Fixture {
       'memberVehicle' => null,
       'isRoundtrip' => false,
     ]);
+
+    $this->generateTimeAndTravelExports($manager, $timeAndTravelMembers);
+  }
+
+  /**
+   * An old locked export (with its attestations and zip) and a draft one on the recent declarations.
+   *
+   * @param Member[] $members
+   */
+  private function generateTimeAndTravelExports(ObjectManager $manager, array $members): void {
+    $club = _InitStory::club_1();
+    $club->getSettings()?->setSmicHourlyRate('11.88');
+
+    // Declarations of the demo accounts inside the locked period, so their "Attestations" section is filled
+    foreach (array_slice($members, 0, 2) as $member) {
+      $vehicle = MemberVehicleFactory::findBy(['member' => $member])[0] ?? null;
+      foreach (['-6 weeks', '-7 weeks'] as $date) {
+        TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'memberVehicle' => $vehicle, 'date' => new \DateTimeImmutable($date)]);
+      }
+    }
+    $manager->flush();
+
+    $locked = TimeAndTravelExportFactory::createOne(['startDate' => new \DateTimeImmutable('-9 weeks'), 'endDate' => new \DateTimeImmutable('-5 weeks')]);
+    $this->exportGenerationService->generate($locked);
+    $locked->setStatus(TimeAndTravelExportStatus::locked)->setLockedAt(new \DateTimeImmutable('-4 weeks'))->setLockedBy(_InitStory::MEMBER_admin_club_1());
+
+    $draft = TimeAndTravelExportFactory::createOne(['startDate' => new \DateTimeImmutable('-4 weeks'), 'endDate' => new \DateTimeImmutable('now')]);
+    $this->exportGenerationService->generate($draft);
+
+    $manager->flush();
   }
 
   /**
