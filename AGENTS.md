@@ -88,6 +88,13 @@ Note: `Validator/Constraints/` classes also drop the plugin name prefix from the
 
 1. Add the `<name>Enabled` column on `Club` (with a migration), as for the existing ones.
 2. Add a case to `ClubPlugin` and fill in both `match` arms (`urlPrefixes()`, `isEnabledFor()`); `match` fails on an unhandled case, so a forgotten arm is caught.
+3. Dev fixtures: add demo data for the plugin in `src/DataFixtures/AppFixtures.php` (generic, association-friendly vocabulary, no firearms; use the seeded faker). The documentation and website screenshots are generated from it (see the front `tests/screenshots/README.md`).
+
+**A plugin is also a paid module of the subscription, so adding or changing one means updating the public side too** (a forgotten card is only noticed by visitors):
+
+- `documentation` repo: a page per plugin under `docs/frontend/docs/`, its sidebar entry in `docs/.vitepress/config.mts`, a card in `docs/index.md` and `docs/frontend/index.md`, and the plugin in `docs/components/bundles.js` so that the page titles can use `<BundleComponent bundle="<key>" />` (badge "Module <name>", before the role badges).
+- `narvik-about` repo (homepage and pricing, see its `AGENTS.md`): `FeatureList.vue`, `PriceBlock.vue` (+ `abonnements.vue`), `ActivitySportInfo.vue` and `evolutions.vue`.
+- Screenshots: entries in the front `tests/screenshots/manifest.ts` (docs and about), never by hand.
 
 ### Configuration (`config/`)
 ```
