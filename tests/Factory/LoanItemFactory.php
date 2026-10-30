@@ -23,7 +23,7 @@ final class LoanItemFactory extends \Zenstruck\Foundry\Persistence\PersistentObj
     return [
       'club' => _InitStory::club_1(),
       'name' => ucfirst(self::faker()->words(2, true)),
-      'description' => self::faker()->boolean(50) ? self::faker()->sentence(8) : null,
+      'description' => self::faker()->boolean(50) ? self::faker()->randomElement(['En bon état, à restituer propre.', 'Utilisable en intérieur comme en extérieur.', 'Caution demandée pour les prêts de plus de 3 jours.', 'Merci de signaler tout dommage au retour.']) : null,
       'loanPrice' => self::faker()->randomFloat(2, 2, 25),
       'purchasePrice' => self::faker()->randomFloat(2, 20, 300),
       'category' => LoanCategoryFactory::randomOrCreate(),

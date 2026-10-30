@@ -25,14 +25,14 @@ use App\Enum\Permission;
 use App\Repository\ClubDependent\Plugin\Loan\LoanRecordingRepository;
 use App\Security\Voter\LoanRecordingVoter;
 use App\Service\UtilsService;
-use App\Validator\Constraints\LoanBackdateAllowed;
+use App\Validator\Constraints\Plugin\Loan\BackdateAllowed;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LoanRecordingRepository::class)]
-#[LoanBackdateAllowed]
+#[BackdateAllowed]
 #[ApiResource(
   uriTemplate: '/clubs/{clubUuid}/loan-recordings/{uuid}',
   operations: [

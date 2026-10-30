@@ -31,6 +31,9 @@ use Zenstruck\Foundry\Story;
  */
 final class _InitStory extends Story {
   public function build(): void {
+    // The official mileage scale, needed by any test that generates a time-and-travel export
+    MileageRateStory::load();
+
     // We create the frontend client
     ClientFactory::createOne([
       'name'       => 'test',
@@ -45,10 +48,11 @@ final class _InitStory extends Story {
 
     $this->addState('club_1', ClubFactory::createOne([
         'uuid' => Uuid::fromString('0193b683-b858-73ee-a9c7-41c84cd27fe2'),
-        'name' => 'Club 1',
+        'name' => 'Amicale des Cigales',
         'presencesEnabled' => true,
         'salesEnabled' => true,
         'loansEnabled' => true,
+        'timeAndTravelEnabled' => true,
         'badgerToken' => 'club1longbadgertoken',
       ]), 'clubs');
     $this->addState('club_2', ClubFactory::createOne([
@@ -100,6 +104,7 @@ final class _InitStory extends Story {
     $this->addState('MEMBER_supervisor_club_1', MemberFactory::createOne([
       'club' => self::club_1(),
       'email' => 'supervisor@club1.fr',
+      'lastname' => 'Supervisorclub1',
     ]));
     $this->addState('MEMBER_member_club_1', MemberFactory::createOne([
       'club' => self::club_1(),

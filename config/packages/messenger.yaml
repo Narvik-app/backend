@@ -31,6 +31,7 @@ framework:
             # 'App\Message\YourMessage': async
             'Symfony\Component\Mailer\Messenger\SendEmailMessage': async_high
             App\Message\ItacMembersMessage: async_medium
+            App\Message\TimeAndTravelExportRegenerateMessage: async_medium
             App\Message\ItacSecondaryClubMembersMessage: async_low
             App\Message\CerberePresencesDateMessage: async_low
             App\Message\MemberPresencesCsvMessage: async_low

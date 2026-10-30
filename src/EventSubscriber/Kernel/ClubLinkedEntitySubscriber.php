@@ -6,6 +6,7 @@ use ApiPlatform\State\ApiResource\Error;
 use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\Club;
 use App\Entity\Interface\ClubLinkedEntityInterface;
+use App\Enum\ClubPlugin;
 use App\Enum\UserRole;
 use App\Service\RequestService;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -81,48 +82,10 @@ final readonly class ClubLinkedEntitySubscriber
       $this->verifyAccessForPlugins($event, $club, "/$matches[2]");
     }
     private function verifyAccessForPlugins(RequestEvent $event, Club $club, string $cleanedPath): void {
-      $presencesPattern = [
-        '/member-presences',
-        '/external-presences',
-      ];
-      $checked = $this->verifyAccessForPlugin("Presences", $presencesPattern, $club->getPresencesEnabled(), $cleanedPath, $event);
-      if ($checked) {
-        return;
+      $plugin = ClubPlugin::fromPath($cleanedPath);
+      if ($plugin && !$plugin->isEnabledFor($club)) {
+        $this->throwLockedException($event, "{$plugin->value} plugin not activated.");
       }
-
-      $salesPattern = [
-        '/sales',
-        '/sale-payment-modes',
-        '/inventory-'
-      ];
-      $checked = $this->verifyAccessForPlugin("Sales", $salesPattern, $club->getSalesEnabled(), $cleanedPath, $event);
-      if ($checked) {
-        return;
-      }
-
-      $loansPattern = [
-        '/loans',
-        '/loan-items',
-        '/loan-categories',
-        '/loan-recordings',
-        '/loan-recording-types',
-      ];
-      $checked = $this->verifyAccessForPlugin("Loans", $loansPattern, $club->getLoansEnabled(), $cleanedPath, $event);
-      if ($checked) {
-        return;
-      }
-    }
-    private function verifyAccessForPlugin(string $pluginName, array $urlPatterns, bool $pluginEnabled, string $requestedPath, RequestEvent $event): bool {
-      foreach ($urlPatterns as $urlPattern) {
-        if (str_starts_with($requestedPath, (string) $urlPattern)) {
-          if (!$pluginEnabled) {
-            $this->throwLockedException($event, "$pluginName plugin not activated.");
-          }
-          return true;
-        }
-      }
-
-      return false;
     }
     private function throwLockedException(RequestEvent $event, string $message = ''): void {
       $error = Error::createFromException(new \Exception($message), Response::HTTP_LOCKED);

@@ -89,7 +89,7 @@ class MemberTest extends AbstractEntityClubLinkedTestCase {
     $this->assertCount(2, $response->toArray()['linkedProfiles']);
 
     // They are sorted alphabetically
-    $this->assertEquals($response->toArray()['linkedProfiles'][0]['club']['name'], 'Club 1');
+    $this->assertEquals($response->toArray()['linkedProfiles'][0]['club']['name'], 'Amicale des Cigales');
     $this->assertEquals($response->toArray()['linkedProfiles'][1]['club']['name'], 'Club 2');
   }
 

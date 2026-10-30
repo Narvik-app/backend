@@ -13,7 +13,7 @@ use App\Tests\Story\GlobalSettingStory;
 
 class GlobalSettingTest extends AbstractEntityApiTestCase {
   #[\Override]
-  protected int $TOTAL_SUPER_ADMIN = 12;
+  protected int $TOTAL_SUPER_ADMIN = 13;
 
   protected function getClassname(): string {
     return GlobalSetting::class;

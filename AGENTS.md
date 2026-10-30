@@ -60,15 +60,41 @@ The application uses a **plugin-based architecture** under `src/Entity/ClubDepen
 
 ```
 src/Entity/ClubDependent/Plugin/
-├── Emailing/         # Email management functionality
-│   ├── Email.php
-│   └── EmailTemplate.php
-└── Presence/         # Member presence tracking
-    ├── ExternalPresence.php
-    └── MemberPresence.php
+├── Emailing/                  # Email management functionality
+├── Loan/                      # Item loan tracking
+├── Presence/                  # Member presence tracking
+├── Sale/                      # Point-of-sale / inventory
+└── TimeAndTravelDeclaration/  # Volunteer time & mileage declarations
 ```
 
 Each plugin module represents a separate feature set that clubs can optionally use, making the system highly flexible and modular.
+
+**The same `Plugin/<PluginName>/` grouping is mirrored in every layer a plugin touches**, not just `Entity/`:
+
+```
+src/Repository/ClubDependent/Plugin/<PluginName>/
+src/State/Plugin/<PluginName>/
+src/Service/Plugin/<PluginName>/
+src/Validator/Constraints/Plugin/<PluginName>/
+```
+
+A class only goes under `Plugin/<PluginName>/` if it is specific to that plugin (its entity lives under `Entity/.../Plugin/<PluginName>/`, or it only makes sense in that plugin's context). Anything generic (shared across plugins, or belonging to a core entity like `Member`/`Club`) stays directly under `Repository/`, `State/`, `Service/`, or `Validator/Constraints/` — do not nest it under `Plugin/` just because it happens to be used by a plugin.
+
+When adding a class for a plugin (a repository, a state processor/provider, a service, or a validation constraint), put it in the matching `Plugin/<PluginName>/` subfolder in that layer, creating the plugin subfolder if it doesn't exist yet — don't drop it flat alongside the generic classes.
+
+Note: `Validator/Constraints/` classes also drop the plugin name prefix from the class name once nested (the namespace already carries it), e.g. `TimeAndTravelDeclarationNotLocked` becomes `Plugin\TimeAndTravelDeclaration\NotLocked`. `Repository/`, `State/` and `Service/` classes keep their full descriptive name even when nested (e.g. `Plugin\Loan\LoanItemRepository`, not `Plugin\Loan\ItemRepository`) — only shorten the class name where doing so doesn't blur which entity/feature it's about.
+
+**Enabling and gating plugins: `App\Enum\ClubPlugin`** (`src/Enum/ClubPlugin.php`) is the single place that maps a plugin to its per-club flag (`Club::get*Enabled()`) and to the URL prefixes it owns (relative to `/clubs/{id}`). `ClubLinkedEntitySubscriber` uses it to answer `423 Locked` when a club calls a disabled plugin's endpoints. When adding a plugin:
+
+1. Add the `<name>Enabled` column on `Club` (with a migration), as for the existing ones.
+2. Add a case to `ClubPlugin` and fill in both `match` arms (`urlPrefixes()`, `isEnabledFor()`); `match` fails on an unhandled case, so a forgotten arm is caught.
+3. Dev fixtures: add demo data for the plugin in `src/DataFixtures/AppFixtures.php` (generic, association-friendly vocabulary, no firearms; use the seeded faker). The documentation and website screenshots are generated from it (see the front `tests/screenshots/README.md`).
+
+**A plugin is also a paid module of the subscription, so adding or changing one means updating the public side too** (a forgotten card is only noticed by visitors):
+
+- `documentation` repo: a page per plugin under `docs/frontend/docs/`, its sidebar entry in `docs/.vitepress/config.mts`, a card in `docs/index.md` and `docs/frontend/index.md`, and the plugin in `docs/components/bundles.js` so that the page titles can use `<BundleComponent bundle="<key>" />` (badge "Module <name>", before the role badges).
+- `narvik-about` repo (homepage and pricing, see its `AGENTS.md`): `FeatureList.vue`, `PriceBlock.vue` (+ `abonnements.vue`), `ActivitySportInfo.vue` and `evolutions.vue`.
+- Screenshots: entries in the front `tests/screenshots/manifest.ts` (docs and about), never by hand.
 
 ### Configuration (`config/`)
 ```
@@ -411,7 +437,7 @@ security: "is_granted('" . Permission::EMAIL_EDIT->value . "', request)"
 - Single source of truth: default values, computed labels, and validation rules belong here, not duplicated in the frontend. Only apply a default when the client omits the field entirely (don't let the frontend send a placeholder value that masks the backend default).
 
 ### 3. **Modular Architecture**
-- Plugin-based feature system
+- Plugin-based feature system (enabled per club, gated through the `ClubPlugin` enum)
 - Clear separation of concerns
 - Flexible configuration per club
 

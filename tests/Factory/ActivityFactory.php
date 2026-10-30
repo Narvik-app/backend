@@ -49,12 +49,12 @@ use Zenstruck\Foundry\Persistence\ProxyRepositoryDecorator;
  */
 final class ActivityFactory extends \Zenstruck\Foundry\Persistence\PersistentObjectFactory {
   public const array ACTIVITIES = [
-    '10M',
-    '25M rameneurs',
-    '25M toutes armes',
-    '50M rameneurs',
-    '50M 22Hunter',
-    'Tir Contrôlé',
+    'Atelier',
+    'Entraînement',
+    'Initiation',
+    'Réunion',
+    'Sortie',
+    'Contrôle annuel',
     'Permanence',
     'Travaux',
     'Bureau',
