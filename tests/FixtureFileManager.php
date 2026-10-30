@@ -21,19 +21,20 @@ class FixtureFileManager {
   /**
    * @param string $filename
    * @param bool $tmpCopy When set to true, the file must be deleted at the end of the test, otherwise it will remain (i.e import that store the file and not just read it). When the upload move the file, it won't remain in the tmp folder, no need to remove it.
+   * @param bool $test Mark the file as an upload that can be moved outside of a real HTTP request (i.e fixtures)
    * @return UploadedFile
    */
-  public static function getUploadedFile(string $filename, bool $tmpCopy = false): UploadedFile {
+  public static function getUploadedFile(string $filename, bool $tmpCopy = false, bool $test = false): UploadedFile {
     $file = new File(__DIR__ . '/fixtures/' . $filename);
     $path = $file->getPathname();
 
     if ($tmpCopy) {
       // Unique per call: parallel test runs (paratest) would otherwise race on the same shared path.
-      $path = sys_get_temp_dir() . '/' . uniqid('', true) . '-' . $filename;
+      $path = sys_get_temp_dir() . '/' . uniqid('', true) . '-' . basename($filename);
       file_put_contents($path, $file->getContent());
     }
 
-    return new UploadedFile($path, $filename);
+    return new UploadedFile($path, basename($filename), test: $test);
   }
 
   public static function removeUploadedFile(UploadedFile $file): void {

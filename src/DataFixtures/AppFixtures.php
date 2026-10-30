@@ -20,6 +20,8 @@ use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Factory\MemberSeasonFactory;
+use App\Service\ImageService;
+use App\Tests\FixtureFileManager;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use App\Tests\Story\AgeCategoryStory;
@@ -32,11 +34,18 @@ use Doctrine\Persistence\ObjectManager;
 use function Zenstruck\Foundry\faker;
 
 class AppFixtures extends Fixture {
+  public function __construct(private readonly ImageService $imageService) {
+  }
+
   public function load(ObjectManager $manager): void {
+    // Same data on every load, so screenshots (documentation / about website) stay stable
+    faker()->seed(20260101);
+
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
 
     MemberFactory::new()->many(250)->create();
+    $this->importDemoImages();
 
     // We create the default global settings
     GlobalSettingStory::load();
@@ -55,10 +64,10 @@ class AppFixtures extends Fixture {
     $defaultCategoriesPool = InventoryCategoryStory::load();
 
     $itemsMapping = [
-      "Cibles" => ['Cible C50', 'Visuel C50', 'Pistolet 10M', 'Carabine 10M'],
-      "Munitions" => ['semi-auto 22lr', '9mm - SB', '9mm - G', 'Plombs'],
-      "Administratif" => ['licence', 'droit d\'entrée', 'second club'],
-      "Droit de tir" => ['10M', '25/50M'],
+      "Boutique" => ['T-shirt du club', 'Casquette', 'Gourde', 'Sweat à capuche'],
+      "Buvette" => ['Café', 'Eau minérale', 'Jus de fruits', 'Barre chocolatée'],
+      "Administratif" => ['Licence', 'Droit d\'entrée', 'Second club'],
+      "Séances" => ['Séance à l\'unité', 'Carnet de 10 séances'],
     ];
     $categories = $defaultCategoriesPool->getPool('default');
     foreach ($categories as $category) {
@@ -92,35 +101,38 @@ class AppFixtures extends Fixture {
       LoanRecordingTypeFactory::createOne(['name' => 'Contrôle', 'color' => '#f59e0b']),
     ];
 
+    // Item name => demo picture (tests/fixtures/demo/loan-items)
     $loanItemsMapping = [
-      'Optique' => ['Lunette 4x32', 'Point rouge'],
-      'Armes' => ['Carabine 22LR', 'Pistolet 9mm', 'Arc classique'],
-      'Accessoires' => ['Sac de transport', 'Trépied', 'Chronographe'],
+      'Événementiel' => ['Tente de réception' => 'tente', 'Tonnelle pliante' => 'tonnelle', 'Barbecue' => 'barbecue'],
+      'Son et image' => ['Vidéoprojecteur' => 'projecteur', 'Enceinte sono' => 'sono'],
+      'Loisirs' => ['Vélo' => 'velo', 'Table de pique-nique' => 'table', 'Jeux en bois' => 'jeux'],
     ];
 
     $weight = 0;
     $loanCategories = [];
-    foreach ($loanItemsMapping as $categoryName => $itemNames) {
+    foreach ($loanItemsMapping as $categoryName => $items) {
       $category = LoanCategoryFactory::createOne(['name' => $categoryName, 'weight' => $weight++]);
       $loanCategories[$categoryName] = $category;
-      foreach ($itemNames as $name) {
+      foreach ($items as $name => $picture) {
         $item = LoanItemFactory::createOne(['name' => $name, 'category' => $category]);
+        $this->imageService->importLoanItemImage($item, FixtureFileManager::getUploadedFile("demo/loan-items/$picture.jpg", tmpCopy: true, test: true));
         $this->generateLoanHistory($item, $loanRecordingTypes);
       }
     }
 
-    LoanItemFactory::createOne([
-      'name' => 'Carabine de prêt',
-      'category' => $loanCategories['Armes'],
-      'loanPrice' => 15.00,
-      'visibleOnSalePage' => true,
-    ]);
-    LoanItemFactory::createOne([
-      'name' => 'Pistolet de prêt',
-      'category' => $loanCategories['Armes'],
-      'loanPrice' => 10.00,
-      'visibleOnSalePage' => true,
-    ]);
+    $paidLoanItems = [
+      ['Raquettes de badminton', 5.00, 'jeux'],
+      ['Vélo électrique', 10.00, 'velo'],
+    ];
+    foreach ($paidLoanItems as [$name, $price, $picture]) {
+      $item = LoanItemFactory::createOne([
+        'name' => $name,
+        'category' => $loanCategories['Loisirs'],
+        'loanPrice' => $price,
+        'visibleOnSalePage' => true,
+      ]);
+      $this->imageService->importLoanItemImage($item, FixtureFileManager::getUploadedFile("demo/loan-items/$picture.jpg", tmpCopy: true, test: true));
+    }
 
     /*******************************************************
      *              TIME AND TRAVEL DECLARATION            *
@@ -145,6 +157,19 @@ class AppFixtures extends Fixture {
       'memberVehicle' => null,
       'isRoundtrip' => false,
     ]);
+  }
+
+  /**
+   * Generic pictures (no real people) for the club logo and the first members of the club.
+   */
+  private function importDemoImages(): void {
+    $club = _InitStory::club_1();
+    $this->imageService->importClubLogo($club, FixtureFileManager::getUploadedFile('demo/club-logo.png', tmpCopy: true, test: true));
+
+    $members = MemberFactory::findBy(['club' => $club]);
+    foreach (array_slice($members, 0, 12) as $index => $member) {
+      $this->imageService->importMemberPhoto($member, FixtureFileManager::getUploadedFile(sprintf('demo/avatars/avatar-%02d.jpg', $index + 1), tmpCopy: true, test: true));
+    }
   }
 
   private function generateItemHistory(InventoryItem $item, int $months = 6): void {
