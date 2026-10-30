@@ -206,7 +206,7 @@ class AppFixtures extends Fixture {
    */
   private function importDemoImages(): void {
     $club = _InitStory::club_1();
-    $this->imageService->importClubLogo($club, FixtureFileManager::getUploadedFile('demo/club-logo.png', tmpCopy: true, test: true));
+    $this->imageService->importClubLogo($club, FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, tmpCopy: true, test: true));
 
     $members = MemberFactory::findBy(['club' => $club]);
     foreach (array_slice($members, 0, 12) as $index => $member) {
