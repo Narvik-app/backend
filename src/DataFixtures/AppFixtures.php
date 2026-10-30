@@ -60,6 +60,8 @@ class AppFixtures extends Fixture {
     // We record some presence
     MemberPresenceFactory::new()->many(20)->create();
     ExternalPresenceFactory::new()->many(25)->create();
+    // The demo admin has a presence history, for the member page (details and charts)
+    MemberPresenceFactory::new()->many(14)->create(['member' => _InitStory::MEMBER_admin_club_1()]);
 
     EmailFactory::new()->many(12)->create();
 
