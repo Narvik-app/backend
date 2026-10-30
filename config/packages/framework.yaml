@@ -24,3 +24,9 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        # The messenger restart signal (written by messenger:stop-workers) lives in a cache shared on disk by every
+        # paratest process: another process saving the SMTP settings would stop this process' test worker mid-queue.
+        cache:
+            pools:
+                cache.messenger.restart_workers_signal:
+                    adapter: cache.adapter.array

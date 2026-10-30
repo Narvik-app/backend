@@ -64,28 +64,12 @@ class ConfigProvider implements ProviderInterface {
     $config->setId('user');
 
     foreach ($user->getLinkedProfiles() as $profile) {
-      $id = $profile->getId();
       /** @var Club $club */
       $club = $profile->getClub();
 
       // User is admin of any club. He has the right to see the version
       if ($this->authorizationChecker->isGranted(ClubRole::admin->value, $club)) {
         $this->displayAppVersion($config);
-      }
-
-      // User is badger or supervisor
-      if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club) ||
-          $this->authorizationChecker->isGranted(ClubRole::badger->value, $club)) {
-        $config->addProfileModule($id, 'presences', [
-          'enabled' => $club->getPresencesEnabled(),
-        ]);
-      }
-
-      // User a supervisor, he can have access to the sale management
-      if ($this->authorizationChecker->isGranted(ClubRole::supervisor->value, $club)) {
-        $config->addProfileModule($id, 'sales', [
-          'enabled' => $club->getSalesEnabled(),
-        ]);
       }
     }
   }

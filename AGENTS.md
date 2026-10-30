@@ -84,6 +84,11 @@ When adding a class for a plugin (a repository, a state processor/provider, a se
 
 Note: `Validator/Constraints/` classes also drop the plugin name prefix from the class name once nested (the namespace already carries it), e.g. `TimeAndTravelDeclarationNotLocked` becomes `Plugin\TimeAndTravelDeclaration\NotLocked`. `Repository/`, `State/` and `Service/` classes keep their full descriptive name even when nested (e.g. `Plugin\Loan\LoanItemRepository`, not `Plugin\Loan\ItemRepository`) — only shorten the class name where doing so doesn't blur which entity/feature it's about.
 
+**Enabling and gating plugins: `App\Enum\ClubPlugin`** (`src/Enum/ClubPlugin.php`) is the single place that maps a plugin to its per-club flag (`Club::get*Enabled()`) and to the URL prefixes it owns (relative to `/clubs/{id}`). `ClubLinkedEntitySubscriber` uses it to answer `423 Locked` when a club calls a disabled plugin's endpoints. When adding a plugin:
+
+1. Add the `<name>Enabled` column on `Club` (with a migration), as for the existing ones.
+2. Add a case to `ClubPlugin` and fill in both `match` arms (`urlPrefixes()`, `isEnabledFor()`); `match` fails on an unhandled case, so a forgotten arm is caught.
+
 ### Configuration (`config/`)
 ```
 config/
@@ -425,7 +430,7 @@ security: "is_granted('" . Permission::EMAIL_EDIT->value . "', request)"
 - Single source of truth: default values, computed labels, and validation rules belong here, not duplicated in the frontend. Only apply a default when the client omits the field entirely (don't let the frontend send a placeholder value that masks the backend default).
 
 ### 3. **Modular Architecture**
-- Plugin-based feature system
+- Plugin-based feature system (enabled per club, gated through the `ClubPlugin` enum)
 - Clear separation of concerns
 - Flexible configuration per club
 
