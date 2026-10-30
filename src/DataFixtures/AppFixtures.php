@@ -22,9 +22,15 @@ use App\Tests\Factory\LoanRecordingTypeFactory;
 use App\Tests\Factory\MemberControlFactory;
 use App\Tests\Factory\MemberControlTypeFactory;
 use App\Tests\Factory\MemberFactory;
+use App\Tests\Factory\MemberPermissionFactory;
+use App\Tests\Factory\PermissionTemplateFactory;
+use App\Tests\Factory\UserFactory;
+use App\Tests\Factory\UserMemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Factory\MemberSeasonFactory;
+use App\Enum\ClubRole;
+use App\Enum\Permission;
 use App\Enum\TimeAndTravelExportStatus;
 use App\Service\ImageService;
 use App\Service\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportGenerationService;
@@ -77,6 +83,7 @@ class AppFixtures extends Fixture {
     ]);
 
     $this->generateMemberControls();
+    $this->generatePermissions();
 
     EmailFactory::new()->many(12)->create();
 
@@ -218,6 +225,44 @@ class AppFixtures extends Fixture {
     $this->exportGenerationService->generate($draft);
 
     $manager->flush();
+  }
+
+  /**
+   * Permission templates, and a supervisor with a few permissions (the ones of a template + one more),
+   * to show the permissions pages.
+   */
+  private function generatePermissions(): void {
+    $club = _InitStory::club_1();
+    $templates = [
+      'Trésorier' => [
+        Permission::SALE_HISTORY_ACCESS, Permission::SALE_HISTORY_EDIT, Permission::SALE_INVENTORY_ACCESS,
+        Permission::SALE_PAYMENT_MODES_ACCESS, Permission::SALE_IMPORT_ACCESS, Permission::TIME_TRAVEL_ACCESS, Permission::TIME_TRAVEL_EXPORT,
+      ],
+      'Gestionnaire du matériel' => [
+        Permission::LOAN_ACCESS, Permission::LOAN_EDIT, Permission::LOAN_ITEMS_ACCESS, Permission::LOAN_ITEMS_EDIT,
+        Permission::LOAN_CATEGORIES_ACCESS, Permission::LOAN_CATEGORIES_EDIT, Permission::LOAN_RECORDINGS_ACCESS, Permission::LOAN_RECORDINGS_EDIT,
+      ],
+      'Buvette' => [
+        Permission::SALE_NEW, Permission::SALE_INVENTORY_ACCESS, Permission::SALE_HISTORY_ACCESS,
+      ],
+      'Communication' => [
+        Permission::EMAIL_ACCESS, Permission::EMAIL_EDIT, Permission::EMAIL_TEMPLATE_ACCESS, Permission::EMAIL_TEMPLATE_EDIT,
+      ],
+    ];
+    foreach ($templates as $name => $permissions) {
+      $template = PermissionTemplateFactory::createOne(['name' => $name, 'club' => $club]);
+      foreach ($permissions as $permission) {
+        MemberPermissionFactory::createOne(['club' => $club, 'member' => null, 'template' => $template, 'permission' => $permission]);
+      }
+    }
+
+    // A supervisor with the permissions of the "Trésorier" template, plus the loans
+    $member = MemberFactory::createOne(['club' => $club, 'firstname' => 'Valérie', 'lastname' => 'Duval', 'email' => 'valerie.duval@club1.fr']);
+    $user = UserFactory::createOne(['email' => 'valerie.duval@club1.fr', 'plainPassword' => 'admin123', 'accountActivated' => true]);
+    UserMemberFactory::createOne(['member' => $member, 'user' => $user, 'role' => ClubRole::supervisor]);
+    foreach (array_merge($templates['Trésorier'], [Permission::LOAN_ACCESS, Permission::LOAN_ITEMS_ACCESS]) as $permission) {
+      MemberPermissionFactory::createOne(['club' => $club, 'member' => $member, 'permission' => $permission]);
+    }
   }
 
   /**
