@@ -8,11 +8,11 @@ use Zenstruck\Foundry\Story;
 
 final class InventoryCategoryStory extends Story {
   public const array CATEGORIES = [
-    "Cibles",
-    "Munitions",
-    "Droit de tir",
+    "Boutique",
+    "Buvette",
+    "Séances",
     "Administratif",
-    "Concours",
+    "Événements",
     "Autres",
   ];
 

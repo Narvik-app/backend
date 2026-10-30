@@ -74,7 +74,7 @@ class UserTest extends AbstractEntityApiTestCase {
     $this->assertCount(1, $response->toArray()['linkedProfiles']);
 
     // They are sorted alphabetically
-    $this->assertEquals($response->toArray()['linkedProfiles'][0]['club']['name'], 'Club 1');
+    $this->assertEquals($response->toArray()['linkedProfiles'][0]['club']['name'], 'Amicale des Cigales');
   }
 
   /**

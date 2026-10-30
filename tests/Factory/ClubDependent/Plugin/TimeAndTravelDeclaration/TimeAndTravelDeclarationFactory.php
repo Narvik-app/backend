@@ -26,7 +26,7 @@ final class TimeAndTravelDeclarationFactory extends \Zenstruck\Foundry\Persisten
       'arrivalLocation' => mb_substr(self::faker()->city(), 0, TimeAndTravelDeclaration::LOCATION_MAX_LENGTH),
       'kilometers' => self::faker()->numberBetween(5, 150),
       'hours' => self::faker()->numberBetween(2, 16) / 2, // Half-hour steps only, see TimeAndTravelDeclaration::validateHoursGranularity()
-      'description' => mb_substr(self::faker()->sentence(4), 0, TimeAndTravelDeclaration::DESCRIPTION_MAX_LENGTH),
+      'description' => self::faker()->randomElement(['Réunion de bureau', 'Installation du matériel', 'Course pour la buvette', 'Préparation du tournoi', 'Rangement du local', 'Permanence accueil', 'Réunion mairie', 'Achat de fournitures']),
       'isRoundtrip' => self::faker()->boolean(70),
       'memberVehicle' => MemberVehicleFactory::randomOrCreate(),
     ];

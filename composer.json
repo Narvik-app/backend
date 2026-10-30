@@ -153,6 +153,7 @@
         ],
         "reload-fixture": [
             "@reload-schema",
+            "rm -rf private/files/clubs private/files/generic",
             "php bin/console doctrine:fixtures:load -q"
         ],
         "reload-test": [

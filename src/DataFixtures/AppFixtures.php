@@ -5,10 +5,13 @@ namespace App\DataFixtures;
 use App\Tests\Factory\ClubDependent\Plugin\Emailing\EmailFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\MemberVehicleFactory;
 use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelDeclarationFactory;
+use App\Tests\Factory\ClubDependent\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportFactory;
 use App\Tests\Factory\ExternalPresenceFactory;
+use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
 use App\Entity\ClubDependent\Plugin\Loan\LoanRecordingType;
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
+use App\Tests\Factory\ActivityFactory;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
 use App\Tests\Factory\LoanCategoryFactory;
@@ -16,10 +19,22 @@ use App\Tests\Factory\LoanFactory;
 use App\Tests\Factory\LoanItemFactory;
 use App\Tests\Factory\LoanRecordingFactory;
 use App\Tests\Factory\LoanRecordingTypeFactory;
+use App\Tests\Factory\MemberControlFactory;
+use App\Tests\Factory\MemberControlTypeFactory;
 use App\Tests\Factory\MemberFactory;
+use App\Tests\Factory\MemberPermissionFactory;
+use App\Tests\Factory\PermissionTemplateFactory;
+use App\Tests\Factory\UserFactory;
+use App\Tests\Factory\UserMemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
 use App\Tests\Factory\MemberSeasonFactory;
+use App\Enum\ClubRole;
+use App\Enum\Permission;
+use App\Enum\TimeAndTravelExportStatus;
+use App\Service\ImageService;
+use App\Service\Plugin\TimeAndTravelDeclaration\TimeAndTravelExportGenerationService;
+use App\Tests\FixtureFileManager;
 use App\Tests\Story\_InitStory;
 use App\Tests\Story\ActivityStory;
 use App\Tests\Story\AgeCategoryStory;
@@ -32,11 +47,21 @@ use Doctrine\Persistence\ObjectManager;
 use function Zenstruck\Foundry\faker;
 
 class AppFixtures extends Fixture {
+  public function __construct(
+    private readonly ImageService $imageService,
+    private readonly TimeAndTravelExportGenerationService $exportGenerationService,
+  ) {
+  }
+
   public function load(ObjectManager $manager): void {
+    // Same data on every load, so screenshots (documentation / about website) stay stable
+    faker()->seed(20260101);
+
     // We create the bare minium required (some users and clubs)
     _InitStory::load();
 
     MemberFactory::new()->many(250)->create();
+    $this->importDemoImages();
 
     // We create the default global settings
     GlobalSettingStory::load();
@@ -44,6 +69,21 @@ class AppFixtures extends Fixture {
     // We record some presence
     MemberPresenceFactory::new()->many(20)->create();
     ExternalPresenceFactory::new()->many(25)->create();
+    $this->generateTodayPresences();
+
+    // The demo admin has a presence history, for the member page (details and charts)
+    // (never on the activity feeding the yearly control, which has to stay overdue for the demo)
+    $adminActivities = array_values(array_filter(
+      ActivityFactory::findBy(['club' => _InitStory::club_1()]),
+      static fn ($activity) => $activity->getName() !== 'Contrôle annuel',
+    ));
+    MemberPresenceFactory::new()->many(14)->create(fn () => [
+      'member' => _InitStory::MEMBER_admin_club_1(),
+      'activities' => faker()->randomElements($adminActivities, faker()->numberBetween(1, 3)),
+    ]);
+
+    $this->generateMemberControls();
+    $this->generatePermissions();
 
     EmailFactory::new()->many(12)->create();
 
@@ -55,17 +95,19 @@ class AppFixtures extends Fixture {
     $defaultCategoriesPool = InventoryCategoryStory::load();
 
     $itemsMapping = [
-      "Cibles" => ['Cible C50', 'Visuel C50', 'Pistolet 10M', 'Carabine 10M'],
-      "Munitions" => ['semi-auto 22lr', '9mm - SB', '9mm - G', 'Plombs'],
-      "Administratif" => ['licence', 'droit d\'entrée', 'second club'],
-      "Droit de tir" => ['10M', '25/50M'],
+      "Boutique" => ['T-shirt du club', 'Casquette', 'Gourde', 'Sweat à capuche'],
+      "Buvette" => ['Café', 'Eau minérale', 'Jus de fruits', 'Barre chocolatée'],
+      "Administratif" => ['Licence', 'Droit d\'entrée', 'Second club'],
+      "Séances" => ['Séance à l\'unité', 'Carnet de 10 séances'],
+      "Événements" => ['Repas de fin d\'année', 'Tombola', 'Inscription au tournoi'],
+      "Autres" => ['Autocollant', 'Porte-clés', 'Stylo du club'],
     ];
     $categories = $defaultCategoriesPool->getPool('default');
     foreach ($categories as $category) {
       $catName = $category->getName();
       if (array_key_exists((string) $catName, $itemsMapping)) {
         foreach ($itemsMapping[$catName] as $name) {
-          $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category, 'quantity' => faker()->numberBetween(60, 200)]);
+          $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category, 'description' => null, 'quantity' => faker()->numberBetween(60, 200)]);
           $this->generateItemHistory($item);
         }
       } else {
@@ -92,35 +134,38 @@ class AppFixtures extends Fixture {
       LoanRecordingTypeFactory::createOne(['name' => 'Contrôle', 'color' => '#f59e0b']),
     ];
 
+    // Item name => demo picture (tests/fixtures/demo/loan-items)
     $loanItemsMapping = [
-      'Optique' => ['Lunette 4x32', 'Point rouge'],
-      'Armes' => ['Carabine 22LR', 'Pistolet 9mm', 'Arc classique'],
-      'Accessoires' => ['Sac de transport', 'Trépied', 'Chronographe'],
+      'Événementiel' => ['Tente de réception' => 'tente', 'Tonnelle pliante' => 'tonnelle', 'Barbecue' => 'barbecue'],
+      'Son et image' => ['Vidéoprojecteur' => 'projecteur', 'Enceinte sono' => 'sono'],
+      'Loisirs' => ['Vélo' => 'velo', 'Table de pique-nique' => 'table', 'Jeux en bois' => 'jeux'],
     ];
 
     $weight = 0;
     $loanCategories = [];
-    foreach ($loanItemsMapping as $categoryName => $itemNames) {
+    foreach ($loanItemsMapping as $categoryName => $items) {
       $category = LoanCategoryFactory::createOne(['name' => $categoryName, 'weight' => $weight++]);
       $loanCategories[$categoryName] = $category;
-      foreach ($itemNames as $name) {
+      foreach ($items as $name => $picture) {
         $item = LoanItemFactory::createOne(['name' => $name, 'category' => $category]);
+        $this->imageService->importLoanItemImage($item, FixtureFileManager::getUploadedFile("demo/loan-items/$picture.jpg", tmpCopy: true, test: true));
         $this->generateLoanHistory($item, $loanRecordingTypes);
       }
     }
 
-    LoanItemFactory::createOne([
-      'name' => 'Carabine de prêt',
-      'category' => $loanCategories['Armes'],
-      'loanPrice' => 15.00,
-      'visibleOnSalePage' => true,
-    ]);
-    LoanItemFactory::createOne([
-      'name' => 'Pistolet de prêt',
-      'category' => $loanCategories['Armes'],
-      'loanPrice' => 10.00,
-      'visibleOnSalePage' => true,
-    ]);
+    $paidLoanItems = [
+      ['Raquettes de badminton', 5.00, 'jeux'],
+      ['Vélo électrique', 10.00, 'velo'],
+    ];
+    foreach ($paidLoanItems as [$name, $price, $picture]) {
+      $item = LoanItemFactory::createOne([
+        'name' => $name,
+        'category' => $loanCategories['Loisirs'],
+        'loanPrice' => $price,
+        'visibleOnSalePage' => true,
+      ]);
+      $this->imageService->importLoanItemImage($item, FixtureFileManager::getUploadedFile("demo/loan-items/$picture.jpg", tmpCopy: true, test: true));
+    }
 
     /*******************************************************
      *              TIME AND TRAVEL DECLARATION            *
@@ -128,7 +173,12 @@ class AppFixtures extends Fixture {
 
     // A handful of members get a vehicle and a history of declarations, so the boards
     // (admin and personal) have real data to show for club_1, on which the plugin is enabled.
-    $timeAndTravelMembers = MemberFactory::randomRange(6, 10, ['club' => _InitStory::club_1()]);
+    // The demo accounts (admin, supervisor) always have some, as they are the ones used for screenshots.
+    $timeAndTravelMembers = [
+      _InitStory::MEMBER_admin_club_1(),
+      _InitStory::MEMBER_supervisor_club_1(),
+      ...MemberFactory::randomRange(6, 10, ['club' => _InitStory::club_1()]),
+    ];
     foreach ($timeAndTravelMembers as $member) {
       $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
       TimeAndTravelDeclarationFactory::new()
@@ -145,6 +195,158 @@ class AppFixtures extends Fixture {
       'memberVehicle' => null,
       'isRoundtrip' => false,
     ]);
+
+    $this->generateTimeAndTravelExports($manager, $timeAndTravelMembers);
+  }
+
+  /**
+   * An old locked export (with its attestations and zip) and a draft one on the recent declarations.
+   *
+   * @param Member[] $members
+   */
+  private function generateTimeAndTravelExports(ObjectManager $manager, array $members): void {
+    $club = _InitStory::club_1();
+    $club->getSettings()?->setSmicHourlyRate('11.88');
+
+    // Declarations of the demo accounts inside the locked period, so their "Attestations" section is filled
+    foreach (array_slice($members, 0, 2) as $member) {
+      $vehicle = MemberVehicleFactory::findBy(['member' => $member])[0] ?? null;
+      foreach (['-6 weeks', '-7 weeks'] as $date) {
+        TimeAndTravelDeclarationFactory::createOne(['member' => $member, 'memberVehicle' => $vehicle, 'date' => new \DateTimeImmutable($date)]);
+      }
+    }
+    $manager->flush();
+
+    $locked = TimeAndTravelExportFactory::createOne(['startDate' => new \DateTimeImmutable('-9 weeks'), 'endDate' => new \DateTimeImmutable('-5 weeks')]);
+    $this->exportGenerationService->generate($locked);
+    $locked->setStatus(TimeAndTravelExportStatus::locked)->setLockedAt(new \DateTimeImmutable('-4 weeks'))->setLockedBy(_InitStory::MEMBER_admin_club_1());
+
+    $draft = TimeAndTravelExportFactory::createOne(['startDate' => new \DateTimeImmutable('-4 weeks'), 'endDate' => new \DateTimeImmutable('now')]);
+    $this->exportGenerationService->generate($draft);
+
+    $manager->flush();
+  }
+
+  /**
+   * Permission templates, and a supervisor with a few permissions (the ones of a template + one more),
+   * to show the permissions pages.
+   */
+  private function generatePermissions(): void {
+    $club = _InitStory::club_1();
+    $templates = [
+      'Trésorier' => [
+        Permission::SALE_HISTORY_ACCESS, Permission::SALE_HISTORY_EDIT, Permission::SALE_INVENTORY_ACCESS,
+        Permission::SALE_PAYMENT_MODES_ACCESS, Permission::SALE_IMPORT_ACCESS, Permission::TIME_TRAVEL_ACCESS, Permission::TIME_TRAVEL_EXPORT,
+      ],
+      'Gestionnaire du matériel' => [
+        Permission::LOAN_ACCESS, Permission::LOAN_EDIT, Permission::LOAN_ITEMS_ACCESS, Permission::LOAN_ITEMS_EDIT,
+        Permission::LOAN_CATEGORIES_ACCESS, Permission::LOAN_CATEGORIES_EDIT, Permission::LOAN_RECORDINGS_ACCESS, Permission::LOAN_RECORDINGS_EDIT,
+      ],
+      'Buvette' => [
+        Permission::SALE_NEW, Permission::SALE_INVENTORY_ACCESS, Permission::SALE_HISTORY_ACCESS,
+      ],
+      'Communication' => [
+        Permission::EMAIL_ACCESS, Permission::EMAIL_EDIT, Permission::EMAIL_TEMPLATE_ACCESS, Permission::EMAIL_TEMPLATE_EDIT,
+      ],
+    ];
+    foreach ($templates as $name => $permissions) {
+      $template = PermissionTemplateFactory::createOne(['name' => $name, 'club' => $club]);
+      foreach ($permissions as $permission) {
+        MemberPermissionFactory::createOne(['club' => $club, 'member' => null, 'template' => $template, 'permission' => $permission]);
+      }
+    }
+
+    // A supervisor with the permissions of the "Trésorier" template, plus the loans
+    $member = MemberFactory::createOne(['club' => $club, 'firstname' => 'Valérie', 'lastname' => 'Duval', 'email' => 'valerie.duval@club1.fr']);
+    $user = UserFactory::createOne(['email' => 'valerie.duval@club1.fr', 'plainPassword' => 'admin123', 'accountActivated' => true]);
+    UserMemberFactory::createOne(['member' => $member, 'user' => $user, 'role' => ClubRole::supervisor]);
+    foreach (array_merge($templates['Trésorier'], [Permission::LOAN_ACCESS, Permission::LOAN_ITEMS_ACCESS]) as $permission) {
+      MemberPermissionFactory::createOne(['club' => $club, 'member' => $member, 'permission' => $permission]);
+    }
+  }
+
+  /**
+   * The "today" list of the presence page: the demo admin (with an expired medical certificate and
+   * controls to show), a few members and external people.
+   */
+  private function generateTodayPresences(): void {
+    $club = _InitStory::club_1();
+    $admin = _InitStory::MEMBER_admin_club_1();
+    $admin->setMedicalCertificateExpiration(new \DateTimeImmutable('-2 months'));
+
+    $activities = [];
+    foreach (ActivityFactory::findBy(['club' => $club]) as $activity) {
+      $activities[$activity->getName()] = $activity;
+    }
+
+    MemberPresenceFactory::createOne(['member' => $admin, 'date' => new \DateTimeImmutable('today 09:12'), 'activities' => [$activities['Permanence'], $activities['Bureau']]]);
+    $hour = 9;
+    foreach (array_slice(array_filter(MemberFactory::randomRange(6, 8, ['club' => $club]), static fn ($member) => $member->getId() !== $admin->getId()), 0, 4) as $member) {
+      MemberPresenceFactory::createOne([
+        'member' => $member,
+        'date' => new \DateTimeImmutable(sprintf('today %02d:%02d', ++$hour, faker()->numberBetween(0, 59))),
+        'activities' => faker()->randomElements(array_values($activities), faker()->numberBetween(1, 2)),
+      ]);
+    }
+
+    ExternalPresenceFactory::new()->many(2)->create(['date' => new \DateTimeImmutable('today 10:05')]);
+  }
+
+  /**
+   * A yearly control (linked to an activity, with warning and alert delays) and a manual one without expiration,
+   * both shown on the presence card. The demo admin has them, so do a few other members (some overdue).
+   */
+  private function generateMemberControls(): void {
+    $club = _InitStory::club_1();
+    $activity = ActivityFactory::findBy(['club' => $club, 'name' => 'Contrôle annuel'])[0] ?? null;
+
+    $yearly = MemberControlTypeFactory::createOne([
+      'name' => 'Contrôle annuel',
+      'icon' => 'shield-check',
+      'activity' => $activity,
+      'warningDays' => 335,
+      'alertDays' => 365,
+      'displayOnPresenceCard' => true,
+      'weight' => 0,
+    ]);
+    $quiz = MemberControlTypeFactory::createOne([
+      'name' => 'QCM',
+      'icon' => 'question-mark-circle',
+      'activity' => null,
+      'warningDays' => null,
+      'alertDays' => null,
+      'displayOnPresenceCard' => true,
+      'weight' => 1,
+    ]);
+
+    $admin = _InitStory::MEMBER_admin_club_1();
+    // The date of a control linked to an activity follows the presences on it: overdue ones need an old presence
+    MemberPresenceFactory::createOne(['member' => $admin, 'activities' => [$activity], 'date' => new \DateTimeImmutable('-14 months')]);
+    MemberControlFactory::createOne(['member' => $admin, 'type' => $quiz, 'date' => new \DateTimeImmutable('-2 months')]);
+
+    foreach (MemberFactory::randomRange(20, 30, ['club' => $club]) as $member) {
+      if ($member->getId() === $admin->getId()) {
+        continue;
+      }
+      MemberPresenceFactory::createOne([
+        'member' => $member,
+        'activities' => [$activity],
+        'date' => new \DateTimeImmutable('-' . faker()->numberBetween(30, 420) . ' days'),
+      ]);
+    }
+  }
+
+  /**
+   * Generic pictures (no real people) for the club logo and the first members of the club.
+   */
+  private function importDemoImages(): void {
+    $club = _InitStory::club_1();
+    $this->imageService->importClubLogo($club, FixtureFileManager::getUploadedFile(FixtureFileManager::LOGO, tmpCopy: true, test: true));
+
+    $members = MemberFactory::findBy(['club' => $club]);
+    foreach (array_slice($members, 0, 12) as $index => $member) {
+      $this->imageService->importMemberPhoto($member, FixtureFileManager::getUploadedFile(sprintf('demo/avatars/avatar-%02d.jpg', $index + 1), tmpCopy: true, test: true));
+    }
   }
 
   private function generateItemHistory(InventoryItem $item, int $months = 6): void {
