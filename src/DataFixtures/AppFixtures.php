@@ -63,6 +63,8 @@ class AppFixtures extends Fixture {
     // We record some presence
     MemberPresenceFactory::new()->many(20)->create();
     ExternalPresenceFactory::new()->many(25)->create();
+    $this->generateTodayPresences();
+
     // The demo admin has a presence history, for the member page (details and charts)
     // (never on the activity feeding the yearly control, which has to stay overdue for the demo)
     $adminActivities = array_values(array_filter(
@@ -90,13 +92,15 @@ class AppFixtures extends Fixture {
       "Buvette" => ['Café', 'Eau minérale', 'Jus de fruits', 'Barre chocolatée'],
       "Administratif" => ['Licence', 'Droit d\'entrée', 'Second club'],
       "Séances" => ['Séance à l\'unité', 'Carnet de 10 séances'],
+      "Événements" => ['Repas de fin d\'année', 'Tombola', 'Inscription au tournoi'],
+      "Autres" => ['Autocollant', 'Porte-clés', 'Stylo du club'],
     ];
     $categories = $defaultCategoriesPool->getPool('default');
     foreach ($categories as $category) {
       $catName = $category->getName();
       if (array_key_exists((string) $catName, $itemsMapping)) {
         foreach ($itemsMapping[$catName] as $name) {
-          $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category, 'quantity' => faker()->numberBetween(60, 200)]);
+          $item = InventoryItemFactory::createOne(['name' => $name, 'category' => $category, 'description' => null, 'quantity' => faker()->numberBetween(60, 200)]);
           $this->generateItemHistory($item);
         }
       } else {
@@ -214,6 +218,33 @@ class AppFixtures extends Fixture {
     $this->exportGenerationService->generate($draft);
 
     $manager->flush();
+  }
+
+  /**
+   * The "today" list of the presence page: the demo admin (with an expired medical certificate and
+   * controls to show), a few members and external people.
+   */
+  private function generateTodayPresences(): void {
+    $club = _InitStory::club_1();
+    $admin = _InitStory::MEMBER_admin_club_1();
+    $admin->setMedicalCertificateExpiration(new \DateTimeImmutable('-2 months'));
+
+    $activities = [];
+    foreach (ActivityFactory::findBy(['club' => $club]) as $activity) {
+      $activities[$activity->getName()] = $activity;
+    }
+
+    MemberPresenceFactory::createOne(['member' => $admin, 'date' => new \DateTimeImmutable('today 09:12'), 'activities' => [$activities['Permanence'], $activities['Bureau']]]);
+    $hour = 9;
+    foreach (array_slice(array_filter(MemberFactory::randomRange(6, 8, ['club' => $club]), static fn ($member) => $member->getId() !== $admin->getId()), 0, 4) as $member) {
+      MemberPresenceFactory::createOne([
+        'member' => $member,
+        'date' => new \DateTimeImmutable(sprintf('today %02d:%02d', ++$hour, faker()->numberBetween(0, 59))),
+        'activities' => faker()->randomElements(array_values($activities), faker()->numberBetween(1, 2)),
+      ]);
+    }
+
+    ExternalPresenceFactory::new()->many(2)->create(['date' => new \DateTimeImmutable('today 10:05')]);
   }
 
   /**
