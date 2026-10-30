@@ -5255,16 +5255,16 @@
         },
         {
             "name": "sumup/sumup-php",
-            "version": "0.1.7",
+            "version": "0.1.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sumup/sumup-php.git",
-                "reference": "585f6d329c9275e3dfac0999ba74094709d6f0f7"
+                "reference": "44f1637f711ec238f68766393f9c6a72c94de63d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/585f6d329c9275e3dfac0999ba74094709d6f0f7",
-                "reference": "585f6d329c9275e3dfac0999ba74094709d6f0f7",
+                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/44f1637f711ec238f68766393f9c6a72c94de63d",
+                "reference": "44f1637f711ec238f68766393f9c6a72c94de63d",
                 "shasum": ""
             },
             "require": {
@@ -5320,9 +5320,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sumup/sumup-php/issues",
-                "source": "https://github.com/sumup/sumup-php/tree/v0.1.7"
+                "source": "https://github.com/sumup/sumup-php/tree/v0.1.8"
             },
-            "time": "2026-10-15T08:34:58+00:00"
+            "time": "2026-10-26T18:37:27+00:00"
         },
         {
             "name": "symfony/asset",
