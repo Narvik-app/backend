@@ -140,7 +140,12 @@ class AppFixtures extends Fixture {
 
     // A handful of members get a vehicle and a history of declarations, so the boards
     // (admin and personal) have real data to show for club_1, on which the plugin is enabled.
-    $timeAndTravelMembers = MemberFactory::randomRange(6, 10, ['club' => _InitStory::club_1()]);
+    // The demo accounts (admin, supervisor) always have some, as they are the ones used for screenshots.
+    $timeAndTravelMembers = [
+      _InitStory::MEMBER_admin_club_1(),
+      _InitStory::MEMBER_supervisor_club_1(),
+      ...MemberFactory::randomRange(6, 10, ['club' => _InitStory::club_1()]),
+    ];
     foreach ($timeAndTravelMembers as $member) {
       $vehicle = MemberVehicleFactory::createOne(['member' => $member]);
       TimeAndTravelDeclarationFactory::new()
