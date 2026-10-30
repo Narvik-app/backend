@@ -64,7 +64,15 @@ class AppFixtures extends Fixture {
     MemberPresenceFactory::new()->many(20)->create();
     ExternalPresenceFactory::new()->many(25)->create();
     // The demo admin has a presence history, for the member page (details and charts)
-    MemberPresenceFactory::new()->many(14)->create(['member' => _InitStory::MEMBER_admin_club_1()]);
+    // (never on the activity feeding the yearly control, which has to stay overdue for the demo)
+    $adminActivities = array_values(array_filter(
+      ActivityFactory::findBy(['club' => _InitStory::club_1()]),
+      static fn ($activity) => $activity->getName() !== 'Contrôle annuel',
+    ));
+    MemberPresenceFactory::new()->many(14)->create(fn () => [
+      'member' => _InitStory::MEMBER_admin_club_1(),
+      'activities' => faker()->randomElements($adminActivities, faker()->numberBetween(1, 3)),
+    ]);
 
     $this->generateMemberControls();
 
@@ -236,13 +244,17 @@ class AppFixtures extends Fixture {
     ]);
 
     $admin = _InitStory::MEMBER_admin_club_1();
-    MemberControlFactory::createOne(['member' => $admin, 'type' => $yearly, 'date' => new \DateTimeImmutable('-14 months')]);
+    // The date of a control linked to an activity follows the presences on it: overdue ones need an old presence
+    MemberPresenceFactory::createOne(['member' => $admin, 'activities' => [$activity], 'date' => new \DateTimeImmutable('-14 months')]);
     MemberControlFactory::createOne(['member' => $admin, 'type' => $quiz, 'date' => new \DateTimeImmutable('-2 months')]);
 
     foreach (MemberFactory::randomRange(20, 30, ['club' => $club]) as $member) {
-      MemberControlFactory::createOne([
+      if ($member->getId() === $admin->getId()) {
+        continue;
+      }
+      MemberPresenceFactory::createOne([
         'member' => $member,
-        'type' => $yearly,
+        'activities' => [$activity],
         'date' => new \DateTimeImmutable('-' . faker()->numberBetween(30, 420) . ' days'),
       ]);
     }
