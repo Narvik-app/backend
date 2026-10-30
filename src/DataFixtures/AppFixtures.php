@@ -11,6 +11,7 @@ use App\Entity\ClubDependent\Member;
 use App\Entity\ClubDependent\Plugin\Loan\LoanItem;
 use App\Entity\ClubDependent\Plugin\Loan\LoanRecordingType;
 use App\Entity\ClubDependent\Plugin\Sale\InventoryItem;
+use App\Tests\Factory\ActivityFactory;
 use App\Tests\Factory\InventoryItemFactory;
 use App\Tests\Factory\InventoryItemHistoryFactory;
 use App\Tests\Factory\LoanCategoryFactory;
@@ -18,6 +19,8 @@ use App\Tests\Factory\LoanFactory;
 use App\Tests\Factory\LoanItemFactory;
 use App\Tests\Factory\LoanRecordingFactory;
 use App\Tests\Factory\LoanRecordingTypeFactory;
+use App\Tests\Factory\MemberControlFactory;
+use App\Tests\Factory\MemberControlTypeFactory;
 use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\SaleFactory;
 use App\Tests\Factory\MemberPresenceFactory;
@@ -62,6 +65,8 @@ class AppFixtures extends Fixture {
     ExternalPresenceFactory::new()->many(25)->create();
     // The demo admin has a presence history, for the member page (details and charts)
     MemberPresenceFactory::new()->many(14)->create(['member' => _InitStory::MEMBER_admin_club_1()]);
+
+    $this->generateMemberControls();
 
     EmailFactory::new()->many(12)->create();
 
@@ -201,6 +206,46 @@ class AppFixtures extends Fixture {
     $this->exportGenerationService->generate($draft);
 
     $manager->flush();
+  }
+
+  /**
+   * A yearly control (linked to an activity, with warning and alert delays) and a manual one without expiration,
+   * both shown on the presence card. The demo admin has them, so do a few other members (some overdue).
+   */
+  private function generateMemberControls(): void {
+    $club = _InitStory::club_1();
+    $activity = ActivityFactory::findBy(['club' => $club, 'name' => 'Contrôle annuel'])[0] ?? null;
+
+    $yearly = MemberControlTypeFactory::createOne([
+      'name' => 'Contrôle annuel',
+      'icon' => 'shield-check',
+      'activity' => $activity,
+      'warningDays' => 335,
+      'alertDays' => 365,
+      'displayOnPresenceCard' => true,
+      'weight' => 0,
+    ]);
+    $quiz = MemberControlTypeFactory::createOne([
+      'name' => 'QCM',
+      'icon' => 'question-mark-circle',
+      'activity' => null,
+      'warningDays' => null,
+      'alertDays' => null,
+      'displayOnPresenceCard' => true,
+      'weight' => 1,
+    ]);
+
+    $admin = _InitStory::MEMBER_admin_club_1();
+    MemberControlFactory::createOne(['member' => $admin, 'type' => $yearly, 'date' => new \DateTimeImmutable('-14 months')]);
+    MemberControlFactory::createOne(['member' => $admin, 'type' => $quiz, 'date' => new \DateTimeImmutable('-2 months')]);
+
+    foreach (MemberFactory::randomRange(20, 30, ['club' => $club]) as $member) {
+      MemberControlFactory::createOne([
+        'member' => $member,
+        'type' => $yearly,
+        'date' => new \DateTimeImmutable('-' . faker()->numberBetween(30, 420) . ' days'),
+      ]);
+    }
   }
 
   /**
