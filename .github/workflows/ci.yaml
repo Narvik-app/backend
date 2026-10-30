@@ -162,12 +162,22 @@ jobs:
               } >> "$FORMATTED_OUTPUT"
           fi
       -
+        # Secrets aren't available on Dependabot and fork PRs: those keep commenting as github-actions
+        name: Generate GitHub App token
+        id: app-token
+        if: ${{ github.event_name == 'pull_request' && !cancelled() && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.FROOZEIFY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FROOZEIFY_APP_PRIVATE_KEY }}
+      -
         name: Post PHPUnit summary as PR comment
         if: ${{ github.event_name == 'pull_request' && !cancelled() }}
         uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: phpunit-summary
           path: formatted_phpunit_summary.md
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
       -
         name: Fail job on test failure
         if: ${{ steps.phpunit.outcome == 'failure' }}
