@@ -44,3 +44,10 @@ runs:
           if: inputs.build-only == 'false'
           shell: bash
           run: docker compose -f compose.yaml -f .github/compose.ci.yaml up --wait --no-build
+
+        - name: Show container logs on startup failure
+          if: failure() && inputs.build-only == 'false'
+          shell: bash
+          run: |
+            docker compose -f compose.yaml -f .github/compose.ci.yaml ps --all
+            docker compose -f compose.yaml -f .github/compose.ci.yaml logs --no-color --timestamps
