@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
         with:
@@ -38,7 +38,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
       -
@@ -93,13 +93,13 @@ jobs:
       -
         name: Upload coverage to Codecov
         if: ${{ steps.phpunit.outcome == 'success' }}
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./junit.xml
@@ -166,14 +166,14 @@ jobs:
         name: Generate GitHub App token
         id: app-token
         if: ${{ github.event_name == 'pull_request' && !cancelled() && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ vars.FROOZEIFY_APP_CLIENT_ID }}
           private-key: ${{ secrets.FROOZEIFY_APP_PRIVATE_KEY }}
       -
         name: Post PHPUnit summary as PR comment
         if: ${{ github.event_name == 'pull_request' && !cancelled() }}
-        uses: marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: phpunit-summary
           path: formatted_phpunit_summary.md
@@ -192,7 +192,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
       -
@@ -215,7 +215,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
 
@@ -231,7 +231,7 @@ jobs:
 #    steps:
 #      -
 #        name: Checkout
-#        uses: actions/checkout@v7
+#        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 #      -
 #        name: Lint Dockerfile
-#        uses: hadolint/hadolint-action@v3.1.0
+#        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
