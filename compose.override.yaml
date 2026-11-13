@@ -10,6 +10,9 @@ x-worker-dev: &worker-dev
   volumes:
     - ./:/app
     - app_var:/app/var
+  extra_hosts:
+    # Ensure that host.docker.internal is correctly defined on Linux (mailer, etc.)
+    - host.docker.internal:host-gateway
 
 services:
   php:
