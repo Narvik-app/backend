@@ -9,5 +9,11 @@ services:
       - ./docker/frankenphp/Caddyfile:/etc/frankenphp/Caddyfile:ro
       - ./docker/frankenphp/conf.d/20-app.dev.ini:/usr/local/etc/php/app.conf.d/20-app.dev.ini:ro
 
+  # The tests use the in-memory test transports, no worker needed
+  worker-high: &no-worker
+    scale: 0
+  worker: *no-worker
+  scheduler: *no-worker
+
 volumes:
   app_var:

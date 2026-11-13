@@ -1,18 +1,34 @@
 ---
 name: narvik
 
+# The Messenger workers: the php image with another command, one process per container.
+x-worker: &worker
+  image: narvik-php:latest
+  restart: unless-stopped
+  environment: &php-environment
+    DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-15}&charset=${POSTGRES_CHARSET:-utf8}
+  # Messenger finishes the message being handled then exits on SIGTERM (needs pcntl)
+  stop_signal: SIGTERM
+  stop_grace_period: 30s
+  # The image healthcheck targets FrankenPHP, which does not run here
+  healthcheck:
+    disable: true
+  depends_on:
+    php:
+      condition: service_healthy # vendors installed and migrations run by the php entrypoint
+
 services:
   php:
     image: narvik-php:latest
     restart: unless-stopped
     environment:
+      <<: *php-environment
       SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
       DEFAULT_URI: https://${SERVER_NAME:-localhost}:${HTTPS_PORT:-443}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
       TRUSTED_HOSTS: ^${SERVER_NAME:-example\.com|localhost}|php$$
-      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-15}&charset=${POSTGRES_CHARSET:-utf8}
       # Run "composer require symfony/mercure-bundle" to install and configure the Mercure integration
       MERCURE_URL: ${CADDY_MERCURE_URL:-http://php/.well-known/mercure}
       MERCURE_PUBLIC_URL: ${CADDY_MERCURE_PUBLIC_URL:-https://${SERVER_NAME:-localhost}:${HTTPS_PORT:-443}/.well-known/mercure}
@@ -33,6 +49,24 @@ services:
         target: 443
         published: ${HTTP3_PORT:-443}
         protocol: udp
+    depends_on:
+      database:
+        condition: service_healthy
+
+  # Emails
+  worker-high:
+    <<: *worker
+    command: [bin/console, messenger:consume, async_high, --time-limit=3600, --memory-limit=256M]
+
+  # Imports, exports, synchronisations
+  worker:
+    <<: *worker
+    command: [bin/console, messenger:consume, async_medium, async_low, --time-limit=3600, --memory-limit=256M]
+
+  # Recurring jobs of src/Scheduler. A single instance.
+  scheduler:
+    <<: *worker
+    command: [bin/console, messenger:consume, scheduler_default, --time-limit=3600, --memory-limit=256M]
 
 # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
 ###> symfony/mercure-bundle ###
@@ -47,6 +81,11 @@ services:
       # You should definitely change the password in production
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
       POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --host=127.0.0.1 --username=\"$$POSTGRES_USER\" --dbname=\"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
       - database_data:/var/lib/postgresql/data:rw
       # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!

@@ -3,7 +3,9 @@ set -e
 
 IGNORE_MIGRATION=${IGNORE_MIGRATION:-false}
 
-if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
+# Project setup (vendors, database, migrations), only when starting the web server.
+# The Messenger workers (bin/console messenger:consume) only start once php is healthy (compose depends_on).
+if [ "$1" = 'frankenphp' ]; then
 	if [ -z "$(ls -A 'vendor/' 2>/dev/null)" ]; then
 		composer install --prefer-dist --no-progress --no-interaction
 	fi
@@ -50,9 +52,6 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 
 	setfacl -R -m u:www-data:rwX -m u:"$(whoami)":rwX var
 	setfacl -dR -m u:www-data:rwX -m u:"$(whoami)":rwX var
-
-	echo "Starting supervisord with messenger-worker conf file"
-	/usr/bin/supervisord -c /etc/supervisor/conf.d/messenger-worker.ini
 
 	echo 'PHP app ready!'
 fi

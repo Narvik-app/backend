@@ -1,5 +1,19 @@
 ---
 # Development environment override
+
+# Same image as php (narvik-php:latest, built from the frankenphp_dev target), same sources.
+# The workers do not reload on code change: `make workers-restart`.
+x-worker-dev: &worker-dev
+  build:
+    context: .
+    target: frankenphp_dev
+  volumes:
+    - ./:/app
+    - app_var:/app/var
+  extra_hosts:
+    # Ensure that host.docker.internal is correctly defined on Linux (mailer, etc.)
+    - host.docker.internal:host-gateway
+
 services:
   php:
     build:
@@ -16,7 +30,6 @@ services:
     environment:
       FRANKENPHP_WORKER_CONFIG: watch
       MERCURE_EXTRA_DIRECTIVES: |
-        demo
         transport bolt {
             path /data/mercure.db
         }
@@ -27,6 +40,10 @@ services:
       # Ensure that host.docker.internal is correctly defined on Linux
       - host.docker.internal:host-gateway
     tty: true
+  worker-high: *worker-dev
+  worker: *worker-dev
+  scheduler: *worker-dev
+
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 
