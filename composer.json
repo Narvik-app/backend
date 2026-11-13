@@ -45,6 +45,7 @@
         "ramsey/uuid-doctrine": "^2.1",
         "sumup/sumup-php": "^0.1.4",
         "symfony/asset": "8.1.*",
+        "symfony/cache-contracts": "^3.6",
         "symfony/console": "8.1.*",
         "symfony/dependency-injection": "8.1.*",
         "symfony/doctrine-bridge": "8.1.*",
