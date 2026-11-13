@@ -5624,16 +5624,16 @@
         },
         {
             "name": "sumup/sumup-php",
-            "version": "0.1.8",
+            "version": "0.1.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sumup/sumup-php.git",
-                "reference": "44f1637f711ec238f68766393f9c6a72c94de63d"
+                "reference": "320575a49351bebe3b07ef4a64a0b6605931a61c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/44f1637f711ec238f68766393f9c6a72c94de63d",
-                "reference": "44f1637f711ec238f68766393f9c6a72c94de63d",
+                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/320575a49351bebe3b07ef4a64a0b6605931a61c",
+                "reference": "320575a49351bebe3b07ef4a64a0b6605931a61c",
                 "shasum": ""
             },
             "require": {
@@ -5689,9 +5689,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sumup/sumup-php/issues",
-                "source": "https://github.com/sumup/sumup-php/tree/v0.1.8"
+                "source": "https://github.com/sumup/sumup-php/tree/v0.1.9"
             },
-            "time": "2026-10-26T18:37:27+00:00"
+            "time": "2026-11-03T11:04:53+00:00"
         },
         {
             "name": "symfony/asset",
@@ -5940,8 +5940,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-26T07:05:14+00:00",
-            "published-time": "2026-11-04T11:25:38+00:00"
+            "time": "2026-09-26T07:05:14+00:00"
         },
         {
             "name": "symfony/clock",
@@ -14862,5 +14861,5 @@
         "ext-zip": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
