@@ -2,52 +2,46 @@
 
 namespace App\Command;
 
+use App\Enum\GlobalSetting;
 use App\Repository\ClubRepository;
-use App\Repository\FileRepository;
-use App\Repository\SeasonRepository;
-use App\Repository\UserSecurityCodeRepository;
-use App\Service\SeasonService;
+use App\Service\GlobalSettingService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'emailing:count:reset', description: 'Reset club monthly email usage count. Will only allow to be run on the first of month')]
+/**
+ * Run by the scheduler (App\Scheduler\MainSchedule) at the start of each month.
+ * Idempotent: the clubs are reset only once per month, so a run missed on the 1st can safely be caught up later.
+ */
+#[AsCommand(name: 'emailing:count:reset', description: 'Reset clubs monthly email usage count, once per month')]
 class EmailingCountResetCommand extends Command {
-  private SymfonyStyle $io;
-
   public function __construct(
     private readonly EntityManagerInterface $entityManager,
     private readonly ClubRepository $clubRepository,
+    private readonly GlobalSettingService $globalSettingService,
   ) {
     parent::__construct();
   }
 
-
   protected function execute(InputInterface $input, OutputInterface $output): int {
-    $this->io = new SymfonyStyle($input, $output);
+    $io = new SymfonyStyle($input, $output);
 
-    $this->resetClubsEmailCount();
+    $currentMonth = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Paris'))->format('Y-m');
+    if ($this->globalSettingService->getSettingValue(GlobalSetting::EMAILING_COUNT_LAST_RESET) === $currentMonth) {
+      $io->warning("Abort, email count already reset for $currentMonth.");
+      return Command::SUCCESS;
+    }
 
+    foreach ($this->clubRepository->findAll() as $club) {
+      $club->setCurrentMonthEmailsSent(0);
+    }
+    $this->globalSettingService->updateSettingValue(GlobalSetting::EMAILING_COUNT_LAST_RESET, $currentMonth);
+    $this->entityManager->flush();
+
+    $io->success("Email count reset for $currentMonth.");
     return Command::SUCCESS;
   }
-  private function resetClubsEmailCount(): void {
-    if (date('j') !== '1') { // We are not the first of the month, we do nothing
-      $this->io->warning('Abort, not first day of the month.');
-      return;
-    }
-
-    $clubs = $this->clubRepository->findAll();
-    foreach ($clubs as $club) {
-      $club->setCurrentMonthEmailsSent(0);
-      $this->entityManager->persist($club);
-    }
-
-    $this->entityManager->flush();
-  }
-
-
 }

@@ -15,7 +15,7 @@ SYMFONY  = $(PHP) bin/console
 
 # Misc
 .DEFAULT_GOAL = help
-.PHONY        : help build up start down logs sh composer vendor sf cc rector rector-dry-run db-dump db-restore db-migrate code-quality
+.PHONY        : help build up start down logs workers-restart workers-logs sh composer vendor sf cc rector rector-dry-run db-dump db-restore db-migrate code-quality
 
 # Capture the first argument as `file`
 file=$(word 2,$(MAKECMDGOALS))
@@ -56,6 +56,12 @@ restart: stop up
 
 logs: ## Show live logs
 	@$(DOCKER_COMP) logs --tail=0 --follow
+
+workers-restart: ## Restart the Messenger workers and the scheduler (they do not reload on code change)
+	@$(DOCKER_COMP) restart worker-high worker scheduler
+
+workers-logs: ## Show live logs of the Messenger workers and the scheduler
+	@$(DOCKER_COMP) logs --tail=50 --follow worker-high worker scheduler
 
 sh: ## Connect to the PHP FPM container
 	@$(PHP_CONT) bash

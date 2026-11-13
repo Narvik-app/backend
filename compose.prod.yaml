@@ -2,18 +2,25 @@
 # Production environment override
 services:
   php:
-    build:
+    build: &prod-build
       context: .
       target: frankenphp_prod
-    environment:
+    environment: &prod-environment
       APP_SECRET: ${APP_SECRET}
       OAUTH_PASSPHRASE: ${OAUTH_PASSPHRASE}
       OAUTH_ENCRYPTION_KEY: ${OAUTH_ENCRYPTION_KEY}
 
-    volumes:
+    volumes: &prod-volumes
       - app_jwt:/app/config/jwt
       - app_private_files:/app/private
-      
+
+  worker-high: &prod-worker
+    build: *prod-build
+    environment: *prod-environment
+    volumes: *prod-volumes
+  worker: *prod-worker
+  scheduler: *prod-worker
+
   database:
     ports:
       - "5432:5432"

@@ -34,6 +34,7 @@ RUN set -eux; \
     	gd \
     	fileinfo \
         gmp \
+        pcntl \
 	;
 
 # https://getcomposer.org/doc/03-cli.md#composer-allow-superuser
@@ -60,10 +61,6 @@ ENTRYPOINT ["docker-entrypoint"]
 RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
     echo "Acquire::http::No-Cache true;" >> /etc/apt/apt.conf.d/99custom && \
     echo "Acquire::BrokenProxy    true;" >> /etc/apt/apt.conf.d/99custom
-
-# Install supervisor for Symfony Messenger
-RUN apt-get update && apt-get install -y --no-install-recommends supervisor
-COPY docker/messenger-worker.ini /etc/supervisor/conf.d/messenger-worker.ini
 
 HEALTHCHECK --start-period=60s CMD curl http://localhost:2019/metrics --silent --show-error --fail --output /dev/null || exit 1
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile" ]

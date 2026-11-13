@@ -22,6 +22,9 @@ enum GlobalSetting {
   /** Percentage bonus applied to the official barème kilométrique for electric vehicles (e.g. "0.20" for +20%). */
   case TIME_AND_TRAVEL_ELECTRIC_BONUS_RATE;
 
+  /** Month ("Y-m") of the last clubs email count reset, see EmailingCountResetCommand. */
+  case EMAILING_COUNT_LAST_RESET;
+
   public function isEncrypted(): bool {
     return match ($this) {
       self::SMTP_USERNAME, self::SMTP_PASSWORD => true,

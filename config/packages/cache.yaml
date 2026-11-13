@@ -17,3 +17,8 @@ framework:
     # Namespaced pools use the above "app" backend by default
     #pools:
     #my.dedicated.cache: null
+
+        # Scheduler state (last run of each job), kept in the database to survive deployments
+        pools:
+            cache.scheduler:
+                adapter: cache.adapter.doctrine_dbal
