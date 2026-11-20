@@ -5683,16 +5683,16 @@
         },
         {
             "name": "sumup/sumup-php",
-            "version": "0.1.9",
+            "version": "0.1.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sumup/sumup-php.git",
-                "reference": "320575a49351bebe3b07ef4a64a0b6605931a61c"
+                "reference": "19c8a7ae26d6c5d99492259f46a6996410c4af24"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/320575a49351bebe3b07ef4a64a0b6605931a61c",
-                "reference": "320575a49351bebe3b07ef4a64a0b6605931a61c",
+                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/19c8a7ae26d6c5d99492259f46a6996410c4af24",
+                "reference": "19c8a7ae26d6c5d99492259f46a6996410c4af24",
                 "shasum": ""
             },
             "require": {
@@ -5714,17 +5714,7 @@
                     "SumUp\\": "src/"
                 },
                 "classmap": [
-                    "src/Checkouts/Checkouts.php",
-                    "src/Customers/Customers.php",
-                    "src/Members/Members.php",
-                    "src/Memberships/Memberships.php",
-                    "src/Merchants/Merchants.php",
-                    "src/Payouts/Payouts.php",
-                    "src/Readers/Readers.php",
-                    "src/Receipts/Receipts.php",
-                    "src/Roles/Roles.php",
-                    "src/Shared/Shared.php",
-                    "src/Transactions/Transactions.php"
+                    "src/"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -5748,9 +5738,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sumup/sumup-php/issues",
-                "source": "https://github.com/sumup/sumup-php/tree/v0.1.9"
+                "source": "https://github.com/sumup/sumup-php/tree/v0.1.10"
             },
-            "time": "2026-11-03T11:04:53+00:00"
+            "time": "2026-11-12T16:45:15+00:00"
         },
         {
             "name": "symfony/asset",
