@@ -11,7 +11,7 @@ use App\Tests\Factory\ClubFactory;
 use App\Tests\Factory\MemberFactory;
 use App\Tests\Factory\UserFactory;
 use App\Tests\Factory\UserMemberFactory;
-use Ramsey\Uuid\Uuid;
+use Symfony\Component\Uid\Uuid;
 use Zenstruck\Foundry\Story;
 
 /**

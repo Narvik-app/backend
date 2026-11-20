@@ -6,7 +6,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\Interface\UuidEntityInterface;
 use App\Service\UuidService;
 use Doctrine\ORM\Mapping as ORM;
-use Ramsey\Uuid\UuidInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 abstract class UuidEntity implements UuidEntityInterface {
@@ -19,7 +19,7 @@ abstract class UuidEntity implements UuidEntityInterface {
   #[ApiProperty(identifier: true)]
   #[ORM\Column(type: 'uuid', unique: true)]
   #[Groups(['common-read'])]
-  protected ?UuidInterface $uuid = null;
+  protected ?Uuid $uuid = null;
 
   public function __construct() {
     $this->uuid = UuidService::generateUuid();
@@ -29,11 +29,11 @@ abstract class UuidEntity implements UuidEntityInterface {
     return $this->id;
   }
 
-  public function getUuid(): ?UuidInterface {
+  public function getUuid(): ?Uuid {
     return $this->uuid;
   }
 
-  public function setUuid(UuidInterface $uuid): static {
+  public function setUuid(Uuid $uuid): static {
     $this->uuid = $uuid;
     return $this;
   }
