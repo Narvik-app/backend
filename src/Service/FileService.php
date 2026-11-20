@@ -7,7 +7,7 @@ use App\Entity\ExposedFile;
 use App\Entity\File as FileEntity;
 use App\Enum\ThumbnailSize;
 use App\Repository\FileRepository;
-use Ramsey\Uuid\UuidInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\HttpFoundation\File\File as SfFile;
 use App\Enum\FileCategory;
 use Doctrine\ORM\EntityManagerInterface;
@@ -92,7 +92,7 @@ class FileService {
     return $fileEntity;
   }
 
-  public function decodeEncodedUriId(string $encodedId): UuidInterface {
+  public function decodeEncodedUriId(string $encodedId): Uuid {
     return UuidService::fromReadable($encodedId);
   }
 

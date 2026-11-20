@@ -9,7 +9,7 @@ use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\UuidInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
 
 abstract class AbstractClubDependentFilter extends AbstractFilter {
@@ -27,7 +27,7 @@ abstract class AbstractClubDependentFilter extends AbstractFilter {
   public function getClubUuid(QueryBuilder $queryBuilder): ?string {
     /** @var Parameter|null $parameter */
     $parameter = $queryBuilder->getParameters()[0] ?? null;
-    if ($parameter && $parameter->getValue() instanceof UuidInterface) {
+    if ($parameter && $parameter->getValue() instanceof Uuid) {
       return $parameter->getValue();
     }
     return null;

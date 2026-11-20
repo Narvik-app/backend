@@ -2,11 +2,11 @@
 
 namespace App\Entity\Interface;
 
-use Ramsey\Uuid\UuidInterface;
+use Symfony\Component\Uid\Uuid;
 
 interface UuidEntityInterface {
 
   public function getId(): ?int;
-  public function getUuid(): ?UuidInterface;
-  public function setUuid(UuidInterface $uuid): static;
+  public function getUuid(): ?Uuid;
+  public function setUuid(Uuid $uuid): static;
 }
