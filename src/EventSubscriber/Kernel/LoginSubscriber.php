@@ -3,6 +3,7 @@
 namespace App\EventSubscriber\Kernel;
 
 use App\Entity\User;
+use App\Service\LoginGuardService;
 use League\Bundle\OAuth2ServerBundle\Event\UserResolveEvent;
 use League\Bundle\OAuth2ServerBundle\OAuth2Events;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -19,16 +20,14 @@ final readonly class LoginSubscriber
     public function __construct(
       private RequestStack $requestStack,
       private RateLimiterFactoryInterface $userIpLoginLimiter,
-      private RateLimiterFactoryInterface $ipLoginLimiter,
+      private LoginGuardService $loginGuard,
       private UserProviderInterface $userProvider,
       private UserPasswordHasherInterface $userPasswordHasher,
     ) {
     }
     #[AsEventListener(event: OAuth2Events::USER_RESOLVE, priority: 10)]
     public function onUserResolve(UserResolveEvent $event): void {
-      $ip = $this->requestStack->getCurrentRequest()->getClientIp();
-      $ipLimiter = $this->ipLoginLimiter->create($ip);
-      $ipLimiter->consume(1)->ensureAccepted();
+      $this->loginGuard->consumeIpAttempt();
 
       try {
         $user = $this->userProvider->loadUserByIdentifier($event->getUsername());
