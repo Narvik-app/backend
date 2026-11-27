@@ -160,11 +160,6 @@ class InstallOAuthCommand extends Command {
   }
 
   /**
-   * Repairs an already-provisioned badger client.
-   * Demotes it to public and restricts it to the refresh_token grant + badger scope.
-   * Safe to re-run: a no-op once the client is already correct.
-   */
-  /**
    * Add the grants introduced after the client creation (i.e. passkey login). Existing grants are kept,
    * an empty grant list already allows every grant.
    */
@@ -183,6 +178,11 @@ class InstallOAuthCommand extends Command {
     $this->io->success("Client frontend corrigé : grants ajoutés " . implode(', ', $missingGrants));
   }
 
+  /**
+   * Repairs an already-provisioned badger client.
+   * Demotes it to public and restricts it to the refresh_token grant + badger scope.
+   * Safe to re-run: a no-op once the client is already correct.
+   */
   private function reconcileBadgerClient(OAuth2ClientInterface $client): void {
     $this->io->info("Client déjà enregistré");
 

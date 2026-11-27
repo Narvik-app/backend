@@ -8,7 +8,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
- * Checks shared by every way to log in (password, passkey...), so a new login method can't skip them.
+ * Checks shared by the ways to log in (password, passkey...). Each grant calls the ones it needs: a new
+ * login method must call them too.
  */
 final readonly class LoginGuardService {
   public function __construct(

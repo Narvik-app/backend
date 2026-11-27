@@ -28,6 +28,8 @@ final class PasskeyGrant extends AbstractGrant {
 
   public function __construct(
     RefreshTokenRepositoryInterface $refreshTokenRepository,
+    // Every grant is built with the AuthorizationServer on each /token call (password, refresh...)
+    #[Autowire(lazy: true)]
     private readonly WebauthnService $webauthnService,
     private readonly LoginGuardService $loginGuard,
     private readonly UserConverterInterface $userConverter,

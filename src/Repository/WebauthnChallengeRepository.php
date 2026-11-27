@@ -3,22 +3,19 @@
 namespace App\Repository;
 
 use App\Entity\WebauthnChallenge;
+use App\Repository\Trait\UuidEntityRepositoryTrait;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @extends ServiceEntityRepository<WebauthnChallenge>
+ * @method WebauthnChallenge|null findOneByUuid(string $uuid)
  */
 class WebauthnChallengeRepository extends ServiceEntityRepository {
+  use UuidEntityRepositoryTrait;
+
   public function __construct(ManagerRegistry $registry) {
     parent::__construct($registry, WebauthnChallenge::class);
-  }
-
-  public function findOneByUuid(string $uuid): ?WebauthnChallenge {
-    if (!\Symfony\Component\Uid\Uuid::isValid($uuid)) {
-      return null;
-    }
-    return $this->findOneBy(['uuid' => $uuid]);
   }
 
   /**

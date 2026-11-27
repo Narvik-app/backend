@@ -148,7 +148,7 @@ class WebauthnService {
 
     try {
       $record = AuthenticatorAttestationResponseValidator::create($this->ceremonyFactory->creationCeremony())
-        ->check($publicKeyCredential->response, $options, $options->rp->id ?? $this->defaultRpId);
+        ->check($publicKeyCredential->response, $options, $options->rp->id);
     } catch (\Throwable $e) {
       $this->logger->info('Passkey registration refused', ['error' => $e->getMessage()]);
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
@@ -211,7 +211,7 @@ class WebauthnService {
 
     try {
       $record = AuthenticatorAssertionResponseValidator::create($this->ceremonyFactory->requestCeremony())
-        ->check($this->toCredentialRecord($passkey), $response, $options, $options->rpId ?? $this->defaultRpId, $response->userHandle);
+        ->check($this->toCredentialRecord($passkey), $response, $options, $options->rpId, $response->userHandle);
     } catch (\Throwable $e) {
       // Also covers a sign counter going backward (cloned authenticator)
       $this->logger->warning('Passkey login refused', ['passkey' => $passkey->getUuid()?->toString(), 'error' => $e->getMessage()]);
@@ -265,16 +265,11 @@ class WebauthnService {
   private function loadPublicKeyCredential(array|string $credential): PublicKeyCredential {
     try {
       $json = is_array($credential) ? json_encode($credential, JSON_THROW_ON_ERROR) : $credential;
-      $publicKeyCredential = $this->serializer->deserialize($json, PublicKeyCredential::class, 'json');
+      /** @var PublicKeyCredential */
+      return $this->serializer->deserialize($json, PublicKeyCredential::class, 'json');
     } catch (\Throwable) {
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
     }
-
-    if (!$publicKeyCredential instanceof PublicKeyCredential) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
-    }
-
-    return $publicKeyCredential;
   }
 
   /**
