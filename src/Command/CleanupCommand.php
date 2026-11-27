@@ -6,6 +6,7 @@ use App\Repository\ClubRepository;
 use App\Repository\FileRepository;
 use App\Repository\SeasonRepository;
 use App\Repository\UserSecurityCodeRepository;
+use App\Repository\WebauthnChallengeRepository;
 use App\Service\SeasonService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -25,6 +26,7 @@ class CleanupCommand extends Command {
     private readonly SeasonRepository $seasonRepository,
     private readonly ClubRepository $clubRepository,
     private readonly FileRepository $fileRepository,
+    private readonly WebauthnChallengeRepository $webauthnChallengeRepository,
   ) {
     parent::__construct();
   }
@@ -35,6 +37,7 @@ class CleanupCommand extends Command {
 
     $this->cleanJwt();
     $this->cleanSecurityCodes();
+    $this->cleanWebauthnChallenges();
     $this->updateSeasons();
     $this->deleteFlaggedClubs();
     $this->deleteEmailingAttachments();
@@ -61,6 +64,12 @@ class CleanupCommand extends Command {
     }
 
     $this->entityManager->flush();
+  }
+
+  private function cleanWebauthnChallenges(): void {
+    $this->io->section("Removing expired passkey challenges");
+    $deleted = $this->webauthnChallengeRepository->deleteExpired();
+    $this->io->writeln("$deleted removed");
   }
 
   private function updateSeasons(): void {

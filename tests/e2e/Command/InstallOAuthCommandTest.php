@@ -2,6 +2,7 @@
 
 namespace App\Tests\e2e\Command;
 
+use App\Security\Grant\PasskeyGrant;
 use App\Tests\AbstractTestCase;
 use App\Tests\Story\_InitStory;
 use League\Bundle\OAuth2ServerBundle\Manager\ClientManagerInterface;
@@ -62,7 +63,7 @@ class InstallOAuthCommandTest extends AbstractTestCase {
     $front = $clientManager->find('front');
     $this->assertNotNull($front);
     $this->assertTrue($front->isConfidential(), 'the front client authenticates unauthenticated calls, it must keep a secret');
-    $this->assertSame(['password', 'refresh_token'], array_map(strval(...), $front->getGrants()));
+    $this->assertSame(['password', 'refresh_token', PasskeyGrant::IDENTIFIER], array_map(strval(...), $front->getGrants()));
     $this->assertSame(['all'], array_map(strval(...), $front->getScopes()));
   }
 
@@ -80,8 +81,29 @@ class InstallOAuthCommandTest extends AbstractTestCase {
 
     $front = $clientManager->find('front');
     $this->assertTrue($front->isConfidential());
-    // Unlike badger, an existing front client is never reconciled - there's no known-bad
-    // legacy shape to repair, and the stored secret is hashed so it can't be re-displayed.
+    // The secret is hashed and can't be re-displayed, so it is never touched.
+    // An empty grant list already allows every grant (including the passkey one), so it is kept unrestricted.
     $this->assertSame([], $front->getGrants(), 'grants should be left as originally created, unrestricted');
+  }
+
+  public function testAddsTheNewGrantsToAnAlreadyProvisionedFrontClient(): void {
+    $clientManager = self::getContainer()->get(ClientManagerInterface::class);
+
+    // A front client created before passkeys existed
+    $application = new Application(self::$kernel);
+    new CommandTester($application->find('league:oauth2-server:create-client'))->execute([
+      'name' => 'Narvik front',
+      'identifier' => 'front',
+      'secret' => 'a-custom-secret-set-by-the-operator',
+      '--grant-type' => ['password', 'refresh_token'],
+    ]);
+    $secret = $clientManager->find('front')->getSecret();
+
+    $this->runInstallOAuth();
+    $this->runInstallOAuth(); // Idempotent
+
+    $front = $clientManager->find('front');
+    $this->assertSame(['password', 'refresh_token', PasskeyGrant::IDENTIFIER], array_map(strval(...), $front->getGrants()));
+    $this->assertSame($secret, $front->getSecret(), 'the secret must be kept');
   }
 }

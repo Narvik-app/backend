@@ -23,6 +23,12 @@ framework:
             limit: 5
             rate: { interval: '5 minutes' }
 
+        # POST /public/passkeys/-/login-options is public and stores a challenge on each call
+        passkey_options:
+            policy: sliding_window
+            limit: 30
+            interval: '5 minutes'
+
 # The e2e suite runs many requests from the same loopback IP, which would otherwise
 # exhaust these bare-IP-keyed buckets after a handful of tests. Raise the limits high
 # enough to be a no-op rather than disabling the limiters outright, so wiring mistakes
@@ -47,3 +53,8 @@ when@test:
                 policy: token_bucket
                 limit: 10000
                 rate: { interval: '5 minutes' }
+
+            passkey_options:
+                policy: sliding_window
+                limit: 10000
+                interval: '5 minutes'

@@ -70,6 +70,28 @@ abstract class AbstractApiTestCase extends AbstractTestCase {
     return true;
   }
 
+  /**
+   * POST /token with any grant (passkey...) as the front client. Keeps the tokens on success.
+   */
+  protected function requestToken(array $body): ResponseInterface {
+    $this->logout();
+
+    $response = static::createClient()->request(Request::METHOD_POST, '/token', [
+      'json' => $body,
+      'headers' => [
+        'Authorization' => 'Basic ' . $this->clientAuthorization,
+      ]
+    ]);
+
+    if ($response->getStatusCode() === Response::HTTP_OK) {
+      $data = $response->toArray();
+      $this->accessToken = $data['access_token'];
+      $this->refreshToken = $data['refresh_token'];
+    }
+
+    return $response;
+  }
+
   protected function loggedAsBadger(Club $club): bool {
     $this->logout();
     $response = static::createClient()->request(Request::METHOD_POST, '/auth/bdg', [
