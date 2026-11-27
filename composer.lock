@@ -5315,16 +5315,16 @@
         },
         {
             "name": "sumup/sumup-php",
-            "version": "0.1.10",
+            "version": "0.1.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sumup/sumup-php.git",
-                "reference": "19c8a7ae26d6c5d99492259f46a6996410c4af24"
+                "reference": "7214b0931c77fe7cb45d765decbfa7ca6c86fd71"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/19c8a7ae26d6c5d99492259f46a6996410c4af24",
-                "reference": "19c8a7ae26d6c5d99492259f46a6996410c4af24",
+                "url": "https://api.github.com/repos/sumup/sumup-php/zipball/7214b0931c77fe7cb45d765decbfa7ca6c86fd71",
+                "reference": "7214b0931c77fe7cb45d765decbfa7ca6c86fd71",
                 "shasum": ""
             },
             "require": {
@@ -5332,7 +5332,7 @@
                 "php": "^8.2"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "3.95.27",
+                "friendsofphp/php-cs-fixer": "3.95.30",
                 "league/oauth2-client": "^2.9",
                 "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^9.6"
@@ -5370,9 +5370,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sumup/sumup-php/issues",
-                "source": "https://github.com/sumup/sumup-php/tree/v0.1.10"
+                "source": "https://github.com/sumup/sumup-php/tree/v0.1.11"
             },
-            "time": "2026-11-12T16:45:15+00:00"
+            "time": "2026-11-17T15:09:53+00:00"
         },
         {
             "name": "symfony/asset",
