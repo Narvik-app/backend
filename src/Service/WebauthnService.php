@@ -11,6 +11,7 @@ use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncode;
@@ -41,24 +42,31 @@ use Webauthn\PublicKeyCredentialUserEntity;
  * passkey is enough on its own to log in (no email, no password).
  *
  * The browser talks to the backend through the frontend, so the WebAuthn origin is the frontend URL
- * and the Relying Party ID defaults to its host.
+ * and the Relying Party ID defaults to its host. With several allowed origins (i.e. localhost and a
+ * tunnel in dev), the RP ID follows the browser Origin of each ceremony, and a passkey only works on
+ * the domain it was created on.
  */
 class WebauthnService {
   private const int TIMEOUT_MS = 300_000;
-  private const string RP_NAME = 'Narvik';
   // COSE algorithm ids supported by the default CeremonyStepManagerFactory
   private const int COSE_ES256 = -7;
   private const int COSE_RS256 = -257;
 
   private readonly SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer;
   private readonly CeremonyStepManagerFactory $ceremonyFactory;
-  private readonly string $rpId;
+  /** Explicit WEBAUTHN_RP_ID, used for every origin */
+  private readonly ?string $forcedRpId;
+  /** FRONTEND_URL host, when the browser origin is unknown */
+  private readonly string $defaultRpId;
+  /** @var list<string> */
+  private readonly array $allowedOrigins;
 
   public function __construct(
     private readonly EntityManagerInterface $em,
     private readonly WebauthnChallengeRepository $challengeRepository,
     private readonly WebauthnCredentialRepository $credentialRepository,
     private readonly LoggerInterface $logger,
+    private readonly RequestStack $requestStack,
     #[Autowire(param: 'app.frontend_url')]
     string $frontendUrl,
     #[Autowire(param: 'app.webauthn_rp_id')]
@@ -71,7 +79,10 @@ class WebauthnService {
       throw new \LogicException("FRONTEND_URL must be an absolute URL to use passkeys.");
     }
     $origin = "{$parsed['scheme']}://{$parsed['host']}" . (isset($parsed['port']) ? ":{$parsed['port']}" : '');
-    $this->rpId = $rpId ?: $parsed['host'];
+    $this->forcedRpId = $rpId ?: null;
+    $this->defaultRpId = $parsed['host'];
+    $origins = array_values(array_filter(array_map(trim(...), explode(',', (string) $allowedOrigins))));
+    $this->allowedOrigins = $origins ?: [$origin];
 
     $attestationManager = new AttestationStatementSupportManager([new NoneAttestationStatementSupport()]);
     /** @var SerializerInterface&NormalizerInterface&DenormalizerInterface $serializer */
@@ -80,9 +91,7 @@ class WebauthnService {
 
     $this->ceremonyFactory = new CeremonyStepManagerFactory();
     $this->ceremonyFactory->setAttestationStatementSupportManager($attestationManager);
-    // Extra origins (i.e. another frontend port in dev/e2e) must share the same RP ID (host)
-    $origins = array_values(array_filter(array_map(trim(...), explode(',', (string) $allowedOrigins))));
-    $this->ceremonyFactory->setAllowedOrigins($origins ?: [$origin]);
+    $this->ceremonyFactory->setAllowedOrigins($this->allowedOrigins);
   }
 
   /**
@@ -97,7 +106,8 @@ class WebauthnService {
     );
 
     $options = PublicKeyCredentialCreationOptions::create(
-      rp: PublicKeyCredentialRpEntity::create(self::RP_NAME, $this->rpId),
+      // The name is deprecated by the spec, browsers show the RP ID
+      rp: PublicKeyCredentialRpEntity::create('', $this->resolveRpId()),
       user: PublicKeyCredentialUserEntity::create(
         name: $user->getEmail(),
         id: self::getUserHandle($user),
@@ -138,7 +148,7 @@ class WebauthnService {
 
     try {
       $record = AuthenticatorAttestationResponseValidator::create($this->ceremonyFactory->creationCeremony())
-        ->check($publicKeyCredential->response, $options, $this->rpId);
+        ->check($publicKeyCredential->response, $options, $options->rp->id ?? $this->defaultRpId);
     } catch (\Throwable $e) {
       $this->logger->info('Passkey registration refused', ['error' => $e->getMessage()]);
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
@@ -169,7 +179,7 @@ class WebauthnService {
   public function createLoginOptions(): array {
     $options = PublicKeyCredentialRequestOptions::create(
       challenge: random_bytes(32),
-      rpId: $this->rpId,
+      rpId: $this->resolveRpId(),
       userVerification: PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_REQUIRED,
       timeout: self::TIMEOUT_MS,
     );
@@ -201,7 +211,7 @@ class WebauthnService {
 
     try {
       $record = AuthenticatorAssertionResponseValidator::create($this->ceremonyFactory->requestCeremony())
-        ->check($this->toCredentialRecord($passkey), $response, $options, $this->rpId, $response->userHandle);
+        ->check($this->toCredentialRecord($passkey), $response, $options, $options->rpId ?? $this->defaultRpId, $response->userHandle);
     } catch (\Throwable $e) {
       // Also covers a sign counter going backward (cloned authenticator)
       $this->logger->warning('Passkey login refused', ['passkey' => $passkey->getUuid()?->toString(), 'error' => $e->getMessage()]);
@@ -221,6 +231,27 @@ class WebauthnService {
    */
   public static function getUserHandle(User $user): string {
     return $user->getUuid()->toRfc4122();
+  }
+
+  /**
+   * RP ID of a new ceremony: the host of the browser Origin when it's an allowed origin. It's stored in
+   * the challenge options, so the verification uses the same one. A forged Origin can only pick another
+   * allowed origin, and the signed origin is still checked against them.
+   */
+  private function resolveRpId(): string {
+    if ($this->forcedRpId) {
+      return $this->forcedRpId;
+    }
+
+    $origin = $this->requestStack->getCurrentRequest()?->headers->get('Origin');
+    if ($origin && in_array($origin, $this->allowedOrigins, true)) {
+      $host = parse_url($origin, PHP_URL_HOST);
+      if (is_string($host) && $host !== '') {
+        return $host;
+      }
+    }
+
+    return $this->defaultRpId;
   }
 
   private static function base64Url(string $data): string {

@@ -4,12 +4,19 @@ namespace App\Tests\e2e\Controller;
 
 use App\Entity\User;
 use App\Entity\WebauthnChallenge;
+use App\Repository\WebauthnChallengeRepository;
+use App\Repository\WebauthnCredentialRepository;
 use App\Security\Grant\PasskeyGrant;
+use App\Service\WebauthnService;
 use App\Tests\e2e\AbstractApiTestCase;
 use App\Tests\Helper\SoftwareAuthenticator;
 use App\Tests\Story\_InitStory;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class PasskeyApiTest extends AbstractApiTestCase {
@@ -214,6 +221,42 @@ class PasskeyApiTest extends AbstractApiTestCase {
     $this->makeDeleteRequest($iri);
     $this->assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
     $this->assertCount(0, $this->makeGetRequest('/self/passkeys')->toArray()['member']);
+  }
+
+  public function testRelyingPartyFollowsTheAllowedBrowserOrigin(): void {
+    $container = self::getContainer();
+    /** @var EntityManagerInterface $em */
+    $em = $container->get(EntityManagerInterface::class);
+    // The browser comes through the tunnel
+    $requestStack = new RequestStack([Request::create('/', 'POST', server: ['HTTP_ORIGIN' => 'https://dev.narvik.app'])]);
+    // Two allowed origins, i.e. dev on localhost and through a tunnel
+    $service = new WebauthnService(
+      $em,
+      $container->get(WebauthnChallengeRepository::class),
+      $container->get(WebauthnCredentialRepository::class),
+      new NullLogger(),
+      $requestStack,
+      'https://narvik.app',
+      null,
+      'https://narvik.app, https://dev.narvik.app',
+    );
+    $user = $em->getRepository(User::class)->findOneBy(['email' => 'member@club1.fr']);
+    $authenticator = new SoftwareAuthenticator('https://dev.narvik.app');
+
+    $options = $service->createRegistrationOptions($user);
+    $this->assertSame('dev.narvik.app', $options['publicKey']['rp']['id']);
+    $service->verifyRegistration($user, $options['challengeId'], $authenticator->create($options['publicKey']), 'Tunnel');
+
+    $login = $service->createLoginOptions();
+    $this->assertSame('dev.narvik.app', $login['publicKey']['rpId']);
+    $this->assertSame($user->getId(), $service->verifyLogin($login['challengeId'], $authenticator->get($login['publicKey']))->getId());
+
+    // Not an allowed origin: FRONTEND_URL host, where the passkey created on dev.narvik.app doesn't exist
+    $requestStack->push(Request::create('/', 'POST', server: ['HTTP_ORIGIN' => 'https://evil.example']));
+    $login = $service->createLoginOptions();
+    $this->assertSame('narvik.app', $login['publicKey']['rpId']);
+    $this->expectException(HttpException::class);
+    $service->verifyLogin($login['challengeId'], $authenticator->get($login['publicKey'], 'dev.narvik.app'));
   }
 
   public function testRegistrationChallengeIsBoundToUser(): void {
