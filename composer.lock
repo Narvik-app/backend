@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d802c0b90a0f1907741572963be05d8",
+    "content-hash": "efe77459cb676569f8a5ba70783da591",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -3194,16 +3194,16 @@
         },
         {
             "name": "league/csv",
-            "version": "9.29.0",
+            "version": "9.29.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/csv.git",
-                "reference": "13d5600d2c935c8785707e7d1d44ca1f2a22d6f4"
+                "reference": "fb9ea14460001b62fcb54d8ac247cc501f60e6e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/csv/zipball/13d5600d2c935c8785707e7d1d44ca1f2a22d6f4",
-                "reference": "13d5600d2c935c8785707e7d1d44ca1f2a22d6f4",
+                "url": "https://api.github.com/repos/thephpleague/csv/zipball/fb9ea14460001b62fcb54d8ac247cc501f60e6e0",
+                "reference": "fb9ea14460001b62fcb54d8ac247cc501f60e6e0",
                 "shasum": ""
             },
             "require": {
@@ -3285,7 +3285,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-28T08:56:24+00:00"
+            "time": "2026-11-22T13:51:45+00:00"
         },
         {
             "name": "league/event",
@@ -10322,8 +10322,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-12T14:32:04+00:00",
-            "published-time": "2026-10-14T06:48:53+00:00"
+            "time": "2026-10-12T14:32:04+00:00"
         },
         {
             "name": "symfony/validator",
@@ -14543,5 +14542,5 @@
         "ext-zip": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
