@@ -304,8 +304,12 @@ class WebauthnService {
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid challenge.');
     }
 
-    $this->em->remove($challenge);
-    $this->em->flush();
+    // Atomic delete (not remove/flush: Doctrine doesn't check the affected rows), so two concurrent
+    // requests answering the same challenge can't both go through
+    $this->em->detach($challenge);
+    if (!$this->challengeRepository->deleteOne($challenge)) {
+      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid challenge.');
+    }
 
     if ($challenge->isExpired()) {
       throw new HttpException(Response::HTTP_BAD_REQUEST, 'Challenge expired.');

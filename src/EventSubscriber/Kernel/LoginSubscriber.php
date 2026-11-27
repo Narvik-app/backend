@@ -47,6 +47,11 @@ final readonly class LoginSubscriber
         return;
       }
 
+      // Same shared checks as the other grants (activated account, not a badger)
+      if (!$this->loginGuard->canLogin($user)) {
+        return;
+      }
+
       // We reset the user login token
       $userLimiter = $this->getUserLimiter($user);
       $userLimiter->reset();
