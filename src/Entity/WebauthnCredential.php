@@ -10,13 +10,16 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\OpenApi\Model;
 use App\Controller\PasskeyLoginOptions;
-use App\Controller\SelfPasskeyRegister;
 use App\Controller\SelfPasskeyRegisterOptions;
+use App\Dto\PasskeyRegistrationInput;
 use App\Entity\Abstract\UuidEntity;
 use App\Entity\Interface\TimestampEntityInterface;
 use App\Entity\Trait\TimestampTrait;
+use App\Exception\InvalidPasskeyException;
+use App\Exception\PasskeyAlreadyRegisteredException;
 use App\Repository\WebauthnCredentialRepository;
 use App\State\SelfPasskeyProvider;
+use App\State\SelfPasskeyRegisterProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -47,28 +50,9 @@ use Symfony\Component\Validator\Constraints as Assert;
     ),
     new Post(
       uriTemplate: '/self/passkeys',
-      controller: SelfPasskeyRegister::class,
-      openapi: new Model\Operation(
-        summary: 'Finish a passkey registration with the browser attestation response',
-        requestBody: new Model\RequestBody(
-          content: new \ArrayObject([
-            'application/json' => [
-              'schema' => [
-                'type'       => 'object',
-                'properties' => [
-                  'challengeId' => ['type' => 'string'],
-                  'credential'  => ['type' => 'object'],
-                  'name'        => ['type' => 'string'],
-                ],
-                'required' => ['challengeId', 'credential'],
-              ],
-            ],
-          ]),
-        ),
-      ),
-      read: false,
-      deserialize: false,
-      write: false,
+      openapi: new Model\Operation(summary: 'Finish a passkey registration with the browser attestation response'),
+      input: PasskeyRegistrationInput::class,
+      processor: SelfPasskeyRegisterProcessor::class,
     ),
     new Get(
       uriTemplate: '/self/passkeys/{uuid}',
@@ -96,6 +80,10 @@ use Symfony\Component\Validator\Constraints as Assert;
   ],
   normalizationContext: ['groups' => ['passkey-read']],
   denormalizationContext: ['groups' => ['passkey-write']],
+  exceptionToStatus: [
+    InvalidPasskeyException::class           => 400,
+    PasskeyAlreadyRegisteredException::class => 409,
+  ],
 )]
 class WebauthnCredential extends UuidEntity implements TimestampEntityInterface {
   use TimestampTrait;

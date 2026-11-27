@@ -2,6 +2,7 @@
 
 namespace App\Security\Grant;
 
+use App\Exception\InvalidPasskeyException;
 use App\Service\LoginGuardService;
 use App\Service\WebauthnService;
 use League\Bundle\OAuth2ServerBundle\Converter\UserConverterInterface;
@@ -15,7 +16,6 @@ use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\RateLimiter\Exception\RateLimitExceededException;
 
 /**
@@ -64,7 +64,7 @@ final class PasskeyGrant extends AbstractGrant {
 
     try {
       $user = $this->webauthnService->verifyLogin($challengeId, $credential);
-    } catch (HttpException) {
+    } catch (InvalidPasskeyException) {
       $this->getEmitter()->emit(new RequestEvent(RequestEvent::USER_AUTHENTICATION_FAILED, $request));
       throw OAuthServerException::invalidCredentials();
     }

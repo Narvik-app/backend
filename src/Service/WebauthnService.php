@@ -6,14 +6,14 @@ use App\Entity\User;
 use App\Entity\WebauthnChallenge;
 use App\Entity\WebauthnCredential;
 use App\Enum\WebauthnChallengeType;
+use App\Exception\InvalidPasskeyException;
+use App\Exception\PasskeyAlreadyRegisteredException;
 use App\Repository\WebauthnChallengeRepository;
 use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncode;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -136,14 +136,14 @@ class WebauthnService {
   public function verifyRegistration(User $user, string $challengeId, array|string $credential, ?string $name): WebauthnCredential {
     $challenge = $this->consumeChallenge($challengeId, WebauthnChallengeType::creation);
     if ($challenge->getUser() !== $user) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid challenge.');
+      throw new InvalidPasskeyException('Invalid challenge.');
     }
 
     /** @var PublicKeyCredentialCreationOptions $options */
     $options = $this->serializer->deserialize($challenge->getOptions(), PublicKeyCredentialCreationOptions::class, 'json');
     $publicKeyCredential = $this->loadPublicKeyCredential($credential);
     if (!$publicKeyCredential->response instanceof AuthenticatorAttestationResponse) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
+      throw new InvalidPasskeyException('Invalid passkey response.');
     }
 
     try {
@@ -151,19 +151,19 @@ class WebauthnService {
         ->check($publicKeyCredential->response, $options, $options->rp->id);
     } catch (\Throwable $e) {
       $this->logger->info('Passkey registration refused', ['error' => $e->getMessage()]);
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
+      throw new InvalidPasskeyException('Invalid passkey response.');
     }
 
     $credentialId = self::base64Url($record->publicKeyCredentialId);
     if ($this->credentialRepository->findOneByCredentialId($credentialId)) {
-      throw new HttpException(Response::HTTP_CONFLICT, 'This passkey is already registered.');
+      throw new PasskeyAlreadyRegisteredException('This passkey is already registered.');
     }
 
     $passkey = new WebauthnCredential()
       ->setUser($user)
       ->setCredentialId($credentialId)
       ->setRecord($this->serializer->normalize($record))
-      ->setName(mb_substr(mb_trim((string) $name), 0, 100) ?: 'Passkey');
+      ->setName(mb_trim((string) $name) ?: 'Passkey');
 
     $this->em->persist($passkey);
     $this->em->flush();
@@ -199,14 +199,14 @@ class WebauthnService {
     $publicKeyCredential = $this->loadPublicKeyCredential($credential);
     $response = $publicKeyCredential->response;
     if (!$response instanceof AuthenticatorAssertionResponse) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
+      throw new InvalidPasskeyException('Invalid passkey response.');
     }
 
     $passkey = $this->credentialRepository->findOneByCredentialId(self::base64Url($publicKeyCredential->rawId));
     $user = $passkey?->getUser();
     // Discoverable credentials must return the user handle, and it must match the passkey owner
     if (!$passkey || !$user || $response->userHandle === null || !hash_equals(self::getUserHandle($user), $response->userHandle)) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey.');
+      throw new InvalidPasskeyException('Invalid passkey.');
     }
 
     try {
@@ -215,7 +215,7 @@ class WebauthnService {
     } catch (\Throwable $e) {
       // Also covers a sign counter going backward (cloned authenticator)
       $this->logger->warning('Passkey login refused', ['passkey' => $passkey->getUuid()?->toString(), 'error' => $e->getMessage()]);
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey.');
+      throw new InvalidPasskeyException('Invalid passkey.');
     }
 
     $passkey
@@ -268,7 +268,7 @@ class WebauthnService {
       /** @var PublicKeyCredential */
       return $this->serializer->deserialize($json, PublicKeyCredential::class, 'json');
     } catch (\Throwable) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid passkey response.');
+      throw new InvalidPasskeyException('Invalid passkey response.');
     }
   }
 
@@ -301,18 +301,18 @@ class WebauthnService {
   private function consumeChallenge(string $challengeId, WebauthnChallengeType $type): WebauthnChallenge {
     $challenge = $this->challengeRepository->findOneByUuid($challengeId);
     if (!$challenge || $challenge->getType() !== $type) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid challenge.');
+      throw new InvalidPasskeyException('Invalid challenge.');
     }
 
     // Atomic delete (not remove/flush: Doctrine doesn't check the affected rows), so two concurrent
     // requests answering the same challenge can't both go through
     $this->em->detach($challenge);
     if (!$this->challengeRepository->deleteOne($challenge)) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Invalid challenge.');
+      throw new InvalidPasskeyException('Invalid challenge.');
     }
 
     if ($challenge->isExpired()) {
-      throw new HttpException(Response::HTTP_BAD_REQUEST, 'Challenge expired.');
+      throw new InvalidPasskeyException('Challenge expired.');
     }
 
     return $challenge;

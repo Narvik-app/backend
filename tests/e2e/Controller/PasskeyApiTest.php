@@ -4,6 +4,7 @@ namespace App\Tests\e2e\Controller;
 
 use App\Entity\User;
 use App\Entity\WebauthnChallenge;
+use App\Exception\InvalidPasskeyException;
 use App\Repository\WebauthnChallengeRepository;
 use App\Repository\WebauthnCredentialRepository;
 use App\Security\Grant\PasskeyGrant;
@@ -16,7 +17,6 @@ use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class PasskeyApiTest extends AbstractApiTestCase {
@@ -255,7 +255,7 @@ class PasskeyApiTest extends AbstractApiTestCase {
     $requestStack->push(Request::create('/', 'POST', server: ['HTTP_ORIGIN' => 'https://evil.example']));
     $login = $service->createLoginOptions();
     $this->assertSame('narvik.app', $login['publicKey']['rpId']);
-    $this->expectException(HttpException::class);
+    $this->expectException(InvalidPasskeyException::class);
     $service->verifyLogin($login['challengeId'], $authenticator->get($login['publicKey'], 'dev.narvik.app'));
   }
 
@@ -269,6 +269,33 @@ class PasskeyApiTest extends AbstractApiTestCase {
       'credential'  => new SoftwareAuthenticator()->create($options['publicKey']),
     ]);
     $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+  }
+
+  public function testRegistrationPayloadIsValidated(): void {
+    $this->loggedAsMemberClub1();
+    $options = $this->makePostRequest('/self/passkeys/-/options', [])->toArray();
+    $credential = new SoftwareAuthenticator()->create($options['publicKey']);
+
+    $this->makePostRequest('/self/passkeys', ['credential' => $credential]);
+    $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+    $this->assertJsonContains(['violations' => [['propertyPath' => 'challengeId']]]);
+
+    $this->makePostRequest('/self/passkeys', [
+      'challengeId' => $options['challengeId'],
+      'credential'  => $credential,
+      'name'        => str_repeat('a', 101),
+    ]);
+    $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+    $this->assertJsonContains(['violations' => [['propertyPath' => 'name']]]);
+
+    // No name: the backend gives a default one
+    $passkey = $this->makePostRequest('/self/passkeys', [
+      'challengeId' => $options['challengeId'],
+      'credential'  => $credential,
+      'name'        => '  ',
+    ]);
+    $this->assertResponseStatusCodeSame(Response::HTTP_CREATED);
+    $this->assertSame('Passkey', $passkey->toArray()['name']);
   }
 
   public function testBadgerCannotRegisterPasskey(): void {
