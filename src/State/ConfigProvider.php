@@ -58,11 +58,6 @@ class ConfigProvider implements ProviderInterface {
     $config->addModule('notifications', [
       'enabled' => $this->emailService->canSendEmail(),
     ]);
-
-    // Passwordless login with passkeys (WebAuthn)
-    $config->addModule('passkeys', [
-      'enabled' => true,
-    ]);
   }
 
   public function getUserConfig(Config $config, User $user): void {

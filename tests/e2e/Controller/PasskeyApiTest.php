@@ -233,10 +233,4 @@ class PasskeyApiTest extends AbstractApiTestCase {
     $this->makePostRequest('/self/passkeys/-/options', []);
     $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
   }
-
-  public function testPublicConfigExposesPasskeys(): void {
-    $this->makeNotLoggedRequest('GET', '/public/config');
-    $this->assertResponseIsSuccessful();
-    $this->assertJsonContains(['modules' => ['passkeys' => ['enabled' => true]]]);
-  }
 }

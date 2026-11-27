@@ -101,7 +101,7 @@ class WebauthnService {
       user: PublicKeyCredentialUserEntity::create(
         name: $user->getEmail(),
         id: self::getUserHandle($user),
-        displayName: trim("{$user->getFirstname()} {$user->getLastname()}") ?: $user->getEmail(),
+        displayName: trim((string) $user->getFullName()) ?: $user->getEmail(),
       ),
       challenge: random_bytes(32),
       pubKeyCredParams: [
