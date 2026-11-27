@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d802c0b90a0f1907741572963be05d8",
+    "content-hash": "efe77459cb676569f8a5ba70783da591",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -3121,35 +3121,35 @@
         },
         {
             "name": "lcobucci/jwt",
-            "version": "5.6.1",
+            "version": "5.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lcobucci/jwt.git",
-                "reference": "482760068e5a55a9045feddb3e2fc3f878cbd577"
+                "reference": "d7e47accd18c44268e1dcf01eec19f24d6904862"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lcobucci/jwt/zipball/482760068e5a55a9045feddb3e2fc3f878cbd577",
-                "reference": "482760068e5a55a9045feddb3e2fc3f878cbd577",
+                "url": "https://api.github.com/repos/lcobucci/jwt/zipball/d7e47accd18c44268e1dcf01eec19f24d6904862",
+                "reference": "d7e47accd18c44268e1dcf01eec19f24d6904862",
                 "shasum": ""
             },
             "require": {
                 "ext-openssl": "*",
                 "ext-sodium": "*",
-                "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+                "php": "~8.4.0 || ~8.5.0 || ~8.6.0",
                 "psr/clock": "^1.0"
             },
             "require-dev": {
-                "infection/infection": "^0.29",
-                "lcobucci/clock": "^3.2",
-                "lcobucci/coding-standard": "^11.0",
-                "phpbench/phpbench": "^1.2",
-                "phpstan/extension-installer": "^1.2",
-                "phpstan/phpstan": "^1.10.7",
-                "phpstan/phpstan-deprecation-rules": "^1.1.3",
-                "phpstan/phpstan-phpunit": "^1.3.10",
-                "phpstan/phpstan-strict-rules": "^1.5.0",
-                "phpunit/phpunit": "^11.1"
+                "infection/infection": "^0.35",
+                "lcobucci/clock": "^3.7",
+                "lcobucci/coding-standard": "^12.1",
+                "phpbench/phpbench": "^1.7",
+                "phpstan/extension-installer": "^1.4.3",
+                "phpstan/phpstan": "^2.3",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.1",
+                "phpunit/phpunit": "^13.4"
             },
             "suggest": {
                 "lcobucci/clock": ">= 3.2"
@@ -3178,7 +3178,7 @@
             ],
             "support": {
                 "issues": "https://github.com/lcobucci/jwt/issues",
-                "source": "https://github.com/lcobucci/jwt/tree/5.6.1"
+                "source": "https://github.com/lcobucci/jwt/tree/5.7.0"
             },
             "funding": [
                 {
@@ -3190,7 +3190,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-10-10T09:42:14+00:00"
+            "time": "2026-11-19T21:02:34+00:00"
         },
         {
             "name": "league/csv",
@@ -3348,26 +3348,26 @@
         },
         {
             "name": "league/oauth2-server",
-            "version": "9.4.1",
+            "version": "9.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/oauth2-server.git",
-                "reference": "9d2f6fc0a0b5aa1bb02506971d3a4ecff2c6526c"
+                "reference": "afdb62ecc19bb13a855223465953ed4017a2d078"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/oauth2-server/zipball/9d2f6fc0a0b5aa1bb02506971d3a4ecff2c6526c",
-                "reference": "9d2f6fc0a0b5aa1bb02506971d3a4ecff2c6526c",
+                "url": "https://api.github.com/repos/thephpleague/oauth2-server/zipball/afdb62ecc19bb13a855223465953ed4017a2d078",
+                "reference": "afdb62ecc19bb13a855223465953ed4017a2d078",
                 "shasum": ""
             },
             "require": {
                 "defuse/php-encryption": "^2.4",
                 "ext-json": "*",
                 "ext-openssl": "*",
-                "lcobucci/jwt": "^5.6",
+                "lcobucci/jwt": "^5.6 || ^5.7",
                 "league/event": "^3.0",
                 "league/uri": "^7.8",
-                "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+                "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0 || ~8.6.0",
                 "psr/clock": "^1.0",
                 "psr/http-message": "^2.0",
                 "psr/http-server-middleware": "^1.0"
@@ -3377,7 +3377,7 @@
                 "lncd/oauth2": "*"
             },
             "require-dev": {
-                "laminas/laminas-diactoros": "^3.8",
+                "laminas/laminas-diactoros": "^3.8 || ^3.10",
                 "paragonie/random_compat": "^9.99.100",
                 "php-parallel-lint/php-parallel-lint": "^1.4",
                 "phpstan/extension-installer": "^1.4.3",
@@ -3433,7 +3433,7 @@
             ],
             "support": {
                 "issues": "https://github.com/thephpleague/oauth2-server/issues",
-                "source": "https://github.com/thephpleague/oauth2-server/tree/9.4.1"
+                "source": "https://github.com/thephpleague/oauth2-server/tree/9.5.0"
             },
             "funding": [
                 {
@@ -3441,7 +3441,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-06-25T15:24:07+00:00"
+            "time": "2026-11-20T19:37:37+00:00"
         },
         {
             "name": "league/oauth2-server-bundle",
@@ -3532,21 +3532,21 @@
         },
         {
             "name": "league/uri",
-            "version": "7.9.0",
+            "version": "7.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/uri.git",
-                "reference": "fcc872a3d872aa13f935e0cd1887b9abb06da07f"
+                "reference": "be89e2382e37acdef232259071ade5180821397b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/uri/zipball/fcc872a3d872aa13f935e0cd1887b9abb06da07f",
-                "reference": "fcc872a3d872aa13f935e0cd1887b9abb06da07f",
+                "url": "https://api.github.com/repos/thephpleague/uri/zipball/be89e2382e37acdef232259071ade5180821397b",
+                "reference": "be89e2382e37acdef232259071ade5180821397b",
                 "shasum": ""
             },
             "require": {
                 "ext-mbstring": "*",
-                "league/uri-interfaces": "^7.9.0",
+                "league/uri-interfaces": "^7.10.0",
                 "php": "^8.1",
                 "psr/http-factory": "^1"
             },
@@ -3619,7 +3619,7 @@
                 "docs": "https://uri.thephpleague.com",
                 "forum": "https://thephpleague.slack.com",
                 "issues": "https://github.com/thephpleague/uri-src/issues",
-                "source": "https://github.com/thephpleague/uri/tree/7.9.0"
+                "source": "https://github.com/thephpleague/uri/tree/7.10.0"
             },
             "funding": [
                 {
@@ -3627,20 +3627,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-16T15:19:33+00:00"
+            "time": "2026-11-04T12:45:07+00:00"
         },
         {
             "name": "league/uri-interfaces",
-            "version": "7.9.0",
+            "version": "7.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/uri-interfaces.git",
-                "reference": "eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58"
+                "reference": "ea66240cff4ae9a56ce85d577a04d038b771e51c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58",
-                "reference": "eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58",
+                "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/ea66240cff4ae9a56ce85d577a04d038b771e51c",
+                "reference": "ea66240cff4ae9a56ce85d577a04d038b771e51c",
                 "shasum": ""
             },
             "require": {
@@ -3703,7 +3703,7 @@
                 "docs": "https://uri.thephpleague.com",
                 "forum": "https://thephpleague.slack.com",
                 "issues": "https://github.com/thephpleague/uri-src/issues",
-                "source": "https://github.com/thephpleague/uri-interfaces/tree/7.9.0"
+                "source": "https://github.com/thephpleague/uri-interfaces/tree/7.10.0"
             },
             "funding": [
                 {
@@ -3711,7 +3711,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-16T15:19:33+00:00"
+            "time": "2026-11-04T12:45:07+00:00"
         },
         {
             "name": "maennchen/zipstream-php",
@@ -10322,8 +10322,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-12T14:32:04+00:00",
-            "published-time": "2026-10-14T06:48:53+00:00"
+            "time": "2026-10-12T14:32:04+00:00"
         },
         {
             "name": "symfony/validator",
@@ -14543,5 +14542,5 @@
         "ext-zip": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
