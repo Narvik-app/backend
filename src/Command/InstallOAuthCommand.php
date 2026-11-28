@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Enum\UserRole;
+use App\Security\Grant\PasskeyGrant;
 use App\Repository\ClubDependent\MemberRepository;
 use App\Service\GlobalSettingService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,7 +41,7 @@ class InstallOAuthCommand extends Command {
    * (session renewal) - see narvik-front's app/composables/api/api.ts. Other grants
    * (client_credentials, authorization_code, implicit) are pointless to allow here.
    */
-  private const array FRONT_GRANTS = ['password', 'refresh_token'];
+  private const array FRONT_GRANTS = ['password', 'refresh_token', PasskeyGrant::IDENTIFIER];
   private const array FRONT_SCOPES = ['all'];
 
   private SymfonyStyle $io;
@@ -141,8 +142,9 @@ class InstallOAuthCommand extends Command {
   private function generateFrontClient(): void {
     $this->io->section("Création du client frontend");
 
-    if ($this->clientManager->find('front')) {
-      $this->io->info("Client déjà enregistré");
+    $client = $this->clientManager->find('front');
+    if ($client) {
+      $this->reconcileFrontClient($client);
       return;
     }
 
@@ -155,6 +157,25 @@ class InstallOAuthCommand extends Command {
     ]);
     $this->getApplication()->doRun($command, $this->io);
     $this->io->warning("Le secret ci-dessus ne sera plus jamais affiché : reportez-le dans NUXT_OAUTH_CLIENT_ID / NUXT_OAUTH_CLIENT_SECRET côté frontend avant de continuer.");
+  }
+
+  /**
+   * Add the grants introduced after the client creation (i.e. passkey login). Existing grants are kept,
+   * an empty grant list already allows every grant.
+   */
+  private function reconcileFrontClient(OAuth2ClientInterface $client): void {
+    $this->io->info("Client déjà enregistré");
+
+    $currentGrants = array_map(strval(...), $client->getGrants());
+    $missingGrants = array_diff(self::FRONT_GRANTS, $currentGrants);
+    if (empty($currentGrants) || empty($missingGrants)) {
+      $this->io->info("Client frontend déjà conforme, aucune modification");
+      return;
+    }
+
+    $client->setGrants(...array_map(fn (string $grant) => new Grant($grant), [...$currentGrants, ...$missingGrants]));
+    $this->clientManager->save($client);
+    $this->io->success("Client frontend corrigé : grants ajoutés " . implode(', ', $missingGrants));
   }
 
   /**

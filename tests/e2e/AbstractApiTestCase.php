@@ -47,27 +47,34 @@ abstract class AbstractApiTestCase extends AbstractTestCase {
   }
 
   protected function loggedAs(string $email, string $password): bool {
+    $response = $this->requestToken([
+      'grant_type' => 'password',
+      'username' => $email,
+      'password' => $password,
+    ]);
+    return $response->getStatusCode() === Response::HTTP_OK;
+  }
+
+  /**
+   * POST /token with any grant (password, passkey...) as the front client. Keeps the tokens on success.
+   */
+  protected function requestToken(array $body): ResponseInterface {
     $this->logout();
 
     $response = static::createClient()->request(Request::METHOD_POST, '/token', [
-      'json' => [
-        'grant_type' => 'password',
-        'username' => $email,
-        'password' => $password,
-      ],
+      'json' => $body,
       'headers' => [
         'Authorization' => 'Basic ' . $this->clientAuthorization,
       ]
     ]);
 
-    if ($response->getStatusCode() !== Response::HTTP_OK) {
-      return false;
+    if ($response->getStatusCode() === Response::HTTP_OK) {
+      $data = $response->toArray();
+      $this->accessToken = $data['access_token'];
+      $this->refreshToken = $data['refresh_token'];
     }
 
-    $data = $response->toArray();
-    $this->accessToken = $data['access_token'];
-    $this->refreshToken = $data['refresh_token'];
-    return true;
+    return $response;
   }
 
   protected function loggedAsBadger(Club $club): bool {

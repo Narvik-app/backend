@@ -6,6 +6,8 @@
 parameters:
     env(EXPOSE_VERSION): "false" # default value
     env(TURNSTILE_SECRET): "" # default value
+    env(WEBAUTHN_RP_ID): "" # default value, empty = FRONTEND_URL host
+    env(WEBAUTHN_ALLOWED_ORIGINS): "" # default value, comma separated, empty = FRONTEND_URL origin
     app.expose_version: '%env(bool:resolve:EXPOSE_VERSION)%'
     app.turnstile_secret: '%env(resolve:TURNSTILE_SECRET)%'
 
@@ -13,6 +15,8 @@ parameters:
     app.oauth_private_key: '%env(resolve:OAUTH_PRIVATE_KEY)%'
     
     app.frontend_url: '%env(FRONTEND_URL)%'
+    app.webauthn_rp_id: '%env(WEBAUTHN_RP_ID)%'
+    app.webauthn_allowed_origins: '%env(WEBAUTHN_ALLOWED_ORIGINS)%'
     app.sales_email: '%env(SALES_EMAIL)%'
 
     app.files: '%kernel.project_dir%/private/files'
